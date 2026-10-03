@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
+.env*
 .env.dev
 .env.prod
 .env.example

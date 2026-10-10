@@ -50,6 +50,9 @@ function PatientsTab() {
     if (error) {
         return <p className="error">Error: {error}</p>;
     }
+    if (patients.length===0) {
+        return <p>No patients found.</p>;
+    }
 
     return (
         <table>

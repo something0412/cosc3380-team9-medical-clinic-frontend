@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Tabs } from "./components/Tabs";
+import { PatientDashboard } from "./Pages/Patient/PatientDashboard";
 import type { Patient, TemplateResponse } from "./types";
 import "./App.css";
 import { api } from "./api";
@@ -129,6 +130,7 @@ function App() {
                     { label: "Patients", content: <PatientsTab /> },
                     { label: "Appointments", content: <AppointmentsTab /> },
                     { label: "Template", content: <TemplateTab /> },
+                    {label: "Patient Portal", content: <PatientDashboard />},
                 ]}
             />
         </main>

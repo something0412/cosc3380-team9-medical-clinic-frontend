@@ -1,35 +1,60 @@
-import { useState } from "react";
-export function PatientForms(){
+
+import { useState, type SubmitEvent } from "react";
+export function PatientForms() {
     const [reason, setReason] = useState("");
-    const [notes, setNotes] = useState("");
+    const [allergies, setAllergies] = useState("");
+    const [medications, setMedications] = useState("");
+    const [consent, setConsent] = useState(false);
     const [preview, setPreview] = useState(false);
-    function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
         setPreview(true);
     }
     return (
         <div>
             <h2>Patient Forms</h2>
-            <p>View and complete forms required by the clinic.</p>
+            <p>Complete your medical forms and view your submission history.</p>
 
             <h3>Required Forms</h3>
             <p>Your required forms will appear here once your account is connected.</p>
 
-            <h3>Patient Intake Form (Demo)</h3>
-            <p>This is a practice form. Your answers will not be saved yet.</p>
+            <h3>Patient Intake Form</h3>
+            <p>This is a demo form. Your answers will not be saved yet.</p>
 
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="reason">Reason for visit</label>
-                    <textarea id="reason" value={reason} onChange={(e) => { setReason(e.target.value); setPreview(false);}}
-                    required
-                    /> 
+                    <label>Reason for Visit</label>
+                    <textarea value={reason} onChange={(e) => {
+                        setReason(e.target.value);
+                        setPreview(false);
+                    }} required />
                 </div>
 
                 <div>
-                    <label htmlFor="notes">Additional notes (optional)</label>
-                    <textarea id="notes" value={notes} onChange={(e) => { setNotes(e.target.value); setPreview(false);}}
-                    />
+                    <label>Allergies</label>
+                    <input type="text" value={allergies} onChange={(e) => {
+                        setAllergies(e.target.value);
+                        setPreview(false);
+                    }} placeholder="Enter allergies or None" />
+                </div>
+
+                <div>
+                    <label>Current Medications</label>
+                    <input type="text" value={medications} onChange={(e) => {
+                        setMedications(e.target.value);
+                        setPreview(false);
+                    }} placeholder="Enter medications or None" />
+                </div>
+
+                <div>
+                    <label>
+                        <input type="checkbox" checked={consent}
+                            onChange={(e) => {
+                                setConsent(e.target.checked);
+                                setPreview(false);
+                            }} required />
+                        I confirm that the information provided is accurate.
+                    </label>
                 </div>
 
                 <button type="submit">Preview Form</button>
@@ -38,14 +63,16 @@ export function PatientForms(){
             {preview && (
                 <div>
                     <h3>Form Preview</h3>
-                    <p><strong>Reason:</strong> {reason}</p>
-                    <p><strong>Notes:</strong> {notes|| "None"}</p>
-                    <p>This is only a preview. The form has not been submitted.</p>
+                    <p>Reason: {reason}</p>
+                    <p>Allergies: {allergies || "None"}</p>
+                    <p>Medications: {medications || "None"}</p>
+                    <p>Information confirmed: {consent ? "Yes" : "No"}</p>
+                    <p>This form has not been submitted to the clinic.</p>
                 </div>
             )}
 
-            <h3>My Submitted Forms</h3>
-            <p>No submission history is available yet.</p>
+            <h3>Submission History</h3>
+            <p>Your submitted forms will appear here once connected to the database.</p>
         </div>
     );
 }

@@ -12,6 +12,7 @@ import { api } from "./api";
 // (loading / error / success).
 function PatientsTab() {
     const [patients, setPatients] = useState<Patient[]>([]);
+
     // Shown while the request is in flight, so the user sees "Loading..."
     // instead of a confusing empty table for a moment.
     const [loading, setLoading] = useState(true);
@@ -49,9 +50,6 @@ function PatientsTab() {
 
     if (error) {
         return <p className="error">Error: {error}</p>;
-    }
-    if (patients.length===0) {
-        return <p>No patients found.</p>;
     }
 
     return (

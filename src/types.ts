@@ -16,6 +16,15 @@ export interface Patient {
   email: string | null;
   isActive: boolean;
 }
+export interface CreatePatientRequest {
+    firstName: string;
+    lastName: string;
+    dob: string;
+    gender: string;
+    phone: string;
+    email: string;
+    address: string;
+}
 
 // Shape of the JSON returned by GET /api/template.
 export interface TemplateResponse {

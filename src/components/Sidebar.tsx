@@ -6,7 +6,14 @@ import type { Role } from "../context/AuthContext";
 // from seeing doctor tabs, etc. Add a new page's link to its role's array
 // as pages get built out.
 const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
-    patient: [{ to: "/patient/dashboard", label: "Dashboard" }],
+    patient: [
+        { to: "/patient/dashboard", label: "Dashboard" },
+        { to: "/patient/appointments", label: "Appointments" },
+        { to: "/patient/records", label: "Medical Records" },
+        { to: "/patient/forms", label: "Forms" },
+        { to: "/patient/billing", label: "Billing" },
+        { to: "/patient/profile", label: "My Profile" },
+    ],
     doctor: [{ to: "/doctor/dashboard", label: "Dashboard" }],
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },

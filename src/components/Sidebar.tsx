@@ -12,7 +12,7 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/analytics", label: "Analytics" },
     ],
-    staff: [{ to: "/staff/dashboard", label: "Dashboard" }],
+    staff: [{ to: "/staff/dashboard", label: "Dashboard" }, { to: "/staff/appointment", label: "Patient Appointments" }],
 };
 
 export function Sidebar({ role }: { role: Role }) {

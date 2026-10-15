@@ -3,10 +3,10 @@ import { RoleLayout } from "./layouts/RoleLayout";
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { LoginPage } from "./pages/auth/Login";
 import { DoctorDashboard } from "./pages/doctor/Dashboard";
-import { PatientDashboard } from "./patient/PatientDashboard";
+import { PatientDashboard } from "./pages/patient/Dashboard";
 import { StaffDashboard } from "./pages/staff/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
-import { PatientForms } from "./patient/PatientForms";
+import { StaffAppointment } from "./pages/staff/Appoinment";
 
 function App() {
     return (
@@ -17,7 +17,6 @@ function App() {
             <Route path="/patient" element={<RoleLayout role="patient" />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<PatientDashboard />} />
-                <Route path="forms" element={<PatientForms />} />
             </Route>
 
             <Route path="/doctor" element={<RoleLayout role="doctor" />}>
@@ -34,6 +33,7 @@ function App() {
             <Route path="/staff" element={<RoleLayout role="staff" />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<StaffDashboard />} />
+                <Route path="appointment" element={<StaffAppointment />} />
             </Route>
         </Routes>
     );

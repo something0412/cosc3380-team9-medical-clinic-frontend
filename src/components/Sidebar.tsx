@@ -19,7 +19,15 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/analytics", label: "Analytics" },
     ],
-    staff: [{ to: "/staff/dashboard", label: "Dashboard" }],
+    staff: [
+        { to: "/staff/dashboard", label: "Dashboard" },
+        { to: "/staff/appointment", label: "Patient Appointments" },
+        // Nursing pages: one shared chart lookup + one tab per nurse type.
+        { to: "/staff/charts", label: "Patient Charts" },
+        { to: "/staff/rn", label: "RN Workspace" },
+        { to: "/staff/crna", label: "CRNA Workspace" },
+        { to: "/staff/na", label: "NA Workspace" },
+    ],
 };
 
 export function Sidebar({ role }: { role: Role }) {

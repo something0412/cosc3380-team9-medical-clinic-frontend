@@ -31,7 +31,7 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
 };
 
 export function Sidebar({ role }: { role: Role }) {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     function handleLogout() {
@@ -40,17 +40,17 @@ export function Sidebar({ role }: { role: Role }) {
     }
 
     return (
-        <nav className="flex w-48 shrink-0 flex-col border-r border-gray-200 bg-white">
+        <nav className="sticky top-0 flex h-screen w-48 shrink-0 flex-col border-r border-gray-200 bg-white">
             <div className="border-b border-gray-200 px-4 py-4">
                 <span className="text-sm font-semibold text-gray-900">
                     Medical Clinic
                 </span>
                 <p className="mt-0.5 text-xs text-gray-500 capitalize">
-                    {role}
+                    {user ? `${user.firstName} ${user.lastName} · ${role}` : role}
                 </p>
             </div>
 
-            <ul className="flex-1 space-y-1 px-3 py-4">
+            <ul className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
                 {ROLE_LINKS[role].map((link) => (
                     <li key={link.to}>
                         <NavLink

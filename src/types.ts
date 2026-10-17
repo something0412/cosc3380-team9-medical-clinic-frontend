@@ -118,3 +118,28 @@ export interface AnesthesiaRecord {
   medicationsGiven: string;
   notes: string;
 }
+
+// Auth
+export interface PatientAuthResponse {
+  patientId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface StaffAuthResponse {
+  employeeId: number;
+  firstName: string;
+  lastName: string;
+  employeeType: string;
+  role: "doctor" | "admin" | "staff";
+}
+
+export interface PatientSignupRequest {
+  firstName: string;
+  lastName: string;
+  dob: string;
+  phone: string;
+  email: string;
+  password: string;
+}

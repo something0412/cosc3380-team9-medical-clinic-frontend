@@ -5,35 +5,46 @@ export type Role = "patient" | "doctor" | "admin" | "staff";
 
 const ROLES: Role[] = ["patient", "doctor", "admin", "staff"];
 
+export interface AuthUser {
+  role: Role;
+  id: number;
+  firstName: string;
+  lastName: string;
+}
+
 interface AuthContextValue {
+  user: AuthUser | null;
   role: Role | null;
-  login: (role: Role) => void;
+  login: (user: AuthUser) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// Temporary until real auth exists: the chosen role is kept in localStorage
-// so a page refresh while designing a role's pages doesn't bounce back to
-// the login screen.
-const STORAGE_KEY = "clinic_role";
+const STORAGE_KEY = "clinic_user";
+
+function loadUser(): AuthUser | null {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
+    return stored && ROLES.includes(stored.role) ? stored : null;
+  } catch {
+    return null;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<Role | null>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return ROLES.includes(stored as Role) ? (stored as Role) : null;
-  });
+  const [user, setUser] = useState<AuthUser | null>(loadUser);
 
   useEffect(() => {
-    if (role) {
-      localStorage.setItem(STORAGE_KEY, role);
+    if (user) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
-  }, [role]);
+  }, [user]);
 
   return (
-    <AuthContext.Provider value={{ role, login: setRole, logout: () => setRole(null) }}>
+    <AuthContext.Provider value={{ user, role: user?.role ?? null, login: setUser, logout: () => setUser(null) }}>
       {children}
     </AuthContext.Provider>
   );

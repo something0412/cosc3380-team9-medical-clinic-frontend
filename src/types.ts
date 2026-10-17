@@ -24,6 +24,11 @@ export interface CreatePatientRequest {
     phone: string;
     email: string;
     address: string;
+    // Collected by the receptionist when registering a new patient.
+    emergencyContactName: string;
+    emergencyContactPhone: string;
+    insuranceProvider: string;
+    insurancePolicyNumber: string;
 }
 
 // Shape of the JSON returned by GET /api/template.

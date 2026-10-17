@@ -78,3 +78,10 @@ src/
 4. Add it to the `tabs` array passed to `<Tabs />` in the `App` component.
    Don't modify `Tabs.tsx` itself — it's generic and knows nothing about
    patients/appointments/etc.
+
+## Nursing pages (RN / CRNA / NA)
+
+Pages are in `src/pages/staff/nursing/`. All their backend calls are in
+`src/services/nursingApi.ts` — each function lists the route it needs.
+To use fake data until those routes exist, put `VITE_USE_MOCK_DATA=true`
+in `.env.local` and restart `npm run dev`.

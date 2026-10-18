@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 interface PatientProfileData {
     patientId: number;
@@ -14,6 +15,9 @@ interface PatientProfileData {
 }
 
 export function PatientProfile() {
+    const { user } = useAuth();
+    const patientId = user?.role === "patient" ? user.id : null;
+
     const [profile, setProfile] = useState<PatientProfileData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -22,19 +26,42 @@ export function PatientProfile() {
         let active = true;
 
         async function loadProfile() {
+            setLoading(true);
+            setError("");
+            setProfile(null);
+
+            if (patientId === null || !Number.isSafeInteger(patientId) || patientId <= 0) {
+                if (active) {
+                    setError("Patient information was not found. Please log in again.");
+                    setLoading(false);
+                }
+                return;
+            }
+
             try {
-                const response = await api.get<PatientProfileData>("/api/patient/profile");
-                if (active) setProfile(response.data);
-            } catch {
-                if (active) setError("Patient profile could not be loaded.");
+                const response = await api.get<PatientProfileData>(
+                    `/api/patient/${patientId}/profile`
+                );
+
+                if (active) {
+                    setProfile(response.data);
+                    setError("");
+                }
+            } catch (err) {
+                console.error("Could not load patient profile:", err);
+
+                if (active) {
+                    setError("Patient profile could not be loaded.");
+                }
             } finally {
                 if (active) setLoading(false);
             }
         }
 
         loadProfile();
+
         return () => { active = false; };
-    }, []);
+    }, [patientId]);
 
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-6">
@@ -52,7 +79,7 @@ export function PatientProfile() {
                 <p className="text-gray-500">No profile information found.</p>
             )}
 
-            {profile && (
+            {!loading && !error && profile && (
                 <>
                     <div className="border rounded-lg p-5">
                         <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
@@ -82,7 +109,9 @@ export function PatientProfile() {
 
                             <div>
                                 <p className="text-sm text-gray-500">Date of Birth</p>
-                                <p className="font-medium">{profile.dob.slice(0, 10)}</p>
+                                <p className="font-medium">
+                                    {profile.dob?.slice(0, 10) || "Not provided"}
+                                </p>
                             </div>
 
                             <div>
@@ -98,7 +127,7 @@ export function PatientProfile() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p className="text-sm text-gray-500">Phone Number</p>
-                                <p className="font-medium">{profile.phone}</p>
+                                <p className="font-medium">{profile.phone || "Not provided"}</p>
                             </div>
 
                             <div>

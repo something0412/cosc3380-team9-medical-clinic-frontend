@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 interface VisitRecord {
     appointmentId: number;
@@ -30,6 +31,9 @@ interface MedicalRecords {
 }
 
 export function PatientRecords() {
+    const { user } = useAuth();
+    const patientId = user?.role === "patient" ? user.id : null;
+
     const [records, setRecords] = useState<MedicalRecords | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -38,19 +42,42 @@ export function PatientRecords() {
         let active = true;
 
         async function loadRecords() {
+            setLoading(true);
+            setError("");
+            setRecords(null);
+
+            if (patientId === null || !Number.isSafeInteger(patientId) || patientId <= 0) {
+                if (active) {
+                    setError("Patient information was not found. Please log in again.");
+                    setLoading(false);
+                }
+                return;
+            }
+
             try {
-                const response = await api.get<MedicalRecords>("/api/patient/records");
-                if (active) setRecords(response.data);
-            } catch {
-                if (active) setError("Medical records could not be loaded.");
+                const response = await api.get<MedicalRecords>(
+                    `/api/patient/${patientId}/records`
+                );
+
+                if (active) {
+                    setRecords(response.data);
+                    setError("");
+                }
+            } catch (err) {
+                console.error("Could not load patient medical records:", err);
+
+                if (active) {
+                    setError("Medical records could not be loaded.");
+                }
             } finally {
                 if (active) setLoading(false);
             }
         }
 
         loadRecords();
+
         return () => { active = false; };
-    }, []);
+    }, [patientId]);
 
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-6">
@@ -64,22 +91,28 @@ export function PatientRecords() {
             {loading && <p>Loading medical records...</p>}
             {error && <p className="text-red-600">{error}</p>}
 
-            {records && (
+            {!loading && !error && records && (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="border rounded-lg p-5">
                             <h3 className="font-semibold">Visits</h3>
-                            <p className="text-2xl font-bold mt-2">{records.visits.length}</p>
+                            <p className="text-2xl font-bold mt-2">
+                                {records.visits.length}
+                            </p>
                         </div>
 
                         <div className="border rounded-lg p-5">
                             <h3 className="font-semibold">Prescriptions</h3>
-                            <p className="text-2xl font-bold mt-2">{records.prescriptions.length}</p>
+                            <p className="text-2xl font-bold mt-2">
+                                {records.prescriptions.length}
+                            </p>
                         </div>
 
                         <div className="border rounded-lg p-5">
                             <h3 className="font-semibold">Lab Results</h3>
-                            <p className="text-2xl font-bold mt-2">{records.labResults.length}</p>
+                            <p className="text-2xl font-bold mt-2">
+                                {records.labResults.length}
+                            </p>
                         </div>
                     </div>
 
@@ -101,9 +134,15 @@ export function PatientRecords() {
                                     <tbody>
                                         {records.visits.map((visit) => (
                                             <tr key={visit.appointmentId} className="border-b">
-                                                <td className="p-3">{visit.visitDate.slice(0, 10)}</td>
-                                                <td className="p-3">{visit.diagnosis || "Not provided"}</td>
-                                                <td className="p-3">{visit.notes || "No notes"}</td>
+                                                <td className="p-3">
+                                                    {visit.visitDate?.slice(0, 10) || "N/A"}
+                                                </td>
+                                                <td className="p-3">
+                                                    {visit.diagnosis || "Not provided"}
+                                                </td>
+                                                <td className="p-3">
+                                                    {visit.notes || "No notes"}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -131,9 +170,15 @@ export function PatientRecords() {
                                     <tbody>
                                         {records.prescriptions.map((prescription) => (
                                             <tr key={prescription.prescriptionItemId} className="border-b">
-                                                <td className="p-3">{prescription.medicationName}</td>
-                                                <td className="p-3">{prescription.dosage}</td>
-                                                <td className="p-3">{prescription.instructions || "—"}</td>
+                                                <td className="p-3">
+                                                    {prescription.medicationName}
+                                                </td>
+                                                <td className="p-3">
+                                                    {prescription.dosage}
+                                                </td>
+                                                <td className="p-3">
+                                                    {prescription.instructions || "—"}
+                                                </td>
                                                 <td className="p-3">
                                                     {prescription.isActive ? "Active" : "Inactive"}
                                                 </td>
@@ -163,9 +208,15 @@ export function PatientRecords() {
                                     <tbody>
                                         {records.labResults.map((lab) => (
                                             <tr key={lab.labOrderId} className="border-b">
-                                                <td className="p-3">{lab.testName}</td>
-                                                <td className="p-3">{lab.orderDate.slice(0, 10)}</td>
-                                                <td className="p-3">{lab.resultNotes || "Pending"}</td>
+                                                <td className="p-3">
+                                                    {lab.testName}
+                                                </td>
+                                                <td className="p-3">
+                                                    {lab.orderDate?.slice(0, 10) || "N/A"}
+                                                </td>
+                                                <td className="p-3">
+                                                    {lab.resultNotes || "Pending"}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

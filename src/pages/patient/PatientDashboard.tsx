@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 interface DashboardSummary {
     upcomingAppointments: number;
@@ -8,6 +9,9 @@ interface DashboardSummary {
 }
 
 export function PatientDashboard() {
+    const { user } = useAuth();
+    const patientId = user?.role === "patient" ? user.id : null;
+
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -16,11 +20,25 @@ export function PatientDashboard() {
         let active = true;
 
         async function loadDashboard() {
+            setLoading(true);
+            setError("");
+            setSummary(null);
+
+            if (patientId === null || !Number.isSafeInteger(patientId) || patientId <= 0) {
+                setError("Patient information was not found. Please log in again.");
+                setLoading(false);
+                return;
+            }
+
             try {
-                const response = await api.get<DashboardSummary>("/api/patient/dashboard");
+                const response = await api.get<DashboardSummary>(
+                    `/api/patient/${patientId}/dashboard`
+                );
+
                 if (active) setSummary(response.data);
-            } catch {
-                if (active) setError("Dashboard information is not available yet.");
+            } catch (err) {
+                console.error("Could not load patient dashboard:", err);
+                if (active) setError("Dashboard information could not be loaded.");
             } finally {
                 if (active) setLoading(false);
             }
@@ -28,7 +46,7 @@ export function PatientDashboard() {
 
         loadDashboard();
         return () => { active = false; };
-    }, []);
+    }, [patientId]);
 
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-6">
@@ -44,12 +62,16 @@ export function PatientDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="border rounded-lg p-5">
                         <h3 className="font-semibold">Upcoming Appointments</h3>
-                        <p className="text-2xl font-bold mt-2">{summary.upcomingAppointments}</p>
+                        <p className="text-2xl font-bold mt-2">
+                            {summary.upcomingAppointments}
+                        </p>
                     </div>
 
                     <div className="border rounded-lg p-5">
                         <h3 className="font-semibold">Pending Forms</h3>
-                        <p className="text-2xl font-bold mt-2">{summary.pendingForms}</p>
+                        <p className="text-2xl font-bold mt-2">
+                            {summary.pendingForms}
+                        </p>
                     </div>
 
                     <div className="border rounded-lg p-5">

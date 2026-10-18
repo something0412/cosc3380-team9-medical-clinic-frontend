@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 interface Appointment {
     appointmentId: number;
     appointmentDate: string;
-    appointmentTime: string;
+    appointmentTime: string | null;
     doctorName: string;
     specialty: string | null;
     status: string;
 }
 
 export function PatientAppointments() {
+    const { user } = useAuth();
+    const patientId = user?.role === "patient" ? user.id : null;
+
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -19,19 +23,39 @@ export function PatientAppointments() {
         let active = true;
 
         async function loadAppointments() {
+            setLoading(true);
+            setError("");
+
+            if (patientId === null || !Number.isSafeInteger(patientId) || patientId <= 0) {
+                setError("Patient information was not found. Please log in again.");
+                setLoading(false);
+                return;
+            }
+
             try {
-                const response = await api.get<Appointment[]>("/api/patient/appointments");
-                if (active) setAppointments(response.data);
-            } catch {
-                if (active) setError("Appointments could not be loaded.");
+                const response = await api.get<Appointment[]>(
+                    `/api/patient/${patientId}/appointments`
+                );
+
+                if (active) {
+                    setAppointments(response.data);
+                    setError("");
+                }
+            } catch (err) {
+                console.error("Could not load patient appointments:", err);
+
+                if (active) {
+                    setError("Appointments could not be loaded.");
+                }
             } finally {
                 if (active) setLoading(false);
             }
         }
 
         loadAppointments();
+
         return () => { active = false; };
-    }, []);
+    }, [patientId]);
 
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-6">
@@ -67,11 +91,21 @@ export function PatientAppointments() {
                             <tbody>
                                 {appointments.map((appointment) => (
                                     <tr key={appointment.appointmentId} className="border-b">
-                                        <td className="p-3">{appointment.appointmentDate.slice(0, 10)}</td>
-                                        <td className="p-3">{appointment.appointmentTime}</td>
-                                        <td className="p-3">{appointment.doctorName}</td>
-                                        <td className="p-3">{appointment.specialty || "N/A"}</td>
-                                        <td className="p-3">{appointment.status}</td>
+                                        <td className="p-3">
+                                            {appointment.appointmentDate?.slice(0, 10) || "N/A"}
+                                        </td>
+                                        <td className="p-3">
+                                            {appointment.appointmentTime || "N/A"}
+                                        </td>
+                                        <td className="p-3">
+                                            {appointment.doctorName}
+                                        </td>
+                                        <td className="p-3">
+                                            {appointment.specialty || "N/A"}
+                                        </td>
+                                        <td className="p-3">
+                                            {appointment.status}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

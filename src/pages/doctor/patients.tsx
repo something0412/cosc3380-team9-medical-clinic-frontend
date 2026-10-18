@@ -1,7 +1,7 @@
 export default function Referrals() {
   return (
     <main className="mx-auto flex min-h-screen w-[calc(100%-40px)] max-w-[1200px] flex-col gap-5 font-sans">
-      <header className="flex items-center justify-between"><h1 className="text-2xl font-bold">Referrals</h1><button type="button" className="rounded border border-black px-4 py-2">Create Order</button></header>
+      <header className="flex items-center justify-between"><h1 className="text-2xl font-bold">Patients</h1><button type="button" className="rounded border border-black px-4 py-2">Create Order</button></header>
 
       <section className="grid grid-cols-2 gap-5">
         <div className="rounded-[10px] border border-black p-4"><h2>Pending</h2><p className="text-2xl">2</p></div>

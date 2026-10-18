@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 interface Invoice {
     invoiceId: number;
@@ -22,6 +23,9 @@ interface BillingData {
 }
 
 export function PatientBilling() {
+    const { user } = useAuth();
+    const patientId = user?.role === "patient" ? user.id : null;
+
     const [billing, setBilling] = useState<BillingData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -30,19 +34,42 @@ export function PatientBilling() {
         let active = true;
 
         async function loadBilling() {
+            setLoading(true);
+            setError("");
+            setBilling(null);
+
+            if (patientId === null || !Number.isSafeInteger(patientId) || patientId <= 0) {
+                if (active) {
+                    setError("Patient information was not found. Please log in again.");
+                    setLoading(false);
+                }
+                return;
+            }
+
             try {
-                const response = await api.get<BillingData>("/api/patient/billing");
-                if (active) setBilling(response.data);
-            } catch {
-                if (active) setError("Billing information could not be loaded.");
+                const response = await api.get<BillingData>(
+                    `/api/patient/${patientId}/billing`
+                );
+
+                if (active) {
+                    setBilling(response.data);
+                    setError("");
+                }
+            } catch (err) {
+                console.error("Could not load patient billing:", err);
+
+                if (active) {
+                    setError("Billing information could not be loaded.");
+                }
             } finally {
                 if (active) setLoading(false);
             }
         }
 
         loadBilling();
+
         return () => { active = false; };
-    }, []);
+    }, [patientId]);
 
     const money = (amount: number | string) => {
         return `$${Number(amount).toFixed(2)}`;
@@ -102,7 +129,9 @@ export function PatientBilling() {
                                         {billing.invoices.map((invoice) => (
                                             <tr key={invoice.invoiceId} className="border-b">
                                                 <td className="p-3">#{invoice.invoiceId}</td>
-                                                <td className="p-3">{invoice.issueDate.slice(0, 10)}</td>
+                                                <td className="p-3">
+                                                    {invoice.issueDate?.slice(0, 10) || "N/A"}
+                                                </td>
                                                 <td className="p-3">{money(invoice.amount)}</td>
                                                 <td className="p-3">{invoice.status}</td>
                                             </tr>
@@ -135,7 +164,9 @@ export function PatientBilling() {
                                             <tr key={payment.paymentId} className="border-b">
                                                 <td className="p-3">#{payment.paymentId}</td>
                                                 <td className="p-3">#{payment.invoiceId}</td>
-                                                <td className="p-3">{payment.paymentDate.slice(0, 10)}</td>
+                                                <td className="p-3">
+                                                    {payment.paymentDate?.slice(0, 10) || "N/A"}
+                                                </td>
                                                 <td className="p-3">{money(payment.amountPaid)}</td>
                                                 <td className="p-3">{payment.paymentType}</td>
                                             </tr>

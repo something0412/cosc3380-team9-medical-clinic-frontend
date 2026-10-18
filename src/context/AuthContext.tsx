@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
+
 import type { ReactNode } from "react";
+import { api } from "../api";
 
 export type Role = "patient" | "doctor" | "admin" | "staff";
 
@@ -20,7 +22,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
 const STORAGE_KEY = "clinic_user";
 
 function loadUser(): AuthUser | null {
@@ -43,8 +44,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  function logout() {
+    setUser(null);
+    // Clear the verified server-side session as well as the browser UI state.
+    void api.post("/api/auth/logout").catch((error) => {
+      console.error("Could not log out on the server:", error);
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, role: user?.role ?? null, login: setUser, logout: () => setUser(null) }}>
+    <AuthContext.Provider value={{ user, role: user?.role ?? null, login: setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

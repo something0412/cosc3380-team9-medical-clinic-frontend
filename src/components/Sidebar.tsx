@@ -2,9 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { Role } from "../context/AuthContext";
 
-// Each role only sees its own links here — this is what keeps patients
-// from seeing doctor tabs, etc. Add a new page's link to its role's array
-// as pages get built out.
+// sidebar links for each role
 const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
     patient: [
         { to: "/patient/dashboard", label: "Dashboard" },
@@ -14,10 +12,14 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
         { to: "/patient/billing", label: "Billing" },
         { to: "/patient/profile", label: "My Profile" },
     ],
-    doctor: [{ to: "/doctor/dashboard", label: "Dashboard" }],
+    doctor: [
+        { to: "/doctor/dashboard", label: "Dashboard" },
+        { to: "/doctor/profile", label: "My Profile" },
+    ],
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/analytics", label: "Analytics" },
+        { to: "/admin/profile", label: "My Profile" },
     ],
     staff: [
         { to: "/staff/dashboard", label: "Dashboard" },
@@ -27,6 +29,7 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
         { to: "/staff/rn", label: "RN Workspace" },
         { to: "/staff/crna", label: "CRNA Workspace" },
         { to: "/staff/na", label: "NA Workspace" },
+        { to: "/staff/profile", label: "My Profile" },
     ],
 };
 

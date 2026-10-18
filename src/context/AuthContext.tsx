@@ -5,8 +5,6 @@ import { api } from "../api";
 
 export type Role = "patient" | "doctor" | "admin" | "staff";
 
-const ROLES: Role[] = ["patient", "doctor", "admin", "staff"];
-
 export interface AuthUser {
   role: Role;
   id: number;
@@ -17,43 +15,44 @@ export interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null;
   role: Role | null;
+  loading: boolean;
   login: (user: AuthUser) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const STORAGE_KEY = "clinic_user";
-
-function loadUser(): AuthUser | null {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
-    return stored && ROLES.includes(stored.role) ? stored : null;
-  } catch {
-    return null;
-  }
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(loadUser);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  // load the logged-in user from the session
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  }, [user]);
+    api
+      .get<AuthUser>("/api/auth/me")
+      .then((res) => setUser(res.data))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // session expired: send back to login
+  useEffect(() => {
+    const interceptor = api.interceptors.response.use(undefined, (error) => {
+      if (error.response?.status === 401) setUser(null);
+      return Promise.reject(error);
+    });
+    return () => api.interceptors.response.eject(interceptor);
+  }, []);
 
   function logout() {
     setUser(null);
-    // Clear the verified server-side session as well as the browser UI state.
-    void api.post("/api/auth/logout").catch((error) => {
+    api.post("/api/auth/logout").catch((error) => {
       console.error("Could not log out on the server:", error);
     });
   }
 
   return (
-    <AuthContext.Provider value={{ user, role: user?.role ?? null, login: setUser, logout }}>
+    <AuthContext.Provider value={{ user, role: user?.role ?? null, loading, login: setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

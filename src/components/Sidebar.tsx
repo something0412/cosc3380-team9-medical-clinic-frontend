@@ -7,7 +7,7 @@ import type { Role } from "../context/AuthContext";
 // as pages get built out.
 const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
     patient: [{ to: "/patient/dashboard", label: "Dashboard" }],
-    doctor: [{ to: "/doctor/dashboard", label: "Dashboard" }],
+    doctor: [{ to: "/doctor/dashboard", label: "Dashboard" }, {to: "/doctor/test", label: "D Test tab"}],
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/analytics", label: "Analytics" },

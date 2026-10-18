@@ -11,4 +11,4 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 // every component. The base URL lives here once, and this is the one
 // place to add things later (auth headers, request logging, etc.) that
 // should apply to every call.
-export const api = axios.create({ baseURL: BASE_URL });
+export const api = axios.create({ baseURL: BASE_URL, withCredentials: true });

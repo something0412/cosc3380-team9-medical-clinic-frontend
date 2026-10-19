@@ -3,12 +3,13 @@ import { Sidebar } from "../components/Sidebar";
 import { useAuth } from "../context/AuthContext";
 import type { Role } from "../context/AuthContext";
 
-// Shared shell for every role's section: sidebar + whatever page is routed
-// into the Outlet. `role` is the section this layout guards — if the
-// logged-in role doesn't match (or nobody's logged in), bounce to login
-// instead of leaking another role's pages.
+// page layout for each role
 export function RoleLayout({ role }: { role: Role }) {
-  const { role: currentRole } = useAuth();
+  const { role: currentRole, loading } = useAuth();
+
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading...</p>;
+  }
 
   if (currentRole !== role) {
     return <Navigate to="/login" replace />;

@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
 html {
-  /* Tailwind's text-* utilities are rem-based, so bumping the root size
-     scales all text across the app by the same factor instead of editing
-     every text-* class individually. */
+  /* scale all text */
   font-size: 120%;
 }
 

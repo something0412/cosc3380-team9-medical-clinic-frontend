@@ -3,9 +3,9 @@ import { PatientChart } from "../../../components/PatientChart";
 import { getPatients, getTodaysAppointments } from "../../../services/nursingApi";
 import type { Appointment, Patient } from "../../../types";
 
-// Patient Charts: any nurse (RN, CRNA or NA) can look up any patient's
-// chart here — allergies, blood type, vitals, medications and notes.
-// It's view-only; charting is done on each nurse type's own page.
+// Patient Charts: any nurse can look up any patient's
+// chart here — allergies, vitals and medications. It's view-only;
+// vitals are recorded on the RN Workspace.
 export function PatientCharts() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -41,7 +41,7 @@ export function PatientCharts() {
     <div>
       <h1 className="text-xl font-semibold text-gray-900">Patient Charts</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Look up any patient's allergies, blood type, vitals, medications and notes.
+        Look up any patient's allergies, vitals and medications.
       </p>
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
 

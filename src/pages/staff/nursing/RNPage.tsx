@@ -5,8 +5,8 @@ import { getTodaysAppointments } from "../../../services/nursingApi";
 import type { Appointment } from "../../../types";
 
 // Registered Nurse page: today's patients on the left, the selected
-// patient's chart on the right. RNs can record vitals, add notes and
-// mark medications as given (all inside PatientChart).
+// patient's chart on the right. RNs can record vitals there (inside
+// PatientChart).
 export function RNPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -29,7 +29,7 @@ export function RNPage() {
     <div>
       <h1 className="text-xl font-semibold text-gray-900">RN Workspace</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Record vitals, give medications and document care for today's patients.
+        Check allergies and medications and record vitals for today's patients.
       </p>
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
 
@@ -41,7 +41,7 @@ export function RNPage() {
         />
         <div className="rounded border border-gray-200 bg-white p-4">
           {selected ? (
-            <PatientChart patientId={selected.patientId} role="RN" appointment={selected} />
+            <PatientChart patientId={selected.patientId} canRecordVitals appointment={selected} />
           ) : (
             <p className="text-sm text-gray-500">Select a patient.</p>
           )}

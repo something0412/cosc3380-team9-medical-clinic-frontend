@@ -233,7 +233,13 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     setSubmitting(true);
     try {
       const staff = await staffLogin(id, password);
-      onLogin({ role: staff.role, id: staff.employeeId, firstName: staff.firstName, lastName: staff.lastName });
+      onLogin({
+        role: staff.role,
+        id: staff.employeeId,
+        firstName: staff.firstName,
+        lastName: staff.lastName,
+        staffType: staff.staffType,
+      });
     } catch (err) {
       setError(authErrorMessage(err));
     } finally {

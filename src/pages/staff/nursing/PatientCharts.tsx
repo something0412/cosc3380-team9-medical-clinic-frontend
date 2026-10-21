@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { PatientChart } from "../../../components/PatientChart";
+import { useAuth } from "../../../context/AuthContext";
 import { getPatients, getTodaysAppointments } from "../../../services/nursingApi";
 import type { Appointment, Patient } from "../../../types";
 
-// Patient Charts: any nurse can look up any patient's
-// chart here — allergies, vitals and medications. It's view-only;
-// vitals are recorded on the RN Workspace.
+// Patient Charts: any nurse can look up any patient's chart here —
+// vitals, allergies, medications, notes and labs. It's view-only; charting
+// is done from the Clinical Queue.
 export function PatientCharts() {
+  const { user } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -23,13 +25,13 @@ export function PatientCharts() {
       // Today's appointments are only used to show check-in status, so
       // the page still works if this one fails.
       try {
-        setAppointments(await getTodaysAppointments());
+        setAppointments(await getTodaysAppointments(user?.officeId));
       } catch {
         setAppointments([]);
       }
     }
     loadData();
-  }, []);
+  }, [user?.officeId]);
 
   const filtered = patients.filter((p) =>
     `${p.firstName} ${p.lastName}`.toLowerCase().includes(search.toLowerCase()),
@@ -41,7 +43,7 @@ export function PatientCharts() {
     <div>
       <h1 className="text-xl font-semibold text-gray-900">Patient Charts</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Look up any patient's allergies, vitals and medications.
+        Look up any patient's chart (view only).
       </p>
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
 
@@ -77,7 +79,7 @@ export function PatientCharts() {
 
         <div className="rounded border border-gray-200 bg-white p-4">
           {selectedId ? (
-            <PatientChart patientId={selectedId} appointment={todaysAppointment(selectedId)} />
+            <PatientChart key={selectedId} patientId={selectedId} appointment={todaysAppointment(selectedId)} />
           ) : (
             <p className="text-sm text-gray-500">Select a patient.</p>
           )}

@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* public site colors */
+@theme {
+  --color-navy: #123456;
+  --color-navy-dark: #0b2238;
+}
+
 html {
   /* scale all text */
   font-size: 120%;

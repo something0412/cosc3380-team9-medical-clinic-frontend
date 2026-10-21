@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { RoleLayout } from "./layouts/RoleLayout";
+import { PublicLayout } from "./layouts/PublicLayout";
+import { HomePage } from "./pages/public/HomePage";
+import { ComingSoon } from "./pages/public/ComingSoon";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
@@ -28,7 +31,16 @@ import { StaffProfile } from "./pages/shared/StaffProfile";
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* public routes */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/find-a-doctor" element={<ComingSoon title="Find a Doctor" />} />
+        <Route path="/locations" element={<ComingSoon title="Locations" />} />
+        <Route path="/services" element={<ComingSoon title="Services" />} />
+        <Route path="/about" element={<ComingSoon title="About Us" />} />
+        <Route path="/contact" element={<ComingSoon title="Contact Us" />} />
+      </Route>
+
       <Route path="/login" element={<LoginPage />} />
 
       {/* patient routes */}

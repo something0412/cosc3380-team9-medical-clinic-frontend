@@ -11,8 +11,11 @@ import { LoginPage } from "./pages/auth/Login";
 import { DoctorDashboard } from "./pages/doctor/Dashboard";
 
 import { StaffDashboard } from "./pages/staff/Dashboard";
-import { StaffAppointment } from "./pages/staff/Appoinment";
 import { StaffBilling } from "./pages/staff/Billing";
+import { FrontDesk } from "./pages/staff/frontdesk/FrontDesk";
+import { Patients } from "./pages/staff/frontdesk/Patients";
+import { Receipt } from "./pages/staff/frontdesk/Receipt";
+import { Schedule } from "./pages/staff/frontdesk/Schedule";
 import { PatientCharts } from "./pages/staff/nursing/PatientCharts";
 import { RNPage } from "./pages/staff/nursing/RNPage";
 
@@ -58,8 +61,11 @@ function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<StaffDashboard />} />
         <Route element={<StaffTypeGuard staffType="receptionist" />}>
-          <Route path="appointment" element={<StaffAppointment />} />
+          <Route path="front-desk" element={<FrontDesk />} />
+          <Route path="patients" element={<Patients />} />
+          <Route path="schedule" element={<Schedule />} />
           <Route path="billing" element={<StaffBilling />} />
+          <Route path="billing/receipts/:paymentId" element={<Receipt />} />
         </Route>
         <Route element={<StaffTypeGuard staffType="nurse" />}>
           <Route path="charts" element={<PatientCharts />} />

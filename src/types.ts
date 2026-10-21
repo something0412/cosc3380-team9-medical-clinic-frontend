@@ -36,7 +36,15 @@ export interface CreatePatientRequest {
     provider: string;
     policyNumber: string;
   } | null;
+  // Optional patient-portal login; needs an email (the username).
+  portalPassword: string | null;
 }
+
+// The demographic fields a receptionist can edit (PUT /api/patients/:id).
+export type PatientDetails = Pick<
+  CreatePatientRequest,
+  "firstName" | "lastName" | "dob" | "gender" | "phone" | "email" | "address"
+>;
 
 // Shape of the JSON returned by GET /api/template.
 export interface TemplateResponse {
@@ -63,16 +71,27 @@ export interface Allergy {
 // Set by the receptionist. Nurses only read it.
 export type AppointmentStatus = "Scheduled" | "Cancelled" | "Completed" | "No Show";
 
+// Where a visit is in the waiting room, worked out by the backend from the
+// check-in times and whether the nurse has written a note.
+export type VisitState = "Expected" | "Waiting" | "With nurse" | "Done" | "No Show" | "Cancelled";
+
 export interface Appointment {
   appointmentId: number;
   patientId: number;
   patientName: string;
+  doctorId: number;
   doctorName: string;
+  officeId: number;
   scheduledAt: string; // "YYYY-MM-DDTHH:MM:SS", clinic-local time
   specialty: string;
   status: AppointmentStatus;
   checkedInAt: string | null; // set by the receptionist at check-in
   checkedOutAt: string | null;
+  visitState: VisitState;
+  // Readiness flags for the front desk and nurses.
+  missingForms: number; // required forms not completed
+  insuranceStatus: Insurance["status"] | null; // null = no insurance on file
+  hasSevereAllergy: boolean;
 }
 
 // One row of patient_vitals (see backend migrations/002_patient_vitals.sql).
@@ -121,14 +140,59 @@ export interface Doctor {
   specialties: string | null; // "Family Medicine, Cardiology"
 }
 
-// GET /api/doctors/:doctorId/availability?date=
+// GET /api/specialties
+export interface Specialty {
+  specialtyId: number;
+  name: string;
+  requiresReferral: boolean;
+}
+
+// GET /api/availability?date=&officeId=&specialtyId=&doctorId=
+// One open slot with one doctor.
 export interface AvailableSlot {
+  doctorId: number;
+  doctorName: string;
   timeSlotId: number;
   startTime: string; // "09:00"
   endTime: string;
-  office: string;
   specialty: string;
   requiresReferral: boolean;
+}
+
+// GET /api/patients/:patientId/referrals — referrals valid for a booking.
+export interface Referral {
+  referralId: number;
+  referredBy: string;
+  dateIssued: string;
+  expirationDate: string;
+}
+
+export interface EmergencyContact {
+  emergencyContactId: number;
+  firstName: string;
+  lastName: string;
+  relationship: string;
+  phone: string;
+  isPrimary: boolean;
+}
+
+// GET /api/patients/:patientId — the receptionist's patient profile.
+export interface PatientProfile extends Patient {
+  gender: string | null;
+  address: string | null;
+  hasPortalAccount: boolean;
+  emergencyContacts: EmergencyContact[];
+  insurance: Insurance | null;
+}
+
+// GET /api/patients/:patientId/forms — every form type with this
+// patient's status for it.
+export interface FormStatus {
+  formTypeId: number;
+  name: string;
+  isRequired: boolean;
+  status: "Not started" | "Pending" | "Completed";
+  submittedDate: string | null;
 }
 
 // Money comes back as strings ("150.00") so no cents are lost; convert
@@ -179,6 +243,46 @@ export interface PaymentType {
   name: string;
 }
 
+// GET /api/appointments/:appointmentId/invoice-estimate — the least a
+// visit can be billed: the check-in fee plus its (non-cancelled) labs.
+export interface InvoiceEstimate {
+  appointmentId: number;
+  checkInFee: string;
+  labs: { labOrderId: number; name: string; cost: string }[];
+  minimumAmount: string;
+}
+
+// GET /api/invoices?officeId=&status= — one row of the billing worklist.
+export interface WorklistInvoice {
+  invoiceId: number;
+  patientId: number;
+  patientName: string;
+  appointmentDate: string;
+  issueDate: string;
+  amount: string;
+  balance: string;
+  status: Invoice["status"];
+}
+
+// GET /api/payments/:paymentId/receipt
+export interface Receipt {
+  paymentId: number;
+  paymentDate: string;
+  amountPaid: string;
+  paymentType: string;
+  handledBy: string | null;
+  invoiceId: number;
+  invoiceAmount: string;
+  paidToDate: string;
+  balanceAfter: string;
+  patientId: number;
+  patientName: string;
+  visitDate: string;
+  officeName: string;
+  officeAddress: string;
+  officePhone: string;
+}
+
 // Auth
 export interface PatientAuthResponse {
   patientId: number;
@@ -196,6 +300,7 @@ export interface StaffAuthResponse {
   // Which staff pages to show: nurses get charts, receptionists get the
   // front desk and billing.
   staffType: StaffType;
+  officeId: number;
 }
 
 export type StaffType = "nurse" | "receptionist" | "other";

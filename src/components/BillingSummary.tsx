@@ -1,11 +1,18 @@
+import { Link } from "react-router-dom";
 import { money } from "../services/billingApi";
 import type { BillingData } from "../types";
 
 // One patient's insurance, balance, invoices and payment history. Shared
 // by the patient's own Billing page (read-only) and the receptionist's
 // Billing page (which adds its create-invoice / record-payment forms
-// around it).
-export function BillingSummary({ billing }: { billing: BillingData }) {
+// around it). `receiptPath`, if given, adds a Receipt link per payment.
+export function BillingSummary({
+  billing,
+  receiptPath,
+}: {
+  billing: BillingData;
+  receiptPath?: (paymentId: number) => string;
+}) {
   // Each invoice's balance is worked out by the backend in SQL.
   const outstanding = billing.invoices.reduce((total, invoice) => total + Number(invoice.balance), 0);
 
@@ -86,6 +93,7 @@ export function BillingSummary({ billing }: { billing: BillingData }) {
                   <th className="p-2">Date</th>
                   <th className="p-2">Amount</th>
                   <th className="p-2">Method</th>
+                  {receiptPath && <th className="p-2" />}
                 </tr>
               </thead>
               <tbody>
@@ -96,6 +104,13 @@ export function BillingSummary({ billing }: { billing: BillingData }) {
                     <td className="p-2">{payment.paymentDate}</td>
                     <td className="p-2">{money(payment.amountPaid)}</td>
                     <td className="p-2">{payment.paymentType}</td>
+                    {receiptPath && (
+                      <td className="p-2">
+                        <Link to={receiptPath(payment.paymentId)} className="text-blue-700 hover:underline">
+                          Receipt
+                        </Link>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

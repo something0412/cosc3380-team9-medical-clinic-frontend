@@ -239,6 +239,7 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
         firstName: staff.firstName,
         lastName: staff.lastName,
         staffType: staff.staffType,
+        officeId: staff.officeId,
       });
     } catch (err) {
       setError(authErrorMessage(err));

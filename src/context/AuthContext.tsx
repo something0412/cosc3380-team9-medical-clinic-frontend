@@ -12,6 +12,7 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   staffType?: StaffType; // staff only
+  officeId?: number; // staff only: the office their pages are scoped to
 }
 
 interface AuthContextValue {

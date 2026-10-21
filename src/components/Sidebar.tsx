@@ -25,9 +25,12 @@ const ROLE_LINKS: Record<Role, { to: string; label: string; staffTypes?: StaffTy
         { to: "/admin/analytics", label: "Analytics" },
     ],
     staff: [
-        { to: "/staff/dashboard", label: "Dashboard" },
+        // Staff who are neither nurses nor receptionists only get this.
+        { to: "/staff/dashboard", label: "Dashboard", staffTypes: ["other"] },
         // Front desk: receptionists only.
-        { to: "/staff/appointment", label: "Patient Appointments", staffTypes: ["receptionist"] },
+        { to: "/staff/front-desk", label: "Front Desk", staffTypes: ["receptionist"] },
+        { to: "/staff/patients", label: "Patients", staffTypes: ["receptionist"] },
+        { to: "/staff/schedule", label: "Schedule", staffTypes: ["receptionist"] },
         { to: "/staff/billing", label: "Billing", staffTypes: ["receptionist"] },
         // Nursing pages: shared chart lookup + the RN workspace.
         { to: "/staff/charts", label: "Patient Charts", staffTypes: ["nurse"] },
@@ -45,7 +48,7 @@ export function Sidebar({ role }: { role: Role }) {
     }
 
     return (
-        <nav className="sticky top-0 flex h-screen w-48 shrink-0 flex-col border-r border-gray-200 bg-white">
+        <nav className="sticky top-0 flex h-screen w-48 shrink-0 flex-col border-r border-gray-200 bg-white print:hidden">
             <div className="border-b border-gray-200 px-4 py-4">
                 <span className="text-sm font-semibold text-gray-900">
                     Medical Clinic

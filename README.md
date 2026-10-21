@@ -79,7 +79,7 @@ src/
    Don't modify `Tabs.tsx` itself — it's generic and knows nothing about
    patients/appointments/etc.
 
-## Nursing pages (RN / CRNA / NA)
+## Nursing pages (RN)
 
 Pages are in `src/pages/staff/nursing/`. All their backend calls are in
 `src/services/nursingApi.ts` — each function lists the route it needs.

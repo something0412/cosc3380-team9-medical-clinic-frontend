@@ -16,19 +16,26 @@ export interface Patient {
   email: string | null;
   isActive: boolean;
 }
+// Body of POST /api/patients (receptionist registration). Emergency
+// contact and insurance are optional, but all-or-nothing.
 export interface CreatePatientRequest {
+  firstName: string;
+  lastName: string;
+  dob: string;
+  gender: string;
+  phone: string;
+  email: string;
+  address: string;
+  emergencyContact: {
     firstName: string;
     lastName: string;
-    dob: string;
-    gender: string;
+    relationship: string;
     phone: string;
-    email: string;
-    address: string;
-    // Collected by the receptionist when registering a new patient.
-    emergencyContactName: string;
-    emergencyContactPhone: string;
-    insuranceProvider: string;
-    insurancePolicyNumber: string;
+  } | null;
+  insurance: {
+    provider: string;
+    policyNumber: string;
+  } | null;
 }
 
 // Shape of the JSON returned by GET /api/template.
@@ -38,85 +45,138 @@ export interface TemplateResponse {
 }
 
 // ---------------------------------------------------------------------------
-// Nursing pages (RN / CRNA / NA)
+// Nursing pages
 //
-// The backend routes for these don't exist yet — see services/nursingApi.ts.
-// When they're written, alias the SQL columns to these camelCase names
-// (same as GET /api/patients) and the pages will work as-is.
+// Shapes returned by GET /api/appointments, GET /api/patients/:id/chart
+// and POST /api/patients/:id/vitals (see backend routes/appointments.ts
+// and routes/patients.ts).
 // ---------------------------------------------------------------------------
-
-export type NurseType = "RN" | "CRNA" | "NA";
 
 export interface Allergy {
   allergyId: number;
   allergen: string; // e.g. "Penicillin"
+  category: "Medication" | "Food" | "Environmental" | "Other" | null;
   reaction: string | null; // e.g. "Hives"
   severity: "Mild" | "Moderate" | "Severe";
 }
 
 // Set by the receptionist. Nurses only read it.
-export type AppointmentStatus = "Scheduled" | "Checked In" | "Checked Out";
+export type AppointmentStatus = "Scheduled" | "Cancelled" | "Completed" | "No Show";
 
 export interface Appointment {
   appointmentId: number;
   patientId: number;
   patientName: string;
   doctorName: string;
-  scheduledAt: string; // ISO date-time
-  reason: string | null;
+  scheduledAt: string; // "YYYY-MM-DDTHH:MM:SS", clinic-local time
+  specialty: string;
   status: AppointmentStatus;
-  roomNumber: string | null; // set by an NA when rooming the patient
-  requiresAnesthesia: boolean; // true → shows up for CRNAs
+  checkedInAt: string | null; // set by the receptionist at check-in
+  checkedOutAt: string | null;
 }
 
+// One row of patient_vitals (see backend migrations/002_patient_vitals.sql).
+// Every measurement is optional; null means "not taken".
 export interface Vitals {
   vitalsId: number;
   patientId: number;
-  recordedAt: string;
-  recordedBy: NurseType;
-  systolic: number | null;
-  diastolic: number | null;
-  heartRate: number | null;
-  respiratoryRate: number | null;
+  appointmentId: number | null;
+  recordedBy: string; // nurse's name
   temperatureF: number | null;
-  oxygenSaturation: number | null;
+  heartRateBpm: number | null;
+  systolic: number | null; // blood pressure, shown as "systolic-diastolic"
+  diastolic: number | null;
+  weightLbs: number | null;
+  heightInches: number | null;
 }
 
-export interface Medication {
-  medicationId: number;
+// A medication the patient is currently on: either one they take at home
+// (home_medication) or one prescribed here (prescription_item).
+export interface PatientMedication {
+  source: "Home" | "Prescription";
+  id: number; // only unique together with `source`
   name: string;
-  dosage: string; // e.g. "10 mg"
-  frequency: string; // e.g. "Daily"
-  lastGivenAt: string | null; // last time an RN recorded a dose
-}
-
-export interface ChartNote {
-  noteId: number;
-  patientId: number;
-  createdAt: string;
-  authorRole: NurseType;
-  body: string;
+  dosage: string | null; // e.g. "10 mg"
+  directions: string | null; // frequency or instructions, e.g. "Daily"
+  startDate: string;
 }
 
 // Everything on one patient's chart, returned by
 // GET /api/patients/:patientId/chart in a single request.
 export interface PatientChart {
-  patient: Patient;
-  bloodType: string | null; // e.g. "O+", null if never recorded
+  patient: Patient & { gender: string | null };
   allergies: Allergy[];
   vitals: Vitals[]; // newest first
-  medications: Medication[];
-  notes: ChartNote[]; // newest first
+  medications: PatientMedication[];
 }
 
-// One per appointment that needs anesthesia. Filled in by a CRNA.
-export interface AnesthesiaRecord {
+// ---------------------------------------------------------------------------
+// Front desk (receptionist): booking and billing
+// ---------------------------------------------------------------------------
+
+// GET /api/doctors
+export interface Doctor {
+  doctorId: number;
+  name: string; // "Dr. Greg House"
+  specialties: string | null; // "Family Medicine, Cardiology"
+}
+
+// GET /api/doctors/:doctorId/availability?date=
+export interface AvailableSlot {
+  timeSlotId: number;
+  startTime: string; // "09:00"
+  endTime: string;
+  office: string;
+  specialty: string;
+  requiresReferral: boolean;
+}
+
+// Money comes back as strings ("150.00") so no cents are lost; convert
+// with Number(...) only for display.
+export interface Invoice {
+  invoiceId: number;
   appointmentId: number;
-  consentSigned: boolean;
-  asaClass: string; // patient risk class, "I" (healthy) to "V"
-  anesthesiaType: string; // "General", "Regional", "Local", ...
-  medicationsGiven: string;
-  notes: string;
+  appointmentDate: string;
+  issueDate: string;
+  amount: string;
+  amountPaid: string;
+  balance: string;
+  status: "Pending" | "Paid" | "Overdue";
+}
+
+export interface Payment {
+  paymentId: number;
+  invoiceId: number;
+  paymentDate: string;
+  amountPaid: string;
+  paymentType: string;
+}
+
+export interface Insurance {
+  provider: string;
+  policyNumber: string;
+  status: "Pending" | "Verified" | "Denied";
+}
+
+// GET /api/patients/:patientId/billing
+export interface BillingData {
+  insurance: Insurance | null;
+  invoices: Invoice[];
+  payments: Payment[];
+}
+
+// GET /api/patients/:patientId/uninvoiced-appointments
+export interface UninvoicedAppointment {
+  appointmentId: number;
+  appointmentDate: string;
+  specialty: string;
+  doctorName: string;
+}
+
+// GET /api/payment-types
+export interface PaymentType {
+  paymentTypeId: number;
+  name: string;
 }
 
 // Auth
@@ -133,7 +193,12 @@ export interface StaffAuthResponse {
   lastName: string;
   employeeType: string;
   role: "doctor" | "admin" | "staff";
+  // Which staff pages to show: nurses get charts, receptionists get the
+  // front desk and billing.
+  staffType: StaffType;
 }
+
+export type StaffType = "nurse" | "receptionist" | "other";
 
 export interface PatientSignupRequest {
   firstName: string;

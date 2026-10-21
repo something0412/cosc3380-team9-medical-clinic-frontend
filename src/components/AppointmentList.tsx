@@ -1,7 +1,7 @@
 import type { Appointment } from "../types";
 
 // Today's appointments as a clickable list. Used on the left side of the
-// RN, CRNA and NA pages. Each page filters the list before passing it in.
+// RN page.
 export function AppointmentList({
   appointments,
   selectedId,
@@ -34,10 +34,9 @@ export function AppointmentList({
               {" · "}
               {a.doctorName}
             </p>
-            {/* Check-in status comes from the receptionist. */}
-            <p className={`text-sm ${a.status === "Checked In" ? "font-medium text-green-700" : "text-gray-500"}`}>
-              {a.status}
-              {a.roomNumber && ` · Room ${a.roomNumber}`}
+            {/* Check-in comes from the receptionist. */}
+            <p className={`text-sm ${a.checkedInAt && !a.checkedOutAt ? "font-medium text-green-700" : "text-gray-500"}`}>
+              {a.specialty} · {a.checkedOutAt ? "Checked out" : a.checkedInAt ? "Checked in" : a.status}
             </p>
           </button>
         </li>

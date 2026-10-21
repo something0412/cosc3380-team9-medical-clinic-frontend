@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import type { StaffType } from "../types";
 
 export type Role = "patient" | "doctor" | "admin" | "staff";
 
@@ -10,6 +11,7 @@ export interface AuthUser {
   id: number;
   firstName: string;
   lastName: string;
+  staffType?: StaffType; // staff only
 }
 
 interface AuthContextValue {

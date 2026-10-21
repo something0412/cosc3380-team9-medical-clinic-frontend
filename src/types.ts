@@ -117,7 +117,74 @@ export interface PatientMedication {
   name: string;
   dosage: string | null; // e.g. "10 mg"
   directions: string | null; // frequency or instructions, e.g. "Daily"
+  category: HomeMedCategory | null; // home meds only
   startDate: string;
+}
+
+// GET /api/allergy-types
+export interface AllergyType {
+  allergyTypeId: number;
+  name: string;
+  category: Allergy["category"];
+}
+
+// GET /api/medications — the list a home medication can be picked from.
+export interface MedicationOption {
+  medicationId: number;
+  name: string;
+}
+
+export type HomeMedCategory = "Prescription" | "OTC" | "Supplement";
+
+// GET /api/appointments/:appointmentId/summary (null until a note exists)
+export interface VisitSummary {
+  notes: string | null;
+  diagnosis: string | null;
+  recordedBy: string;
+  recordedDate: string;
+}
+
+// GET /api/lab-test-types
+export interface LabTestType {
+  labTestTypeId: number;
+  name: string;
+  cost: string;
+}
+
+export type LabStatus = "Ordered" | "InProgress" | "Completed" | "Cancelled";
+
+// GET /api/patients/:patientId/lab-orders
+export interface LabOrder {
+  labOrderId: number;
+  appointmentId: number | null;
+  testName: string;
+  status: LabStatus;
+  orderDate: string;
+  resultNotes: string | null;
+  orderedBy: string;
+}
+
+// GET /api/office-supplies?officeId=
+export interface OfficeSupply {
+  officeSupplyId: number;
+  supplyId: number;
+  name: string;
+  type: string;
+  quantityOnHand: number;
+  reorderThreshold: number;
+  expirationDate: string | null;
+  lowStock: boolean; // at or below the reorder threshold
+  expiringSoon: boolean; // expires within 30 days
+}
+
+// GET /api/supply-orders?officeId=
+export interface SupplyOrder {
+  supplyOrderId: number;
+  supplyName: string;
+  quantityOrdered: number;
+  orderDate: string;
+  status: "Pending" | "Ordered" | "Received" | "Cancelled";
+  requestedBy: string;
 }
 
 // Everything on one patient's chart, returned by

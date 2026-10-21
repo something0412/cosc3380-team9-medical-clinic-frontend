@@ -32,9 +32,10 @@ const ROLE_LINKS: Record<Role, { to: string; label: string; staffTypes?: StaffTy
         { to: "/staff/patients", label: "Patients", staffTypes: ["receptionist"] },
         { to: "/staff/schedule", label: "Schedule", staffTypes: ["receptionist"] },
         { to: "/staff/billing", label: "Billing", staffTypes: ["receptionist"] },
-        // Nursing pages: shared chart lookup + the RN workspace.
+        // Nursing pages.
+        { to: "/staff/rn", label: "Clinical Queue", staffTypes: ["nurse"] },
         { to: "/staff/charts", label: "Patient Charts", staffTypes: ["nurse"] },
-        { to: "/staff/rn", label: "RN Workspace", staffTypes: ["nurse"] },
+        { to: "/staff/supplies", label: "Supplies", staffTypes: ["nurse"] },
     ],
 };
 

@@ -1,29 +1,36 @@
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
-import { useAuth } from "../context/AuthContext";
-import { authErrorMessage } from "../services/authApi";
-import { addVitals, getPatientChart } from "../services/nursingApi";
-import type { NewVitals } from "../services/nursingApi";
+import { getPatientChart } from "../services/nursingApi";
 import type { Appointment, PatientChart as Chart } from "../types";
+import { timeOf } from "../utils/dates";
+import { AllergiesTab } from "./chart/AllergiesTab";
+import { LabsTab } from "./chart/LabsTab";
+import { MedicationsTab } from "./chart/MedicationsTab";
+import { NotesTab } from "./chart/NotesTab";
+import { VitalsTab } from "./chart/VitalsTab";
 
-// One patient's chart, used by every nursing page: name, allergies,
-// vitals and current medications.
+const TABS = ["Vitals", "Allergies", "Medications", "Notes", "Labs"] as const;
+type Tab = (typeof TABS)[number];
+
+// One patient's chart, used by the nursing pages: a header with any
+// severe allergies, then a tab each for vitals, allergies, medications,
+// visit notes and lab orders.
 //
-// `canRecordVitals` shows the vitals form (RN Workspace); without it the
-// chart is read-only (Patient Charts page).
+// `canEdit` lets the nurse record and change things (Clinical Queue);
+// without it the chart is read-only (Patient Charts lookup).
 //
-// `appointment` is today's visit, if any — shown in the header and
-// attached to any vitals recorded.
+// `appointment` is today's visit, if any — shown in the header; vitals,
+// notes and labs recorded here are attached to it.
 export function PatientChart({
   patientId,
-  canRecordVitals = false,
+  canEdit = false,
   appointment,
 }: {
   patientId: number;
-  canRecordVitals?: boolean;
+  canEdit?: boolean;
   appointment?: Appointment;
 }) {
   const [chart, setChart] = useState<Chart | null>(null);
+  const [tab, setTab] = useState<Tab>("Vitals");
   const [error, setError] = useState("");
   // Changing this number re-runs the effect below, reloading the chart
   // after the nurse saves something.
@@ -57,10 +64,11 @@ export function PatientChart({
   }
 
   const { patient } = chart;
+  const severe = chart.allergies.filter((a) => a.severity === "Severe");
+  const appointmentId = appointment?.appointmentId ?? null;
 
   return (
-    <div className="space-y-6">
-      {/* Name, DOB and today's visit */}
+    <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-gray-900">
           {patient.firstName} {patient.lastName}
@@ -70,181 +78,53 @@ export function PatientChart({
           {patient.gender && ` · ${patient.gender}`} · {patient.phone}
         </p>
         <p className="text-sm text-gray-600">
-          Today: {appointment ? `${appointment.specialty} with ${appointment.doctorName} (${appointment.status})` : "No appointment"}
+          Today:{" "}
+          {appointment
+            ? `${appointment.specialty} with ${appointment.doctorName}` +
+              (appointment.checkedInAt ? ` · checked in at ${timeOf(appointment.checkedInAt)}` : ` · ${appointment.status}`)
+            : "No appointment"}
         </p>
       </div>
 
-      {/* Allergies: shown first because nurses must check them before
-          doing anything else. */}
-      <div className="rounded border border-red-300 bg-red-50 p-3">
-        <h3 className="text-sm font-semibold text-red-800">Allergies</h3>
-        {chart.allergies.length === 0 ? (
-          <p className="text-sm text-gray-700">No known allergies</p>
-        ) : (
-          <ul className="text-sm text-red-900">
-            {chart.allergies.map((a) => (
-              <li key={a.allergyId} className={a.severity === "Severe" ? "font-bold" : ""}>
-                {a.allergen} — {a.severity}
-                {a.reaction && ` (${a.reaction})`}
-              </li>
-            ))}
-          </ul>
-        )}
+      {/* Severe allergies go above everything else, on every tab. */}
+      {severe.length > 0 && (
+        <div className="rounded border border-red-400 bg-red-50 p-3 text-sm font-semibold text-red-900">
+          Severe allergies: {severe.map((a) => `${a.allergen}${a.reaction ? ` (${a.reaction})` : ""}`).join(", ")}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-1 border-b border-gray-200">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`px-3 py-2 text-sm ${
+              tab === t ? "border-b-2 border-blue-600 font-medium text-blue-700" : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
-      {/* Vitals */}
-      <section>
-        <h3 className="mb-2 font-semibold text-gray-900">Vitals</h3>
-        {canRecordVitals && (
-          <VitalsForm patientId={patientId} appointmentId={appointment?.appointmentId ?? null} onSaved={reload} />
-        )}
-        {chart.vitals.length === 0 ? (
-          <p className="text-sm text-gray-500">No vitals recorded.</p>
-        ) : (
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-gray-600">
-                <tr>
-                  <th>BP</th>
-                  <th>HR (bpm)</th>
-                  <th>Temp (°F)</th>
-                  <th>Weight (lbs)</th>
-                  <th>Height (in)</th>
-                  <th>By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chart.vitals.map((v) => (
-                  <tr key={v.vitalsId} className="border-t border-gray-100">
-                    <td>{v.systolic !== null ? `${v.systolic}-${v.diastolic}` : "—"}</td>
-                    <td>{v.heartRateBpm ?? "—"}</td>
-                    <td>{v.temperatureF ?? "—"}</td>
-                    <td>{v.weightLbs ?? "—"}</td>
-                    <td>{v.heightInches ?? "—"}</td>
-                    <td>{v.recordedBy}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      {/* Medications */}
-      <section>
-        <h3 className="mb-2 font-semibold text-gray-900">Medications</h3>
-        {chart.medications.length === 0 ? (
-          <p className="text-sm text-gray-500">No current medications.</p>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {chart.medications.map((m) => (
-              <li key={`${m.source}-${m.id}`} className="rounded border border-gray-200 p-2">
-                {m.name}
-                {m.dosage && ` ${m.dosage}`}
-                {m.directions && `, ${m.directions}`}
-                <span className="text-gray-500">
-                  {" "}· {m.source === "Home" ? "Home med" : "Prescribed"} since {m.startDate}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
-  );
-}
-
-// The number inputs; blood pressure has its own "120-80" text box.
-// Empty fields are sent as null ("not measured").
-const VITAL_FIELDS: { key: Exclude<keyof NewVitals, "systolic" | "diastolic">; label: string }[] = [
-  { key: "heartRateBpm", label: "Heart rate (bpm)" },
-  { key: "temperatureF", label: "Temp (°F)" },
-  { key: "weightLbs", label: "Weight (lbs)" },
-  { key: "heightInches", label: "Height (in)" },
-];
-
-// "120-80" (or "120/80") -> { systolic: 120, diastolic: 80 }; null if it
-// doesn't look like a blood pressure.
-function parseBloodPressure(text: string) {
-  const match = text.trim().match(/^(\d{2,3})\s*[-/]\s*(\d{2,3})$/);
-  return match ? { systolic: Number(match[1]), diastolic: Number(match[2]) } : null;
-}
-
-function VitalsForm({
-  patientId,
-  appointmentId,
-  onSaved,
-}: {
-  patientId: number;
-  appointmentId: number | null;
-  onSaved: () => void;
-}) {
-  const { user } = useAuth();
-  // Inputs hold strings while typing; converted to numbers on save.
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [bloodPressure, setBloodPressure] = useState("");
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!user) return;
-    const toNumber = (key: string) => (values[key] ? Number(values[key]) : null);
-
-    const bp = bloodPressure.trim() ? parseBloodPressure(bloodPressure) : null;
-    if (bloodPressure.trim() && !bp) {
-      alert('Enter blood pressure like "120-80".');
-      return;
-    }
-    if (!bp && VITAL_FIELDS.every((f) => !values[f.key])) {
-      alert("Enter at least one vital sign.");
-      return;
-    }
-
-    try {
-      await addVitals(patientId, user.id, appointmentId, {
-        temperatureF: toNumber("temperatureF"),
-        heartRateBpm: toNumber("heartRateBpm"),
-        systolic: bp?.systolic ?? null,
-        diastolic: bp?.diastolic ?? null,
-        weightLbs: toNumber("weightLbs"),
-        heightInches: toNumber("heightInches"),
-      });
-      setValues({});
-      setBloodPressure("");
-      onSaved();
-    } catch (err) {
-      alert(`Could not save vitals: ${authErrorMessage(err)}`);
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-2 rounded border border-gray-200 bg-gray-50 p-3">
-      <label className="text-xs text-gray-700">
-        Blood pressure
-        <input
-          placeholder="120-80"
-          value={bloodPressure}
-          onChange={(e) => setBloodPressure(e.target.value)}
-          className="mt-1 block w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm"
+      {tab === "Vitals" && (
+        <VitalsTab
+          patientId={patientId}
+          vitals={chart.vitals}
+          appointmentId={appointmentId}
+          canEdit={canEdit}
+          onSaved={reload}
         />
-      </label>
-      {VITAL_FIELDS.map((f) => (
-        <label key={f.key} className="text-xs text-gray-700">
-          {f.label}
-          <input
-            type="number"
-            step="any"
-            value={values[f.key] ?? ""}
-            onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
-            className="mt-1 block w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm"
-          />
-        </label>
-      ))}
-      <button
-        type="submit"
-        className="col-span-3 rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800"
-      >
-        Save vitals
-      </button>
-    </form>
+      )}
+      {tab === "Allergies" && (
+        <AllergiesTab patientId={patientId} allergies={chart.allergies} canEdit={canEdit} onSaved={reload} />
+      )}
+      {tab === "Medications" && (
+        <MedicationsTab patientId={patientId} medications={chart.medications} canEdit={canEdit} onSaved={reload} />
+      )}
+      {tab === "Notes" && <NotesTab appointmentId={appointmentId} canEdit={canEdit} />}
+      {tab === "Labs" && <LabsTab patientId={patientId} appointmentId={appointmentId} canEdit={canEdit} />}
+    </div>
   );
 }

@@ -18,6 +18,7 @@ import { Receipt } from "./pages/staff/frontdesk/Receipt";
 import { Schedule } from "./pages/staff/frontdesk/Schedule";
 import { PatientCharts } from "./pages/staff/nursing/PatientCharts";
 import { RNPage } from "./pages/staff/nursing/RNPage";
+import { Supplies } from "./pages/staff/nursing/Supplies";
 
 import { PatientDashboard } from "./pages/patient/PatientDashboard";
 import { PatientForms } from "./pages/patient/PatientForms";
@@ -70,6 +71,7 @@ function App() {
         <Route element={<StaffTypeGuard staffType="nurse" />}>
           <Route path="charts" element={<PatientCharts />} />
           <Route path="rn" element={<RNPage />} />
+          <Route path="supplies" element={<Supplies />} />
         </Route>
       </Route>
     </Routes>

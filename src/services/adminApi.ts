@@ -54,7 +54,17 @@ export interface Office {
 export interface OfficeDetails extends Office {
   employeeCount: number;
   activeEmployeeCount: number;
+  activeScheduleCount: number;
 }
+
+export type OfficeInput = Omit<Office, "officeId" | "isActive">;
+
+// 50 states plus DC, matching the backend check
+export const US_STATES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS",
+  "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC",
+  "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+];
 
 export interface Specialty {
   specialtyId: number;
@@ -151,6 +161,21 @@ export async function getOffices() {
 
 export async function getOffice(officeId: number) {
   const res = await api.get<OfficeDetails>(`/api/admin/offices/${officeId}`);
+  return res.data;
+}
+
+export async function createOffice(input: OfficeInput) {
+  const res = await api.post<OfficeDetails>("/api/admin/offices", input);
+  return res.data;
+}
+
+export async function updateOffice(officeId: number, input: OfficeInput) {
+  const res = await api.put<OfficeDetails>(`/api/admin/offices/${officeId}`, input);
+  return res.data;
+}
+
+export async function setOfficeStatus(officeId: number, isActive: boolean) {
+  const res = await api.patch<OfficeDetails>(`/api/admin/offices/${officeId}/status`, { isActive });
   return res.data;
 }
 

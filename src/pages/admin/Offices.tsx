@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
 import { ActiveBadge } from "../../components/admin/StatusBadges";
+import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { Field, SelectField } from "../../components/FormControls";
 import { getOffices } from "../../services/adminApi";
 import type { Office } from "../../services/adminApi";
@@ -57,7 +58,15 @@ export function AdminOffices() {
   }
 
   return (
-    <AdminPage title="Offices" description="View clinic locations, contact details, and status.">
+    <AdminPage
+      title="Offices"
+      description="View clinic locations, contact details, and status."
+      actions={
+        <Link to="/admin/offices/new" className={ADMIN_PRIMARY_BUTTON}>
+          Add Office
+        </Link>
+      }
+    >
       <div className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr]">
         <Field
           label="Search"

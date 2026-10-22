@@ -4,13 +4,13 @@ import { apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
 import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { InfoGrid, InfoItem, Section } from "../../components/ProfileUI";
-import { getEmployee, parseEmployeeId } from "../../services/adminApi";
+import { getEmployee, parseRouteId } from "../../services/adminApi";
 import type { AdminEmployeeDetails as Employee } from "../../services/adminApi";
 import { formatId } from "../../utils/id";
 import { AccountManagement } from "./AccountManagement";
 
 export function AdminEmployeeDetails() {
-  const employeeId = parseEmployeeId(useParams().id);
+  const employeeId = parseRouteId(useParams().id);
   // set by the add and edit forms after saving
   const [savedMessage, setSavedMessage] = useState((useLocation().state as { message?: string } | null)?.message);
   const [employee, setEmployee] = useState<Employee | null>(null);

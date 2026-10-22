@@ -42,7 +42,18 @@ export interface EmployeeType {
 export interface Office {
   officeId: number;
   name: string;
+  apt: string | null;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  phone: string;
   isActive: boolean;
+}
+
+export interface OfficeDetails extends Office {
+  employeeCount: number;
+  activeEmployeeCount: number;
 }
 
 export interface Specialty {
@@ -84,7 +95,7 @@ export interface NewEmployeeInput extends EmployeeInput {
 }
 
 // positive whole number from the URL, or null
-export function parseEmployeeId(value: string | undefined) {
+export function parseRouteId(value: string | undefined) {
   const id = Number(value);
   return value && /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 ? id : null;
 }
@@ -135,6 +146,11 @@ export async function getEmployeeTypes() {
 
 export async function getOffices() {
   const res = await api.get<Office[]>("/api/admin/offices");
+  return res.data;
+}
+
+export async function getOffice(officeId: number) {
+  const res = await api.get<OfficeDetails>(`/api/admin/offices/${officeId}`);
   return res.data;
 }
 

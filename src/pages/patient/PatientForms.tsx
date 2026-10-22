@@ -1,6 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { api } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 interface PatientForm {
     formTypeId: number;
@@ -11,6 +11,9 @@ interface PatientForm {
 }
 
 export function PatientForms() {
+    const { user } = useAuth();
+    const patientId = user?.role === "patient" ? user.id : null;
+
     const [forms, setForms] = useState<PatientForm[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -19,19 +22,42 @@ export function PatientForms() {
         let active = true;
 
         async function loadForms() {
+            setLoading(true);
+            setError("");
+            setForms([]);
+
+            if (patientId === null || !Number.isSafeInteger(patientId) || patientId <= 0) {
+                if (active) {
+                    setError("Patient information was not found. Please log in again.");
+                    setLoading(false);
+                }
+                return;
+            }
+
             try {
-                const response = await api.get<PatientForm[]>("/api/patient/forms");
-                if (active) setForms(response.data);
-            } catch {
-                if (active) setError("Patient forms could not be loaded.");
+                const response = await api.get<PatientForm[]>(
+                    `/api/patient/${patientId}/forms`
+                );
+
+                if (active) {
+                    setForms(response.data);
+                    setError("");
+                }
+            } catch (err) {
+                console.error("Could not load patient forms:", err);
+
+                if (active) {
+                    setError("Patient forms could not be loaded.");
+                }
             } finally {
                 if (active) setLoading(false);
             }
         }
 
         loadForms();
+
         return () => { active = false; };
-    }, []);
+    }, [patientId]);
 
     const requiredForms = forms.filter((form) => form.isRequired);
     const completedForms = forms.filter((form) => form.status?.toLowerCase() === "completed");
@@ -85,7 +111,9 @@ export function PatientForms() {
                                                 <td className="p-3">{form.isRequired ? "Yes" : "No"}</td>
                                                 <td className="p-3">{form.status || "Not started"}</td>
                                                 <td className="p-3">
-                                                    {form.submittedDate ? form.submittedDate.slice(0, 10) : "—"}
+                                                    {form.submittedDate
+                                                        ? form.submittedDate.slice(0, 10)
+                                                        : "—"}
                                                 </td>
                                             </tr>
                                         ))}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { authErrorMessage } from "../../services/authApi";
+import { apiErrorMessage } from "../../api";
 import { addVisitNote, getVisitSummary } from "../../services/nursingApi";
 import type { VisitSummary } from "../../types";
 
@@ -42,7 +42,7 @@ export function NotesTab({ appointmentId, canEdit }: { appointmentId: number | n
       setText("");
       setReloadCount((n) => n + 1);
     } catch (err) {
-      alert(`Could not save note: ${authErrorMessage(err)}`);
+      alert(`Could not save note: ${apiErrorMessage(err)}`);
     }
   }
 

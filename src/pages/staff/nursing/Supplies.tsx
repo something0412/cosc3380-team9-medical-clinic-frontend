@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "../../../context/AuthContext";
-import { authErrorMessage } from "../../../services/authApi";
+import { apiErrorMessage } from "../../../api";
 import { getOfficeSupplies, getSupplyOrders, recordSupplyUse, requestRestock } from "../../../services/nursingApi";
 import type { OfficeSupply, SupplyOrder } from "../../../types";
 
@@ -44,7 +44,7 @@ export function Supplies() {
       setUseCounts({ ...useCounts, [officeSupplyId]: "" });
       reload();
     } catch (err) {
-      alert(`Could not update stock: ${authErrorMessage(err)}`);
+      alert(`Could not update stock: ${apiErrorMessage(err)}`);
     }
   }
 
@@ -57,7 +57,7 @@ export function Supplies() {
       setRestockQuantity("");
       reload();
     } catch (err) {
-      alert(`Could not request restock: ${authErrorMessage(err)}`);
+      alert(`Could not request restock: ${apiErrorMessage(err)}`);
     }
   }
 

@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BillingSummary } from "../../components/BillingSummary";
 import { useAuth } from "../../context/AuthContext";
-import { authErrorMessage } from "../../services/authApi";
+import { apiErrorMessage } from "../../api";
 import {
   createInvoice,
   getBilling,
@@ -292,7 +292,7 @@ function CreateInvoiceForm({
       chooseVisit("");
       onSaved();
     } catch (err) {
-      alert(`Could not create invoice: ${authErrorMessage(err)}`);
+      alert(`Could not create invoice: ${apiErrorMessage(err)}`);
     }
   }
 
@@ -378,7 +378,7 @@ function RecordPaymentForm({
       setAmount("");
       onSaved();
     } catch (err) {
-      alert(`Could not record payment: ${authErrorMessage(err)}`);
+      alert(`Could not record payment: ${apiErrorMessage(err)}`);
     }
   }
 

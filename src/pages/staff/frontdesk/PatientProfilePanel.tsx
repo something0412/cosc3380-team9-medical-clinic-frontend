@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
-import { authErrorMessage } from "../../../services/authApi";
+import { apiErrorMessage } from "../../../api";
 import {
   addEmergencyContact,
   completeForm,
@@ -125,7 +125,7 @@ function DetailsTab({ profile, onSaved }: TabProps) {
       await updatePatient(user.id, profile.patientId, details);
       onSaved();
     } catch (err) {
-      alert(`Could not save: ${authErrorMessage(err)}`);
+      alert(`Could not save: ${apiErrorMessage(err)}`);
     }
   }
 
@@ -165,13 +165,13 @@ function DetailsTab({ profile, onSaved }: TabProps) {
 
 // --- Emergency contacts ---------------------------------------------------
 
-const EMPTY_CONTACT: ContactInput = { firstName: "", lastName: "", relationship: "", phone: "", isPrimary: false };
+const EMPTY_CONTACT: ContactInput = { firstName: "", lastName: "", relationship: "", phoneNumber: "", isPrimary: false };
 
-const CONTACT_FIELDS: { field: "firstName" | "lastName" | "relationship" | "phone"; label: string }[] = [
+const CONTACT_FIELDS: { field: "firstName" | "lastName" | "relationship" | "phoneNumber"; label: string }[] = [
   { field: "firstName", label: "First name" },
   { field: "lastName", label: "Last name" },
   { field: "relationship", label: "Relationship" },
-  { field: "phone", label: "Phone" },
+  { field: "phoneNumber", label: "Phone" },
 ];
 
 // Exactly one contact is primary: the first one added always is, and the
@@ -191,7 +191,7 @@ function ContactsTab({ profile, onSaved }: TabProps) {
       setEditingId(null);
       onSaved();
     } catch (err) {
-      alert(`${failure}: ${authErrorMessage(err)}`);
+      alert(`${failure}: ${apiErrorMessage(err)}`);
     }
   }
 
@@ -219,7 +219,7 @@ function ContactsTab({ profile, onSaved }: TabProps) {
               className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 p-2 text-sm"
             >
               <span>
-                {c.firstName} {c.lastName} ({c.relationship}) · {c.phone}
+                {c.firstName} {c.lastName} ({c.relationship}) · {c.phoneNumber}
                 {c.isPrimary && <span className="ml-2 font-medium text-green-700">Primary</span>}
               </span>
               <span className="flex gap-3">
@@ -325,7 +325,7 @@ function InsuranceTab({ profile, onSaved }: TabProps) {
       await saveInsurance(user.id, profile.patientId, { provider, policyNumber });
       onSaved();
     } catch (err) {
-      alert(`Could not save insurance: ${authErrorMessage(err)}`);
+      alert(`Could not save insurance: ${apiErrorMessage(err)}`);
     }
   }
 
@@ -335,7 +335,7 @@ function InsuranceTab({ profile, onSaved }: TabProps) {
       await setInsuranceStatus(user.id, profile.patientId, status);
       onSaved();
     } catch (err) {
-      alert(`Could not update status: ${authErrorMessage(err)}`);
+      alert(`Could not update status: ${apiErrorMessage(err)}`);
     }
   }
 
@@ -404,7 +404,7 @@ function FormsTab({ patientId }: { patientId: number }) {
       await completeForm(user.id, patientId, formTypeId);
       setReloadCount((n) => n + 1);
     } catch (err) {
-      alert(`Could not update form: ${authErrorMessage(err)}`);
+      alert(`Could not update form: ${apiErrorMessage(err)}`);
     }
   }
 
@@ -457,7 +457,7 @@ function PortalTab({ profile, onSaved }: TabProps) {
       setPassword("");
       onSaved();
     } catch (err) {
-      alert(`Could not create account: ${authErrorMessage(err)}`);
+      alert(`Could not create account: ${apiErrorMessage(err)}`);
     }
   }
 

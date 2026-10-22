@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { authErrorMessage } from "../../services/authApi";
+import { apiErrorMessage } from "../../api";
 import { addAllergy, getAllergyTypes, removeAllergy, updateAllergy } from "../../services/nursingApi";
 import type { Allergy, AllergyType } from "../../types";
 
@@ -56,7 +56,7 @@ export function AllergiesTab({
       resetForm();
       onSaved();
     } catch (err) {
-      alert(`${failure}: ${authErrorMessage(err)}`);
+      alert(`${failure}: ${apiErrorMessage(err)}`);
     }
   }
 

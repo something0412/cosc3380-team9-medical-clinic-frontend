@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
-import { authErrorMessage } from "../../../services/authApi";
+import { apiErrorMessage } from "../../../api";
 import { bookAppointment, getAvailability, getReferrals, getSpecialties } from "../../../services/frontDeskApi";
 import { getPatients } from "../../../services/nursingApi";
 import type { AvailableSlot, Patient, Referral, Specialty } from "../../../types";
@@ -93,7 +93,7 @@ export function Schedule() {
       setSlots(slots.filter((s) => s !== slot));
       resetSlot();
     } catch (err) {
-      setMessage(`Could not book: ${authErrorMessage(err)}`);
+      setMessage(`Could not book: ${apiErrorMessage(err)}`);
     }
   }
 

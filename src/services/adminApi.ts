@@ -212,3 +212,117 @@ export async function setSpecialtyStatus(specialtyId: number, isActive: boolean)
   const res = await api.patch<SpecialtyDetails>(`/api/admin/specialties/${specialtyId}/status`, { isActive });
   return res.data;
 }
+
+// allowed values match chk_doctor_schedule_day
+export const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+export interface Schedule {
+  doctorId: number;
+  doctorFirstName: string;
+  doctorLastName: string;
+  doctorIsActive: boolean;
+  dayOfWeek: string;
+  officeId: number;
+  officeName: string;
+  specialtyId: number;
+  specialtyName: string;
+  shiftTypeId: number;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+}
+
+export interface ScheduleAssignment {
+  officeId: number;
+  specialtyId: number;
+  shiftTypeId: number;
+}
+
+export interface DoctorOption {
+  doctorId: number;
+  firstName: string;
+  lastName: string;
+  specialties: { specialtyId: number; name: string; isActive: boolean }[];
+}
+
+export interface TimeSlot {
+  timeSlotId: number;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+}
+
+export interface ShiftType {
+  shiftTypeId: number;
+  name: string;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+  activeScheduleCount: number;
+  timeSlots: TimeSlot[];
+}
+
+export type ShiftInput = Pick<ShiftType, "name" | "startTime" | "endTime">;
+export type TimeSlotInput = Pick<TimeSlot, "startTime" | "endTime">;
+
+const schedulePath = (doctorId: number, dayOfWeek: string) => `/api/admin/schedules/${doctorId}/${dayOfWeek}`;
+
+export async function getSchedules() {
+  const res = await api.get<Schedule[]>("/api/admin/schedules");
+  return res.data;
+}
+
+export async function getSchedule(doctorId: number, dayOfWeek: string) {
+  const res = await api.get<Schedule>(schedulePath(doctorId, dayOfWeek));
+  return res.data;
+}
+
+export async function getDoctorOptions() {
+  const res = await api.get<DoctorOption[]>("/api/admin/schedules/doctor-options");
+  return res.data;
+}
+
+export async function createSchedule(input: ScheduleAssignment & { doctorId: number; dayOfWeek: string }) {
+  const res = await api.post<Schedule>("/api/admin/schedules", input);
+  return res.data;
+}
+
+export async function updateSchedule(doctorId: number, dayOfWeek: string, input: ScheduleAssignment) {
+  const res = await api.put<Schedule>(schedulePath(doctorId, dayOfWeek), input);
+  return res.data;
+}
+
+export async function setScheduleStatus(doctorId: number, dayOfWeek: string, isActive: boolean) {
+  const res = await api.patch<Schedule>(`${schedulePath(doctorId, dayOfWeek)}/status`, { isActive });
+  return res.data;
+}
+
+export async function getShiftTypes() {
+  const res = await api.get<ShiftType[]>("/api/admin/shift-types");
+  return res.data;
+}
+
+export async function createShiftType(input: ShiftInput) {
+  await api.post("/api/admin/shift-types", input);
+}
+
+export async function updateShiftType(shiftTypeId: number, input: ShiftInput) {
+  await api.put(`/api/admin/shift-types/${shiftTypeId}`, input);
+}
+
+export async function setShiftTypeStatus(shiftTypeId: number, isActive: boolean) {
+  await api.patch(`/api/admin/shift-types/${shiftTypeId}/status`, { isActive });
+}
+
+export async function createTimeSlot(shiftTypeId: number, input: TimeSlotInput) {
+  await api.post(`/api/admin/shift-types/${shiftTypeId}/time-slots`, input);
+}
+
+export async function updateTimeSlot(timeSlotId: number, input: TimeSlotInput) {
+  await api.put(`/api/admin/time-slots/${timeSlotId}`, input);
+}
+
+export async function setTimeSlotStatus(timeSlotId: number, isActive: boolean) {
+  await api.patch(`/api/admin/time-slots/${timeSlotId}/status`, { isActive });
+}

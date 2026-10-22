@@ -14,6 +14,9 @@ import { AdminEmployeeCreate, AdminEmployeeEdit } from "./pages/admin/EmployeeFo
 import { AdminOffices } from "./pages/admin/Offices";
 import { AdminOfficeDetails } from "./pages/admin/OfficeDetails";
 import { AdminOfficeCreate, AdminOfficeEdit } from "./pages/admin/OfficeForm";
+import { AdminSpecialties } from "./pages/admin/Specialties";
+import { AdminSpecialtyDetails } from "./pages/admin/SpecialtyDetails";
+import { AdminSpecialtyCreate, AdminSpecialtyEdit } from "./pages/admin/SpecialtyForm";
 
 import { LoginPage } from "./pages/auth/Login";
 
@@ -80,7 +83,10 @@ function App() {
         <Route path="offices/new" element={<AdminOfficeCreate />} />
         <Route path="offices/:id" element={<AdminOfficeDetails />} />
         <Route path="offices/:id/edit" element={<AdminOfficeEdit />} />
-        <Route path="specialties" element={<AdminComingSoon title="Specialties" description="Manage medical specialties offered by the clinic." />} />
+        <Route path="specialties" element={<AdminSpecialties />} />
+        <Route path="specialties/new" element={<AdminSpecialtyCreate />} />
+        <Route path="specialties/:id" element={<AdminSpecialtyDetails />} />
+        <Route path="specialties/:id/edit" element={<AdminSpecialtyEdit />} />
         <Route path="schedules" element={<AdminComingSoon title="Schedules" description="View and assign doctor schedules across offices." />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="profile" element={<StaffProfile />} />

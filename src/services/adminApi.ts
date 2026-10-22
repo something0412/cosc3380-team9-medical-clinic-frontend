@@ -69,8 +69,17 @@ export const US_STATES = [
 export interface Specialty {
   specialtyId: number;
   name: string;
+  requiresReferral: boolean;
   isActive: boolean;
 }
+
+export interface SpecialtyDetails extends Specialty {
+  doctorCount: number;
+  activeDoctorCount: number;
+  activeScheduleCount: number;
+}
+
+export type SpecialtyInput = Pick<Specialty, "name" | "requiresReferral">;
 
 // matches chk_nurse_level in the database
 export const NURSING_LEVELS = ["RN", "LPN", "NP", "CNA"];
@@ -181,5 +190,25 @@ export async function setOfficeStatus(officeId: number, isActive: boolean) {
 
 export async function getSpecialties() {
   const res = await api.get<Specialty[]>("/api/admin/specialties");
+  return res.data;
+}
+
+export async function getSpecialty(specialtyId: number) {
+  const res = await api.get<SpecialtyDetails>(`/api/admin/specialties/${specialtyId}`);
+  return res.data;
+}
+
+export async function createSpecialty(input: SpecialtyInput) {
+  const res = await api.post<SpecialtyDetails>("/api/admin/specialties", input);
+  return res.data;
+}
+
+export async function updateSpecialty(specialtyId: number, input: SpecialtyInput) {
+  const res = await api.put<SpecialtyDetails>(`/api/admin/specialties/${specialtyId}`, input);
+  return res.data;
+}
+
+export async function setSpecialtyStatus(specialtyId: number, isActive: boolean) {
+  const res = await api.patch<SpecialtyDetails>(`/api/admin/specialties/${specialtyId}/status`, { isActive });
   return res.data;
 }

@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 import { apiErrorMessage } from "../../api";
 import { ActiveBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
+import { ConfirmPanel, StatusRow } from "../../components/admin/StatusControls";
 import { ADMIN_DANGER_BUTTON, ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "../../components/admin/styles";
 import { Field } from "../../components/FormControls";
 import { Section } from "../../components/ProfileUI";
@@ -10,51 +11,6 @@ import { createEmployeeLogin, resetEmployeePassword, setEmployeeStatus, setLogin
 import type { AdminEmployeeDetails } from "../../services/adminApi";
 
 type Panel = "deactivate" | "disable-login" | "reset-password" | "create-login" | null;
-
-interface AccountRowProps {
-  label: string;
-  status: ReactNode;
-  note: string;
-  showActions: boolean;
-  children?: ReactNode;
-}
-
-function AccountRow({ label, status, note, showActions, children }: AccountRowProps) {
-  return (
-    <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-slate-700">{label}</span>
-          {status}
-        </div>
-        <p className="mt-1 text-sm text-slate-500">{note}</p>
-      </div>
-      {showActions && <div className="flex flex-wrap gap-2">{children}</div>}
-    </div>
-  );
-}
-
-function ConfirmPanel({ text, confirmLabel, saving, onConfirm, onCancel }: {
-  text: string;
-  confirmLabel: string;
-  saving: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div role="alertdialog" aria-label={confirmLabel} className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-      <p className="text-sm text-amber-900">{text}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" onClick={onConfirm} disabled={saving} className={ADMIN_DANGER_BUTTON}>
-          {saving ? "Saving..." : confirmLabel}
-        </button>
-        <button type="button" onClick={onCancel} disabled={saving} className={ADMIN_SECONDARY_BUTTON}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // employee status, login access, and passwords for one employee
 export function AccountManagement({ employee, onChange }: { employee: AdminEmployeeDetails; onChange: () => Promise<void> }) {
@@ -134,7 +90,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
 
       <div className="divide-y divide-slate-200">
         <div>
-          <AccountRow
+          <StatusRow
             label="Employee Status"
             status={<ActiveBadge isActive={employee.isActive} />}
             showActions={panel === null}
@@ -155,7 +111,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
                     Activate Employee
                   </button>
                 )}
-          </AccountRow>
+          </StatusRow>
           {panel === "deactivate" && (
             <ConfirmPanel
               text={`Deactivate ${name}? They won't be able to sign in until they're activated again. Their records are kept.`}
@@ -168,7 +124,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
         </div>
 
         <div>
-          <AccountRow
+          <StatusRow
             label="Login Access"
             status={<LoginStatusBadge hasLogin={employee.hasLogin} loginActive={employee.loginActive} />}
             showActions={panel === null}
@@ -203,7 +159,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
                 Create Login
               </button>
             )}
-          </AccountRow>
+          </StatusRow>
 
           {panel === "disable-login" && (
             <ConfirmPanel

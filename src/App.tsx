@@ -7,6 +7,7 @@ import { ComingSoon } from "./pages/public/ComingSoon";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
+import { AdminComingSoon } from "./pages/admin/ComingSoon";
 
 import { LoginPage } from "./pages/auth/Login";
 
@@ -65,6 +66,10 @@ function App() {
       <Route path="/admin" element={<RoleLayout role="admin" />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="employees" element={<AdminComingSoon title="Employees" description="Manage employee accounts, roles, and office assignments." />} />
+        <Route path="offices" element={<AdminComingSoon title="Offices" description="Manage clinic locations and their contact details." />} />
+        <Route path="specialties" element={<AdminComingSoon title="Specialties" description="Manage medical specialties offered by the clinic." />} />
+        <Route path="schedules" element={<AdminComingSoon title="Schedules" description="View and assign doctor schedules across offices." />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="profile" element={<StaffProfile />} />
       </Route>

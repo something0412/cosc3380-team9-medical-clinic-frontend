@@ -10,6 +10,7 @@ import { AdminAnalytics } from "./pages/admin/Analytics";
 import { AdminComingSoon } from "./pages/admin/ComingSoon";
 import { AdminEmployees } from "./pages/admin/Employees";
 import { AdminEmployeeDetails } from "./pages/admin/EmployeeDetails";
+import { AdminEmployeeCreate, AdminEmployeeEdit } from "./pages/admin/EmployeeForm";
 
 import { LoginPage } from "./pages/auth/Login";
 
@@ -69,7 +70,9 @@ function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="employees" element={<AdminEmployees />} />
+        <Route path="employees/new" element={<AdminEmployeeCreate />} />
         <Route path="employees/:id" element={<AdminEmployeeDetails />} />
+        <Route path="employees/:id/edit" element={<AdminEmployeeEdit />} />
         <Route path="offices" element={<AdminComingSoon title="Offices" description="Manage clinic locations and their contact details." />} />
         <Route path="specialties" element={<AdminComingSoon title="Specialties" description="Manage medical specialties offered by the clinic." />} />
         <Route path="schedules" element={<AdminComingSoon title="Schedules" description="View and assign doctor schedules across offices." />} />

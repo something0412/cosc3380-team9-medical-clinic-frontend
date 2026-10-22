@@ -24,7 +24,7 @@ export interface AdminEmployeeDetails extends AdminEmployee {
     licenseExpiration: string;
     npiNumber: string;
     deaNumber: string | null;
-    specialties: { name: string; isPrimary: boolean }[];
+    specialties: { specialtyId: number; name: string; isPrimary: boolean }[];
   } | null;
   nurse: {
     licenseNumber: string;
@@ -34,6 +34,61 @@ export interface AdminEmployeeDetails extends AdminEmployee {
   } | null;
 }
 
+export interface EmployeeType {
+  employeeTypeId: number;
+  typeName: string;
+}
+
+export interface Office {
+  officeId: number;
+  name: string;
+  isActive: boolean;
+}
+
+export interface Specialty {
+  specialtyId: number;
+  name: string;
+  isActive: boolean;
+}
+
+// matches chk_nurse_level in the database
+export const NURSING_LEVELS = ["RN", "LPN", "NP", "CNA"];
+
+export interface EmployeeInput {
+  firstName: string;
+  lastName: string;
+  dob: string;
+  email: string;
+  phone: string;
+  employeeTypeId: number;
+  officeId: number;
+  doctor: {
+    licenseNumber: string;
+    licenseState: string;
+    licenseExpiration: string;
+    npiNumber: string;
+    deaNumber: string | null;
+    specialtyIds: number[];
+    primarySpecialtyId: number;
+  } | null;
+  nurse: {
+    licenseNumber: string;
+    licenseState: string;
+    licenseExpiration: string;
+    nursingLevel: string;
+  } | null;
+}
+
+export interface NewEmployeeInput extends EmployeeInput {
+  login: { username: string; password: string } | null;
+}
+
+// positive whole number from the URL, or null
+export function parseEmployeeId(value: string | undefined) {
+  const id = Number(value);
+  return value && /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
 export async function getEmployees() {
   const res = await api.get<AdminEmployee[]>("/api/admin/employees");
   return res.data;
@@ -41,5 +96,30 @@ export async function getEmployees() {
 
 export async function getEmployee(employeeId: number) {
   const res = await api.get<AdminEmployeeDetails>(`/api/admin/employees/${employeeId}`);
+  return res.data;
+}
+
+export async function createEmployee(input: NewEmployeeInput) {
+  const res = await api.post<AdminEmployeeDetails>("/api/admin/employees", input);
+  return res.data;
+}
+
+export async function updateEmployee(employeeId: number, input: EmployeeInput) {
+  const res = await api.put<AdminEmployeeDetails>(`/api/admin/employees/${employeeId}`, input);
+  return res.data;
+}
+
+export async function getEmployeeTypes() {
+  const res = await api.get<EmployeeType[]>("/api/admin/employee-types");
+  return res.data;
+}
+
+export async function getOffices() {
+  const res = await api.get<Office[]>("/api/admin/offices");
+  return res.data;
+}
+
+export async function getSpecialties() {
+  const res = await api.get<Specialty[]>("/api/admin/specialties");
   return res.data;
 }

@@ -13,7 +13,7 @@ import {
   getEmployeeTypes,
   getOffices,
   getSpecialties,
-  parseEmployeeId,
+  parseRouteId,
   updateEmployee,
 } from "../../services/adminApi";
 import type {
@@ -424,7 +424,7 @@ export function AdminEmployeeCreate() {
 }
 
 export function AdminEmployeeEdit() {
-  const employeeId = parseEmployeeId(useParams().id);
+  const employeeId = parseRouteId(useParams().id);
   const navigate = useNavigate();
   const [employee, setEmployee] = useState<AdminEmployeeDetails | null>(null);
   const [loading, setLoading] = useState(true);

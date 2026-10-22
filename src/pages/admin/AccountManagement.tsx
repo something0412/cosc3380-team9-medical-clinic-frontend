@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { apiErrorMessage } from "../../api";
-import { EmployeeStatusBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
+import { ActiveBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
 import { ADMIN_DANGER_BUTTON, ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "../../components/admin/styles";
 import { Field } from "../../components/FormControls";
 import { Section } from "../../components/ProfileUI";
@@ -136,7 +136,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
         <div>
           <AccountRow
             label="Employee Status"
-            status={<EmployeeStatusBadge isActive={employee.isActive} />}
+            status={<ActiveBadge isActive={employee.isActive} />}
             showActions={panel === null}
             note={
               isSelf && employee.isActive

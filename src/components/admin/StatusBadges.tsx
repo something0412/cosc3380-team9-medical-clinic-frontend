@@ -14,7 +14,7 @@ function Badge({ tone, children }: { tone: keyof typeof TONES; children: ReactNo
   );
 }
 
-export function EmployeeStatusBadge({ isActive }: { isActive: boolean }) {
+export function ActiveBadge({ isActive }: { isActive: boolean }) {
   return isActive ? <Badge tone="green">Active</Badge> : <Badge tone="gray">Inactive</Badge>;
 }
 

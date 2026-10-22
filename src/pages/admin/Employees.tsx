@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
-import { EmployeeStatusBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
+import { ActiveBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
 import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { Field, SelectField } from "../../components/FormControls";
 import { getEmployees } from "../../services/adminApi";
@@ -146,7 +146,7 @@ export function AdminEmployees() {
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-navy">{e.firstName} {e.lastName}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{e.employeeType}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{e.officeName}</td>
-                    <td className="px-4 py-3"><EmployeeStatusBadge isActive={e.isActive} /></td>
+                    <td className="px-4 py-3"><ActiveBadge isActive={e.isActive} /></td>
                     <td className="px-4 py-3"><LoginStatusBadge hasLogin={e.hasLogin} loginActive={e.loginActive} /></td>
                     <td className="px-4 py-3 text-right">
                       <Link

@@ -288,7 +288,7 @@ function CreateInvoiceForm({
     event.preventDefault();
     if (!user) return;
     try {
-      await createInvoice(user.id, Number(appointmentId), Number(amount));
+      await createInvoice(Number(appointmentId), Number(amount));
       chooseVisit("");
       onSaved();
     } catch (err) {
@@ -371,7 +371,7 @@ function RecordPaymentForm({
     event.preventDefault();
     if (!user) return;
     try {
-      const payment = await recordPayment(user.id, Number(invoiceId), Number(paymentTypeId), Number(amount));
+      const payment = await recordPayment(Number(invoiceId), Number(paymentTypeId), Number(amount));
       setLastPaymentId(payment.paymentId);
       setInvoiceId("");
       setPaymentTypeId("");

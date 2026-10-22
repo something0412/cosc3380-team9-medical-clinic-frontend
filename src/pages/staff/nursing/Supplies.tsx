@@ -40,7 +40,7 @@ export function Supplies() {
   async function handleUse(officeSupplyId: number) {
     if (!user) return;
     try {
-      await recordSupplyUse(user.id, officeSupplyId, Number(useCounts[officeSupplyId] || 1));
+      await recordSupplyUse(officeSupplyId, Number(useCounts[officeSupplyId] || 1));
       setUseCounts({ ...useCounts, [officeSupplyId]: "" });
       reload();
     } catch (err) {
@@ -52,7 +52,7 @@ export function Supplies() {
     event.preventDefault();
     if (!user) return;
     try {
-      await requestRestock(user.id, Number(restockSupplyId), Number(restockQuantity));
+      await requestRestock(Number(restockSupplyId), Number(restockQuantity));
       setRestockSupplyId("");
       setRestockQuantity("");
       reload();

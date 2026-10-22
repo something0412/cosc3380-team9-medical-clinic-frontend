@@ -75,8 +75,8 @@ export function MedicationsTab({
     run(
       () =>
         editing
-          ? updateHomeMedication(user.id, editing.id, details)
-          : addHomeMedication(user.id, patientId, {
+          ? updateHomeMedication(editing.id, details)
+          : addHomeMedication(patientId, {
               ...details,
               medicationId: medicationId ? Number(medicationId) : null,
               medicationName,
@@ -110,7 +110,7 @@ export function MedicationsTab({
                     </button>
                     <button
                       type="button"
-                      onClick={() => run(() => stopHomeMedication(user.id, m.id), "Could not update medication")}
+                      onClick={() => run(() => stopHomeMedication(m.id), "Could not update medication")}
                       className="text-blue-700 hover:underline"
                     >
                       Stopped taking

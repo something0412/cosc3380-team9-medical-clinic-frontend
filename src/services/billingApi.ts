@@ -40,8 +40,8 @@ export async function getInvoiceEstimate(appointmentId: number): Promise<Invoice
 
 // POST /api/invoices  (receptionists only). Leave `amount` out to bill
 // exactly the minimum; the backend rejects anything below it.
-export async function createInvoice(employeeId: number, appointmentId: number, amount?: number): Promise<Invoice> {
-  const res = await api.post<Invoice>("/api/invoices", { employeeId, appointmentId, amount });
+export async function createInvoice(appointmentId: number, amount?: number): Promise<Invoice> {
+  const res = await api.post<Invoice>("/api/invoices", { appointmentId, amount });
   return res.data;
 }
 
@@ -53,12 +53,11 @@ export async function getWorklist(officeId: number, status: Invoice["status"] = 
 
 // POST /api/invoices/:invoiceId/payments  (receptionists only)
 export async function recordPayment(
-  employeeId: number,
   invoiceId: number,
   paymentTypeId: number,
   amount: number,
 ): Promise<Omit<Payment, "paymentType">> {
-  const res = await api.post(`/api/invoices/${invoiceId}/payments`, { employeeId, paymentTypeId, amount });
+  const res = await api.post(`/api/invoices/${invoiceId}/payments`, { paymentTypeId, amount });
   return res.data;
 }
 

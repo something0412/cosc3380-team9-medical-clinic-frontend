@@ -66,8 +66,8 @@ export function AllergiesTab({
     run(
       () =>
         editing
-          ? updateAllergy(user.id, editing.allergyId, { reaction, severity })
-          : addAllergy(user.id, patientId, { allergyTypeId: Number(allergyTypeId), reaction, severity }),
+          ? updateAllergy(editing.allergyId, { reaction, severity })
+          : addAllergy(patientId, { allergyTypeId: Number(allergyTypeId), reaction, severity }),
       "Could not save allergy",
     );
   }
@@ -97,7 +97,7 @@ export function AllergiesTab({
                   </button>
                   <button
                     type="button"
-                    onClick={() => run(() => removeAllergy(user.id, a.allergyId), "Could not remove allergy")}
+                    onClick={() => run(() => removeAllergy(a.allergyId), "Could not remove allergy")}
                     className="text-blue-700 hover:underline"
                   >
                     Remove

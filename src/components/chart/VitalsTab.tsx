@@ -104,7 +104,7 @@ function VitalsForm({
     }
 
     try {
-      await addVitals(patientId, user.id, appointmentId, {
+      await addVitals(patientId, appointmentId, {
         temperatureF: toNumber("temperatureF"),
         heartRateBpm: toNumber("heartRateBpm"),
         systolic: bp?.systolic ?? null,

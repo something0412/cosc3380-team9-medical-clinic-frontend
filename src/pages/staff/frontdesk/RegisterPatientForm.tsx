@@ -101,7 +101,7 @@ export function RegisterPatientForm({ onRegistered }: { onRegistered: (patient: 
     }
 
     try {
-      const saved = await registerPatient(user.id, {
+      const saved = await registerPatient({
         firstName: f.firstName,
         lastName: f.lastName,
         dob: f.dob,

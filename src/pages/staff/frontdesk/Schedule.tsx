@@ -80,7 +80,7 @@ export function Schedule() {
     event.preventDefault();
     if (!user || !slot) return;
     try {
-      const booked = await bookAppointment(user.id, {
+      const booked = await bookAppointment({
         patientId: Number(patientId),
         doctorId: slot.doctorId,
         specialtyId: Number(specialtyId),

@@ -109,6 +109,25 @@ export async function updateEmployee(employeeId: number, input: EmployeeInput) {
   return res.data;
 }
 
+export async function setEmployeeStatus(employeeId: number, isActive: boolean) {
+  const res = await api.patch<AdminEmployeeDetails>(`/api/admin/employees/${employeeId}/status`, { isActive });
+  return res.data;
+}
+
+export async function setLoginStatus(employeeId: number, loginActive: boolean) {
+  const res = await api.patch<AdminEmployeeDetails>(`/api/admin/employees/${employeeId}/login-status`, { loginActive });
+  return res.data;
+}
+
+export async function resetEmployeePassword(employeeId: number, password: string) {
+  await api.put(`/api/admin/employees/${employeeId}/password`, { password });
+}
+
+export async function createEmployeeLogin(employeeId: number, login: { username: string; password: string }) {
+  const res = await api.post<AdminEmployeeDetails>(`/api/admin/employees/${employeeId}/login`, login);
+  return res.data;
+}
+
 export async function getEmployeeTypes() {
   const res = await api.get<EmployeeType[]>("/api/admin/employee-types");
   return res.data;

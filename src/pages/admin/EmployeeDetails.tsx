@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
-import { EmployeeStatusBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
 import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { InfoGrid, InfoItem, Section } from "../../components/ProfileUI";
 import { getEmployee, parseEmployeeId } from "../../services/adminApi";
 import type { AdminEmployeeDetails as Employee } from "../../services/adminApi";
 import { formatId } from "../../utils/id";
+import { AccountManagement } from "./AccountManagement";
 
 export function AdminEmployeeDetails() {
   const employeeId = parseEmployeeId(useParams().id);
   // set by the add and edit forms after saving
-  const savedMessage = (useLocation().state as { message?: string } | null)?.message;
+  const [savedMessage, setSavedMessage] = useState((useLocation().state as { message?: string } | null)?.message);
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -47,6 +47,13 @@ export function AdminEmployeeDetails() {
     };
   }, [employeeId]);
 
+  // reload after an account change without clearing the page
+  async function refreshEmployee() {
+    if (employeeId === null) return;
+    setEmployee(await getEmployee(employeeId));
+    setSavedMessage(undefined);
+  }
+
   return (
     <AdminPage
       title={employee ? `${employee.firstName} ${employee.lastName}` : "Employee Details"}
@@ -79,7 +86,6 @@ export function AdminEmployeeDetails() {
           <Section title="Employee Information">
             <InfoGrid>
               <InfoItem label="Staff ID" value={formatId(employee.employeeId)} />
-              <InfoItem label="Status" value={<EmployeeStatusBadge isActive={employee.isActive} />} />
               <InfoItem label="Role" value={employee.employeeType} />
               <InfoItem label="Office" value={employee.officeName} />
               <InfoItem label="Date of Birth" value={employee.dob} />
@@ -93,12 +99,7 @@ export function AdminEmployeeDetails() {
             </InfoGrid>
           </Section>
 
-          <Section title="Login Account">
-            <InfoGrid>
-              <InfoItem label="Login" value={<LoginStatusBadge hasLogin={employee.hasLogin} loginActive={employee.loginActive} />} />
-              {employee.hasLogin && <InfoItem label="Created" value={employee.loginCreatedDate} />}
-            </InfoGrid>
-          </Section>
+          <AccountManagement employee={employee} onChange={refreshEmployee} />
 
           {employee.doctor && (
             <Section title="Medical License">

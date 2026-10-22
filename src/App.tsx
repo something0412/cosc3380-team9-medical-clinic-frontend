@@ -7,7 +7,6 @@ import { ComingSoon } from "./pages/public/ComingSoon";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
-import { AdminComingSoon } from "./pages/admin/ComingSoon";
 import { AdminEmployees } from "./pages/admin/Employees";
 import { AdminEmployeeDetails } from "./pages/admin/EmployeeDetails";
 import { AdminEmployeeCreate, AdminEmployeeEdit } from "./pages/admin/EmployeeForm";
@@ -17,6 +16,9 @@ import { AdminOfficeCreate, AdminOfficeEdit } from "./pages/admin/OfficeForm";
 import { AdminSpecialties } from "./pages/admin/Specialties";
 import { AdminSpecialtyDetails } from "./pages/admin/SpecialtyDetails";
 import { AdminSpecialtyCreate, AdminSpecialtyEdit } from "./pages/admin/SpecialtyForm";
+import { AdminSchedules } from "./pages/admin/Schedules";
+import { AdminScheduleCreate, AdminScheduleEdit } from "./pages/admin/ScheduleForm";
+import { AdminShiftSettings } from "./pages/admin/ShiftSettings";
 
 import { LoginPage } from "./pages/auth/Login";
 
@@ -87,7 +89,10 @@ function App() {
         <Route path="specialties/new" element={<AdminSpecialtyCreate />} />
         <Route path="specialties/:id" element={<AdminSpecialtyDetails />} />
         <Route path="specialties/:id/edit" element={<AdminSpecialtyEdit />} />
-        <Route path="schedules" element={<AdminComingSoon title="Schedules" description="View and assign doctor schedules across offices." />} />
+        <Route path="schedules" element={<AdminSchedules />} />
+        <Route path="schedules/new" element={<AdminScheduleCreate />} />
+        <Route path="schedules/shifts" element={<AdminShiftSettings />} />
+        <Route path="schedules/:doctorId/:dayOfWeek/edit" element={<AdminScheduleEdit />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="profile" element={<StaffProfile />} />
       </Route>

@@ -38,7 +38,7 @@ export function NotesTab({ appointmentId, canEdit }: { appointmentId: number | n
     event.preventDefault();
     if (!user || !appointmentId) return;
     try {
-      await addVisitNote(user.id, appointmentId, text);
+      await addVisitNote(appointmentId, text);
       setText("");
       setReloadCount((n) => n + 1);
     } catch (err) {

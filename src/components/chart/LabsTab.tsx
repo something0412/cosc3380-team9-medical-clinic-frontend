@@ -70,7 +70,7 @@ export function LabsTab({
     event.preventDefault();
     if (!user) return;
     run(async () => {
-      await orderLab(user.id, { patientId, labTestTypeId: Number(labTestTypeId), appointmentId });
+      await orderLab({ patientId, labTestTypeId: Number(labTestTypeId), appointmentId });
       setLabTestTypeId("");
     }, "Could not order test");
   }
@@ -120,7 +120,7 @@ export function LabsTab({
                       <button
                         type="button"
                         onClick={() =>
-                          run(() => updateLabOrder(user.id, o.labOrderId, { status: "InProgress", resultNotes: "" }), "Could not update")
+                          run(() => updateLabOrder(o.labOrderId, { status: "InProgress", resultNotes: "" }), "Could not update")
                         }
                         className="text-blue-700 hover:underline"
                       >
@@ -136,7 +136,7 @@ export function LabsTab({
                       <button
                         type="button"
                         onClick={() =>
-                          run(() => updateLabOrder(user.id, o.labOrderId, { status: "Cancelled", resultNotes: "" }), "Could not cancel")
+                          run(() => updateLabOrder(o.labOrderId, { status: "Cancelled", resultNotes: "" }), "Could not cancel")
                         }
                         className="text-blue-700 hover:underline"
                       >
@@ -153,7 +153,7 @@ export function LabsTab({
                   onSubmit={(e) => {
                     e.preventDefault();
                     run(
-                      () => updateLabOrder(user.id, o.labOrderId, { status: "Completed", resultNotes: results }),
+                      () => updateLabOrder(o.labOrderId, { status: "Completed", resultNotes: results }),
                       "Could not save results",
                     );
                   }}

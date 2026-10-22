@@ -122,7 +122,7 @@ function DetailsTab({ profile, onSaved }: TabProps) {
     event.preventDefault();
     if (!user) return;
     try {
-      await updatePatient(user.id, profile.patientId, details);
+      await updatePatient(profile.patientId, details);
       onSaved();
     } catch (err) {
       alert(`Could not save: ${apiErrorMessage(err)}`);
@@ -201,8 +201,8 @@ function ContactsTab({ profile, onSaved }: TabProps) {
     run(
       () =>
         editingId
-          ? updateEmergencyContact(user.id, editingId, form)
-          : addEmergencyContact(user.id, profile.patientId, form),
+          ? updateEmergencyContact(editingId, form)
+          : addEmergencyContact(profile.patientId, form),
       "Could not save contact",
     );
   }
@@ -240,7 +240,7 @@ function ContactsTab({ profile, onSaved }: TabProps) {
                       className={linkButtonClass}
                       onClick={() =>
                         run(
-                          () => updateEmergencyContact(user.id, c.emergencyContactId, { ...c, isPrimary: true }),
+                          () => updateEmergencyContact(c.emergencyContactId, { ...c, isPrimary: true }),
                           "Could not make primary",
                         )
                       }
@@ -250,7 +250,7 @@ function ContactsTab({ profile, onSaved }: TabProps) {
                     <button
                       type="button"
                       className={linkButtonClass}
-                      onClick={() => run(() => removeEmergencyContact(user.id, c.emergencyContactId), "Could not remove")}
+                      onClick={() => run(() => removeEmergencyContact(c.emergencyContactId), "Could not remove")}
                     >
                       Remove
                     </button>
@@ -322,7 +322,7 @@ function InsuranceTab({ profile, onSaved }: TabProps) {
     event.preventDefault();
     if (!user) return;
     try {
-      await saveInsurance(user.id, profile.patientId, { provider, policyNumber });
+      await saveInsurance(profile.patientId, { provider, policyNumber });
       onSaved();
     } catch (err) {
       alert(`Could not save insurance: ${apiErrorMessage(err)}`);
@@ -332,7 +332,7 @@ function InsuranceTab({ profile, onSaved }: TabProps) {
   async function changeStatus(status: Insurance["status"]) {
     if (!user) return;
     try {
-      await setInsuranceStatus(user.id, profile.patientId, status);
+      await setInsuranceStatus(profile.patientId, status);
       onSaved();
     } catch (err) {
       alert(`Could not update status: ${apiErrorMessage(err)}`);
@@ -401,7 +401,7 @@ function FormsTab({ patientId }: { patientId: number }) {
   async function markCompleted(formTypeId: number) {
     if (!user) return;
     try {
-      await completeForm(user.id, patientId, formTypeId);
+      await completeForm(patientId, formTypeId);
       setReloadCount((n) => n + 1);
     } catch (err) {
       alert(`Could not update form: ${apiErrorMessage(err)}`);
@@ -453,7 +453,7 @@ function PortalTab({ profile, onSaved }: TabProps) {
     event.preventDefault();
     if (!user) return;
     try {
-      await createPortalAccount(user.id, profile.patientId, password);
+      await createPortalAccount(profile.patientId, password);
       setPassword("");
       onSaved();
     } catch (err) {

@@ -38,7 +38,7 @@ export function FrontDesk() {
   async function handleVisit(appointmentId: number, action: "check-in" | "check-out" | "no-show") {
     if (!user) return;
     try {
-      const updated = await updateVisit(user.id, appointmentId, action);
+      const updated = await updateVisit(appointmentId, action);
       setAppointments(appointments.map((a) => (a.appointmentId === appointmentId ? updated : a)));
     } catch (err) {
       alert(`Could not ${action.replace("-", " ")}: ${apiErrorMessage(err)}`);

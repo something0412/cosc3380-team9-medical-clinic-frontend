@@ -1,8 +1,8 @@
 // All backend calls for the nursing pages live in this one file. Each
 // function lists the route it calls; the data shapes are in types.ts.
 //
-// `employeeId` is always the logged-in nurse; the backend rejects anyone
-// else and limits nurses to their own office.
+// The backend knows who is logged in (session cookie), rejects anyone
+// who isn't a nurse and limits nurses to their own office.
 
 import { api } from "../api";
 import type {
@@ -56,13 +56,11 @@ export type NewVitals = Pick<
 // POST /api/patients/:patientId/vitals
 export async function addVitals(
   patientId: number,
-  employeeId: number,
   appointmentId: number | null,
   vitals: NewVitals,
 ): Promise<Vitals> {
   const res = await api.post<Vitals>(`/api/patients/${patientId}/vitals`, {
     ...vitals,
-    recordedByEmployeeId: employeeId,
     appointmentId,
   });
   return res.data;
@@ -80,21 +78,20 @@ type AllergyInput = { reaction: string; severity: Allergy["severity"] };
 
 // POST /api/patients/:patientId/allergies
 export async function addAllergy(
-  employeeId: number,
   patientId: number,
   allergy: AllergyInput & { allergyTypeId: number },
 ) {
-  await api.post(`/api/patients/${patientId}/allergies`, { ...allergy, employeeId });
+  await api.post(`/api/patients/${patientId}/allergies`, allergy);
 }
 
 // PATCH /api/allergies/:allergyId
-export async function updateAllergy(employeeId: number, allergyId: number, allergy: AllergyInput) {
-  await api.patch(`/api/allergies/${allergyId}`, { ...allergy, employeeId });
+export async function updateAllergy(allergyId: number, allergy: AllergyInput) {
+  await api.patch(`/api/allergies/${allergyId}`, allergy);
 }
 
 // PATCH /api/allergies/:allergyId/deactivate
-export async function removeAllergy(employeeId: number, allergyId: number) {
-  await api.patch(`/api/allergies/${allergyId}/deactivate`, { employeeId });
+export async function removeAllergy(allergyId: number) {
+  await api.patch(`/api/allergies/${allergyId}/deactivate`);
 }
 
 // --- Home medications (what the patient already takes; not prescriptions) -------
@@ -110,21 +107,20 @@ export type HomeMedDetails = { category: HomeMedCategory | null; dosage: string;
 // POST /api/patients/:patientId/home-medications — either a medicationId
 // from the list or a typed medicationName.
 export async function addHomeMedication(
-  employeeId: number,
   patientId: number,
   med: HomeMedDetails & { medicationId: number | null; medicationName: string },
 ) {
-  await api.post(`/api/patients/${patientId}/home-medications`, { ...med, employeeId });
+  await api.post(`/api/patients/${patientId}/home-medications`, med);
 }
 
 // PATCH /api/home-medications/:homeMedicationId
-export async function updateHomeMedication(employeeId: number, homeMedicationId: number, med: HomeMedDetails) {
-  await api.patch(`/api/home-medications/${homeMedicationId}`, { ...med, employeeId });
+export async function updateHomeMedication(homeMedicationId: number, med: HomeMedDetails) {
+  await api.patch(`/api/home-medications/${homeMedicationId}`, med);
 }
 
 // PATCH /api/home-medications/:homeMedicationId/deactivate
-export async function stopHomeMedication(employeeId: number, homeMedicationId: number) {
-  await api.patch(`/api/home-medications/${homeMedicationId}/deactivate`, { employeeId });
+export async function stopHomeMedication(homeMedicationId: number) {
+  await api.patch(`/api/home-medications/${homeMedicationId}/deactivate`);
 }
 
 // --- Visit notes -------------------------------------------------------------------
@@ -136,8 +132,8 @@ export async function getVisitSummary(appointmentId: number): Promise<VisitSumma
 }
 
 // POST /api/appointments/:appointmentId/notes
-export async function addVisitNote(employeeId: number, appointmentId: number, text: string) {
-  await api.post(`/api/appointments/${appointmentId}/notes`, { employeeId, text });
+export async function addVisitNote(appointmentId: number, text: string) {
+  await api.post(`/api/appointments/${appointmentId}/notes`, { text });
 }
 
 // --- Lab orders --------------------------------------------------------------------
@@ -155,20 +151,16 @@ export async function getLabOrders(patientId: number): Promise<LabOrder[]> {
 }
 
 // POST /api/lab-orders
-export async function orderLab(
-  employeeId: number,
-  order: { patientId: number; labTestTypeId: number; appointmentId: number | null },
-) {
-  await api.post("/api/lab-orders", { ...order, employeeId });
+export async function orderLab(order: { patientId: number; labTestTypeId: number; appointmentId: number | null }) {
+  await api.post("/api/lab-orders", order);
 }
 
 // PATCH /api/lab-orders/:labOrderId — move the status on and/or save results.
 export async function updateLabOrder(
-  employeeId: number,
   labOrderId: number,
   update: { status: Exclude<LabStatus, "Ordered"> | null; resultNotes: string },
 ) {
-  await api.patch(`/api/lab-orders/${labOrderId}`, { ...update, employeeId });
+  await api.patch(`/api/lab-orders/${labOrderId}`, update);
 }
 
 // --- Supplies ------------------------------------------------------------------------
@@ -180,8 +172,8 @@ export async function getOfficeSupplies(officeId: number): Promise<OfficeSupply[
 }
 
 // POST /api/office-supplies/:officeSupplyId/use
-export async function recordSupplyUse(employeeId: number, officeSupplyId: number, quantity: number) {
-  await api.post(`/api/office-supplies/${officeSupplyId}/use`, { employeeId, quantity });
+export async function recordSupplyUse(officeSupplyId: number, quantity: number) {
+  await api.post(`/api/office-supplies/${officeSupplyId}/use`, { quantity });
 }
 
 // GET /api/supply-orders?officeId=
@@ -191,6 +183,6 @@ export async function getSupplyOrders(officeId: number): Promise<SupplyOrder[]> 
 }
 
 // POST /api/supply-orders
-export async function requestRestock(employeeId: number, supplyId: number, quantity: number) {
-  await api.post("/api/supply-orders", { employeeId, supplyId, quantity });
+export async function requestRestock(supplyId: number, quantity: number) {
+  await api.post("/api/supply-orders", { supplyId, quantity });
 }

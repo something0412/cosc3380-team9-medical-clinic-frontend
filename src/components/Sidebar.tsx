@@ -19,10 +19,14 @@ const ROLE_LINKS: Record<Role, { to: string; label: string; staffTypes?: StaffTy
         { to: "/patient/billing", label: "Billing" },
         { to: "/patient/profile", label: "My Profile" },
     ],
-    doctor: [{ to: "/doctor/dashboard", label: "Dashboard" }],
+    doctor: [
+        { to: "/doctor/dashboard", label: "Dashboard" },
+        { to: "/doctor/profile", label: "My Profile" },
+    ],
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/analytics", label: "Analytics" },
+        { to: "/admin/profile", label: "My Profile" },
     ],
     staff: [
         // Staff who are neither nurses nor receptionists only get this.
@@ -36,6 +40,8 @@ const ROLE_LINKS: Record<Role, { to: string; label: string; staffTypes?: StaffTy
         { to: "/staff/rn", label: "Clinical Queue", staffTypes: ["nurse"] },
         { to: "/staff/charts", label: "Patient Charts", staffTypes: ["nurse"] },
         { to: "/staff/supplies", label: "Supplies", staffTypes: ["nurse"] },
+        // Every staff member.
+        { to: "/staff/profile", label: "My Profile" },
     ],
 };
 

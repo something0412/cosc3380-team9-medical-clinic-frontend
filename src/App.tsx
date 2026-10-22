@@ -2,6 +2,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { RoleLayout } from "./layouts/RoleLayout";
 import { StaffTypeGuard } from "./layouts/StaffTypeGuard";
+import { PublicLayout } from "./layouts/PublicLayout";
+import { HomePage } from "./pages/public/HomePage";
+import { ComingSoon } from "./pages/public/ComingSoon";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
@@ -27,13 +30,24 @@ import { PatientBilling } from "./pages/patient/PatientBilling";
 import { PatientProfile } from "./pages/patient/PatientProfile";
 import { PatientRecords } from "./pages/patient/PatientRecords";
 
+import { StaffProfile } from "./pages/shared/StaffProfile";
+
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* public routes */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/find-a-doctor" element={<ComingSoon title="Find a Doctor" />} />
+        <Route path="/locations" element={<ComingSoon title="Locations" />} />
+        <Route path="/services" element={<ComingSoon title="Services" />} />
+        <Route path="/about" element={<ComingSoon title="About Us" />} />
+        <Route path="/contact" element={<ComingSoon title="Contact Us" />} />
+      </Route>
+
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Patient Routes */}
+      {/* patient routes */}
       <Route path="/patient" element={<RoleLayout role="patient" />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<PatientDashboard />} />
@@ -44,20 +58,22 @@ function App() {
         <Route path="records" element={<PatientRecords />} />
       </Route>
 
-      {/* Doctor Routes */}
+      {/* doctor routes */}
       <Route path="/doctor" element={<RoleLayout role="doctor" />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DoctorDashboard />} />
+        <Route path="profile" element={<StaffProfile />} />
       </Route>
 
-      {/* Admin Routes */}
+      {/* admin routes */}
       <Route path="/admin" element={<RoleLayout role="admin" />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="analytics" element={<AdminAnalytics />} />
+        <Route path="profile" element={<StaffProfile />} />
       </Route>
 
-      {/* Staff Routes */}
+      {/* staff routes */}
       <Route path="/staff" element={<RoleLayout role="staff" />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<StaffDashboard />} />
@@ -73,6 +89,7 @@ function App() {
           <Route path="rn" element={<RNPage />} />
           <Route path="supplies" element={<Supplies />} />
         </Route>
+        <Route path="profile" element={<StaffProfile />} />
       </Route>
     </Routes>
   );

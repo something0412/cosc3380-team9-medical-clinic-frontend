@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { authErrorMessage } from "../../services/authApi";
+import { apiErrorMessage } from "../../api";
 import { getLabOrders, getLabTestTypes, orderLab, updateLabOrder } from "../../services/nursingApi";
 import type { LabOrder, LabTestType } from "../../types";
 
@@ -62,7 +62,7 @@ export function LabsTab({
       setResults("");
       reload();
     } catch (err) {
-      alert(`${failure}: ${authErrorMessage(err)}`);
+      alert(`${failure}: ${apiErrorMessage(err)}`);
     }
   }
 

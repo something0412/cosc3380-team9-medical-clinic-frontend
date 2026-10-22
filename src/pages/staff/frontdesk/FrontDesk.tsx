@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
-import { authErrorMessage } from "../../../services/authApi";
+import { apiErrorMessage } from "../../../api";
 import { getAppointments, updateVisit } from "../../../services/frontDeskApi";
 import type { Appointment } from "../../../types";
 import { timeOf, today } from "../../../utils/dates";
@@ -41,7 +41,7 @@ export function FrontDesk() {
       const updated = await updateVisit(user.id, appointmentId, action);
       setAppointments(appointments.map((a) => (a.appointmentId === appointmentId ? updated : a)));
     } catch (err) {
-      alert(`Could not ${action.replace("-", " ")}: ${authErrorMessage(err)}`);
+      alert(`Could not ${action.replace("-", " ")}: ${apiErrorMessage(err)}`);
     }
   }
 

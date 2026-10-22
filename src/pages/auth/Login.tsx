@@ -1,10 +1,12 @@
 import { useState } from "react";
-import type { ChangeEvent, FormEvent, InputHTMLAttributes } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { ErrorText, Field, IdField, SubmitButton } from "../../components/FormControls";
 import { useAuth } from "../../context/AuthContext";
 import type { AuthUser } from "../../context/AuthContext";
-import { authErrorMessage, patientLogin, patientSignup, staffLogin } from "../../services/authApi";
-import type { PatientAuthResponse, PatientSignupRequest } from "../../types";
+import { api, apiErrorMessage } from "../../api";
+import type { PatientAuthResponse, PatientSignupRequest, StaffAuthResponse } from "../../types";
+import { formatId, parseId } from "../../utils/id";
 
 type Tab = "patient" | "staff";
 type PatientMode = "login" | "signup";
@@ -83,16 +85,6 @@ function toPatientUser(p: PatientAuthResponse): AuthUser {
   return { role: "patient", id: p.patientId, firstName: p.firstName, lastName: p.lastName };
 }
 
-const ID_LENGTH = 8;
-
-function formatId(id: number) {
-  return String(id).padStart(ID_LENGTH, "0");
-}
-
-function parseId(value: string) {
-  return value.length === ID_LENGTH && /^\d+$/.test(value) && Number(value) > 0 ? Number(value) : null;
-}
-
 function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
   const [mode, setMode] = useState<PatientMode>("login");
   const [patientId, setPatientId] = useState("");
@@ -108,7 +100,7 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     setError("");
   }
 
-  // Patient login
+  // patient login
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
     setError("");
@@ -119,16 +111,16 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     }
     setSubmitting(true);
     try {
-      const patient = await patientLogin(id, email, password);
-      onLogin(toPatientUser(patient));
+      const res = await api.post<PatientAuthResponse>("/api/auth/patient/login", { patientId: id, email, password });
+      onLogin(toPatientUser(res.data));
     } catch (err) {
-      setError(authErrorMessage(err));
+      setError(apiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
   }
 
-  // Create account
+  // create account
   async function handleSignup(e: FormEvent) {
     e.preventDefault();
     setError("");
@@ -143,16 +135,17 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     setSubmitting(true);
     try {
       const { firstName, lastName, dob, phone, email, password } = signup;
-      setCreated(await patientSignup({ firstName, lastName, dob, phone, email, password }));
+      const res = await api.post<PatientAuthResponse>("/api/auth/patient/signup", { firstName, lastName, dob, phone, email, password });
+      setCreated(res.data);
       setSignup(EMPTY_SIGNUP);
     } catch (err) {
-      setError(authErrorMessage(err));
+      setError(apiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
   }
 
-  // Account created
+  // account created
   if (created) {
     return (
       <div className="space-y-4 text-center">
@@ -221,7 +214,7 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Staff login
+  // staff login
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
     setError("");
@@ -232,17 +225,18 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     }
     setSubmitting(true);
     try {
-      const staff = await staffLogin(id, password);
-      onLogin({
-        role: staff.role,
-        id: staff.employeeId,
-        firstName: staff.firstName,
-        lastName: staff.lastName,
-        staffType: staff.staffType,
-        officeId: staff.officeId,
+      const res = await api.post<StaffAuthResponse>("/api/auth/staff/login", { employeeId: id, password });
+      const staff = res.data;
+      onLogin({ 
+        role: staff.role, 
+        id: staff.employeeId, 
+        firstName: staff.firstName, 
+        lastName: staff.lastName, 
+        staffType: staff.staffType, 
+        officeId: staff.officeId 
       });
     } catch (err) {
-      setError(authErrorMessage(err));
+      setError(apiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -256,49 +250,5 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
       <ErrorText message={error} />
       <SubmitButton submitting={submitting} label="Log In" />
     </form>
-  );
-}
-
-function Field({ label, ...props }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>
-      <input
-        {...props}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-      />
-    </label>
-  );
-}
-
-function IdField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <Field
-      label={label}
-      type="text"
-      inputMode="numeric"
-      autoComplete="off"
-      placeholder="00000000"
-      maxLength={ID_LENGTH}
-      required
-      value={value}
-      onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
-    />
-  );
-}
-
-function ErrorText({ message }: { message: string }) {
-  return message ? <p className="text-sm text-red-600">{message}</p> : null;
-}
-
-function SubmitButton({ submitting, label }: { submitting: boolean; label: string }) {
-  return (
-    <button
-      type="submit"
-      disabled={submitting}
-      className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-    >
-      {submitting ? "Please wait..." : label}
-    </button>
   );
 }

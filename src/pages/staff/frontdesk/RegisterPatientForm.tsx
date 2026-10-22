@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "../../../context/AuthContext";
-import { authErrorMessage } from "../../../services/authApi";
+import { apiErrorMessage } from "../../../api";
 import { registerPatient } from "../../../services/frontDeskApi";
 import type { Patient } from "../../../types";
 
@@ -119,7 +119,7 @@ export function RegisterPatientForm({ onRegistered }: { onRegistered: (patient: 
       setMessage("");
       onRegistered(saved);
     } catch (err) {
-      setMessage(`Could not register patient: ${authErrorMessage(err)}`);
+      setMessage(`Could not register patient: ${apiErrorMessage(err)}`);
     }
   }
 

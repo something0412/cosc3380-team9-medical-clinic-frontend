@@ -1,21 +1,18 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
 import { EmployeeStatusBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
+import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { InfoGrid, InfoItem, Section } from "../../components/ProfileUI";
-import { getEmployee } from "../../services/adminApi";
+import { getEmployee, parseEmployeeId } from "../../services/adminApi";
 import type { AdminEmployeeDetails as Employee } from "../../services/adminApi";
 import { formatId } from "../../utils/id";
 
-// positive whole number from the URL, or null
-function toEmployeeId(value: string | undefined) {
-  const id = Number(value);
-  return value && /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 ? id : null;
-}
-
 export function AdminEmployeeDetails() {
-  const employeeId = toEmployeeId(useParams().id);
+  const employeeId = parseEmployeeId(useParams().id);
+  // set by the add and edit forms after saving
+  const savedMessage = (useLocation().state as { message?: string } | null)?.message;
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -55,7 +52,20 @@ export function AdminEmployeeDetails() {
       title={employee ? `${employee.firstName} ${employee.lastName}` : "Employee Details"}
       description={employee ? `Staff ID ${formatId(employee.employeeId)} · ${employee.employeeType}` : undefined}
       back={{ to: "/admin/employees", label: "Back to Employees" }}
+      actions={
+        employee && (
+          <Link to={`/admin/employees/${employee.employeeId}/edit`} className={ADMIN_PRIMARY_BUTTON}>
+            Edit Employee
+          </Link>
+        )
+      }
     >
+      {savedMessage && employee && (
+        <p role="status" className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {savedMessage}
+        </p>
+      )}
+
       {loading && <p className="text-sm text-slate-600">Loading employee...</p>}
 
       {error && (

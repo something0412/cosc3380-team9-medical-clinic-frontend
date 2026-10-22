@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
 import { EmployeeStatusBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
+import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { Field, SelectField } from "../../components/FormControls";
 import { getEmployees } from "../../services/adminApi";
 import type { AdminEmployee } from "../../services/adminApi";
@@ -67,7 +68,15 @@ export function AdminEmployees() {
   }
 
   return (
-    <AdminPage title="Employees" description="View employee accounts, roles, and office assignments.">
+    <AdminPage
+      title="Employees"
+      description="View employee accounts, roles, and office assignments."
+      actions={
+        <Link to="/admin/employees/new" className={ADMIN_PRIMARY_BUTTON}>
+          Add Employee
+        </Link>
+      }
+    >
       <div className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]">
         <Field
           label="Search"

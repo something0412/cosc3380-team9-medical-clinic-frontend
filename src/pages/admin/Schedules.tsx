@@ -179,6 +179,7 @@ export function AdminSchedules() {
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="font-medium text-navy">{doctorName(s)}</div>
                       <div className="font-mono text-xs text-slate-500">{formatId(s.doctorId)}</div>
+                      {!s.doctorIsActive && <div className="text-xs font-medium text-amber-700">Doctor inactive</div>}
                     </td>
                     <td className="px-4 py-3 text-slate-700">{s.dayOfWeek}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{s.officeName}</td>

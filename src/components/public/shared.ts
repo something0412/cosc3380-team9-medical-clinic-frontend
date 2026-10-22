@@ -1,4 +1,5 @@
 import { useAuth } from "../../context/AuthContext";
+import type { Role } from "../../context/AuthContext";
 
 // public site navigation
 export const PUBLIC_LINKS = [
@@ -22,6 +23,12 @@ export const SECONDARY_BUTTON = `inline-flex items-center justify-center gap-2 w
 // small uppercase label above section headings
 export const EYEBROW = "text-xs font-semibold uppercase tracking-[0.14em] text-teal-600";
 
+// existing appointment pages; other roles use their dashboard
+const APPOINTMENT_PAGES: Partial<Record<Role, string>> = {
+  patient: "/patient/appointments",
+  staff: "/staff/appointment",
+};
+
 // portal and appointment links based on who is signed in
 export function usePortalLink() {
   const { role, loading } = useAuth();
@@ -29,7 +36,6 @@ export function usePortalLink() {
     loading,
     to: role ? `/${role}/dashboard` : "/login",
     label: role ? "My Portal" : "Patient Portal",
-    // only patients have an appointments page
-    appointmentsTo: role === "patient" ? "/patient/appointments" : "/login",
+    appointmentsTo: role ? (APPOINTMENT_PAGES[role] ?? `/${role}/dashboard`) : "/login",
   };
 }

@@ -21,7 +21,7 @@ export function PublicLayout() {
         Skip to main content
       </a>
       <PublicHeader />
-      <main id="main" className="flex-1">
+      <main id="main" className="flex-1 text-pretty">
         <Outlet />
       </main>
       <PublicFooter />

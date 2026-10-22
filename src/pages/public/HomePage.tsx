@@ -56,7 +56,7 @@ function Hero() {
       <div className={`${CONTAINER} grid items-center gap-10 pb-24 pt-10 sm:pt-14 lg:grid-cols-[1fr_1.1fr] lg:gap-14 lg:pb-32 lg:pt-16`}>
         <div className="max-w-xl">
           <p className={EYEBROW}>Welcome to Medical Clinic</p>
-          <h1 className="mt-4 text-[2.1rem] font-bold leading-[1.12] tracking-tight text-navy sm:text-[2.6rem] xl:text-5xl">
+          <h1 className="mt-4 text-balance text-[2.1rem] font-bold leading-[1.12] tracking-tight text-navy sm:text-[2.6rem] xl:text-5xl">
             Trusted care for every stage of life
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-slate-600">
@@ -73,7 +73,9 @@ function Hero() {
               Find a Doctor
             </Link>
           </div>
-          <p className="mt-4 text-sm text-slate-500">Appointments are managed through the Patient Portal.</p>
+          <p className="mt-4 text-sm text-slate-500">
+            Online booking is coming soon. Patients can view their appointments in the Patient Portal.
+          </p>
         </div>
 
         <div className="relative">
@@ -97,7 +99,7 @@ function Hero() {
 function QuickActions() {
   const portal = usePortalLink();
   const actions: { icon: IconName; title: string; text: string; to: string }[] = [
-    { icon: "calendar", title: "Appointments", text: "View and manage your visits in the Patient Portal.", to: portal.appointmentsTo },
+    { icon: "calendar", title: "Appointments", text: "View your upcoming and past visits in the Patient Portal.", to: portal.appointmentsTo },
     { icon: "doctor", title: "Find a Doctor", text: "Browse our physicians by specialty and location.", to: "/find-a-doctor" },
     { icon: "pin", title: "Locations", text: "Find a Medical Clinic office near you.", to: "/locations" },
   ];
@@ -136,7 +138,7 @@ function ServicesPreview() {
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <p className={EYEBROW}>Our services</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-navy lg:text-4xl">Primary and specialty care in one place</h2>
+            <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-navy lg:text-4xl">Primary and specialty care in one place</h2>
             <p className="mt-4 leading-relaxed text-slate-600">
               Start with a primary care physician who knows your history. When you need a specialist, your doctor's referral
               connects you with our team.
@@ -180,11 +182,11 @@ function LocationsPreview() {
           loading="lazy"
           decoding="async"
           alt="A bright clinic waiting room with seating and a reception desk"
-          className="aspect-[3/2] w-full rounded-2xl object-cover shadow-2xl ring-1 ring-white/10"
+          className="aspect-video w-full rounded-2xl object-cover shadow-2xl ring-1 ring-white/10 lg:aspect-[3/2]"
         />
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-300">Locations</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight lg:text-4xl">Connected care across multiple states</h2>
+          <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight lg:text-4xl">Connected care across multiple states</h2>
           <p className="mt-4 text-lg leading-relaxed text-white/80">
             Every Medical Clinic office shares one patient record and one Patient Portal, so your care stays coordinated no
             matter which location you visit.
@@ -216,7 +218,7 @@ function AboutPreview() {
       <div className={`${CONTAINER} grid gap-12 xl:grid-cols-[1fr_1.25fr] xl:items-center xl:gap-16`}>
         <div>
           <p className={EYEBROW}>About us</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-navy lg:text-4xl">Patient-centered care, made accessible</h2>
+          <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-navy lg:text-4xl">Patient centered care, made accessible</h2>
           <p className="mt-4 leading-relaxed text-slate-600">
             Medical Clinic is a group of physicians, nurses, and staff dedicated to making quality healthcare easier to reach.
             We listen first, explain clearly, and work as one team for every patient.

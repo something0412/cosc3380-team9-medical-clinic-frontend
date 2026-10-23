@@ -40,7 +40,7 @@ export function AboutPage() {
         <h1 className="font-heading text-4xl font-semibold text-navy sm:text-5xl">About Medical Clinic</h1>
         <p className="mt-5 max-w-3xl text-xl leading-relaxed text-slate-600">
           Medical Clinic is a group of clinic offices where patients see primary care doctors and specialists. Our
-          physicians, nurses, and front-desk staff work as one team across our locations.
+          physicians, nurses, and receptionists work together across our clinic locations.
         </p>
       </section>
 

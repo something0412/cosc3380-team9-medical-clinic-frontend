@@ -175,7 +175,7 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
       <h1 className={`${HEADING} mb-6`}>Patient Sign In</h1>
       <div>
         <IdField label="Patient number" value={patientId} onChange={setPatientId} />
-        <p className="mt-1 text-xs text-slate-500">The 8-digit number you received when you created your account.</p>
+        <p className="mt-1 text-xs text-slate-500">Use the patient number you received when you created your account.</p>
       </div>
       <Field label="Email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       <Field label="Password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />

@@ -4,6 +4,7 @@ import { RoleLayout } from "./layouts/RoleLayout";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { HomePage } from "./pages/public/HomePage";
 import { ComingSoon } from "./pages/public/ComingSoon";
+import { NotFound } from "./pages/public/NotFound";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
@@ -51,6 +52,7 @@ function App() {
         <Route path="/services" element={<ComingSoon title="Services" />} />
         <Route path="/about" element={<ComingSoon title="About Us" />} />
         <Route path="/contact" element={<ComingSoon title="Contact Us" />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
 
       <Route path="/login" element={<LoginPage />} />

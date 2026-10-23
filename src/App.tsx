@@ -3,7 +3,14 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { RoleLayout } from "./layouts/RoleLayout";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { HomePage } from "./pages/public/HomePage";
-import { ComingSoon } from "./pages/public/ComingSoon";
+import { NotFound } from "./pages/public/NotFound";
+import { FindDoctorPage } from "./pages/public/FindDoctor";
+import { DoctorProfilePage } from "./pages/public/DoctorProfile";
+import { LocationsPage } from "./pages/public/Locations";
+import { LocationDetailsPage } from "./pages/public/LocationDetails";
+import { ServicesPage } from "./pages/public/Services";
+import { AboutPage } from "./pages/public/About";
+import { ContactPage } from "./pages/public/Contact";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
@@ -31,7 +38,7 @@ import { AdminShiftSettings } from "./pages/admin/ShiftSettings";
 import { AdminPatients } from "./pages/admin/Patients";
 import { AdminStaff } from "./pages/admin/Staff";
 
-import { LoginPage } from "./pages/auth/Login";
+import { EmployeeLoginPage, PatientLoginPage } from "./pages/auth/Login";
 
 import { DoctorDashboard } from "./pages/doctor/Dashboard";
 import LabOrders from "./pages/doctor/lab_orders";
@@ -54,34 +61,23 @@ import { PatientRecords } from "./pages/patient/PatientRecords";
 import { StaffProfile } from "./pages/shared/StaffProfile";
 
 function App() {
-    return (
-        <Routes>
-            {/* public routes */}
-            <Route element={<PublicLayout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route
-                    path="/find-a-doctor"
-                    element={<ComingSoon title="Find a Doctor" />}
-                />
-                <Route
-                    path="/locations"
-                    element={<ComingSoon title="Locations" />}
-                />
-                <Route
-                    path="/services"
-                    element={<ComingSoon title="Services" />}
-                />
-                <Route
-                    path="/about"
-                    element={<ComingSoon title="About Us" />}
-                />
-                <Route
-                    path="/contact"
-                    element={<ComingSoon title="Contact Us" />}
-                />
-            </Route>
+  return (
+    <Routes>
+      {/* public routes */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/find-a-doctor" element={<FindDoctorPage />} />
+        <Route path="/find-a-doctor/:id" element={<DoctorProfilePage />} />
+        <Route path="/locations" element={<LocationsPage />} />
+        <Route path="/locations/:id" element={<LocationDetailsPage />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Route>
 
-            <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<PatientLoginPage />} />
+      <Route path="/employee/login" element={<EmployeeLoginPage />} />
 
             {/* patient routes */}
             <Route path="/patient" element={<RoleLayout role="patient" />}>

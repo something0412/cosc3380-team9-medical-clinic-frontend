@@ -12,7 +12,9 @@ export function RoleLayout({ role }: { role: Role }) {
   }
 
   if (currentRole !== role) {
-    return <Navigate to="/login" replace />;
+    // signed in with a different role: back to their own dashboard
+    if (currentRole) return <Navigate to={`/${currentRole}/dashboard`} replace />;
+    return <Navigate to={role === "patient" ? "/login" : "/employee/login"} replace />;
   }
 
   return (

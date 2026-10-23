@@ -83,6 +83,9 @@ function Hero() {
 function PortalNotice() {
   const portal = usePortalLink();
 
+  // this note is written for patients
+  if (portal.isEmployee) return null;
+
   return (
     <section aria-label="Patient Portal" className="border-y border-slate-200 bg-white">
       <div className={`${CONTAINER} flex flex-col gap-3 py-6 md:flex-row md:items-center md:justify-between md:gap-8`}>

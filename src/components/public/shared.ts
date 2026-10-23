@@ -34,10 +34,12 @@ const APPOINTMENT_PAGES: Partial<Record<Role, string>> = {
 // portal and appointment links based on who is signed in
 export function usePortalLink() {
   const { role, loading } = useAuth();
+  const isEmployee = role !== null && role !== "patient";
   return {
     loading,
+    isEmployee,
     to: role ? `/${role}/dashboard` : "/login",
-    label: role ? "My Portal" : "Patient Portal",
+    label: isEmployee ? "Employee Portal" : role ? "My Portal" : "Patient Portal",
     appointmentsTo: role ? (APPOINTMENT_PAGES[role] ?? `/${role}/dashboard`) : "/login",
   };
 }

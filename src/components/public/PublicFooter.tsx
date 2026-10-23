@@ -39,7 +39,7 @@ export function PublicFooter() {
       <div className="border-t border-white/10">
         <div className={`${CONTAINER} flex flex-col gap-3 py-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between`}>
           <p>© {new Date().getFullYear()} Medical Clinic. All rights reserved.</p>
-          <Link to="/login" className="self-start rounded py-1 hover:text-white focus-visible:outline-2 focus-visible:outline-white">
+          <Link to="/employee/login" className="self-start rounded py-1 hover:text-white focus-visible:outline-2 focus-visible:outline-white">
             Employee Access
           </Link>
         </div>

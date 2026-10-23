@@ -2,21 +2,39 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { Role } from "../context/AuthContext";
 
-// Each role only sees its own links here — this is what keeps patients
-// from seeing doctor tabs, etc. Add a new page's link to its role's array
-// as pages get built out.
+// sidebar links for each role
 const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
-    patient: [{ to: "/patient/dashboard", label: "Dashboard" }],
-    doctor: [{ to: "/doctor/dashboard", label: "Dashboard" }],
+    patient: [
+        { to: "/patient/dashboard", label: "Dashboard" },
+        { to: "/patient/appointments", label: "Appointments" },
+        { to: "/patient/records", label: "Medical Records" },
+        { to: "/patient/forms", label: "Forms" },
+        { to: "/patient/billing", label: "Billing" },
+        { to: "/patient/profile", label: "My Profile" },
+    ],
+    doctor: [
+        { to: "/doctor/dashboard", label: "Dashboard" },
+        { to: "/doctor/profile", label: "My Profile" },
+    ],
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/analytics", label: "Analytics" },
+        { to: "/admin/profile", label: "My Profile" },
     ],
-    staff: [{ to: "/staff/dashboard", label: "Dashboard" }],
+    staff: [
+        { to: "/staff/dashboard", label: "Dashboard" },
+        { to: "/staff/appointment", label: "Patient Appointments" },
+        // Nursing pages: one shared chart lookup + one tab per nurse type.
+        { to: "/staff/charts", label: "Patient Charts" },
+        { to: "/staff/rn", label: "RN Workspace" },
+        { to: "/staff/crna", label: "CRNA Workspace" },
+        { to: "/staff/na", label: "NA Workspace" },
+        { to: "/staff/profile", label: "My Profile" },
+    ],
 };
 
 export function Sidebar({ role }: { role: Role }) {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     function handleLogout() {
@@ -25,17 +43,17 @@ export function Sidebar({ role }: { role: Role }) {
     }
 
     return (
-        <nav className="flex w-48 shrink-0 flex-col border-r border-gray-200 bg-white">
+        <nav className="sticky top-0 flex h-screen w-48 shrink-0 flex-col border-r border-gray-200 bg-white">
             <div className="border-b border-gray-200 px-4 py-4">
                 <span className="text-sm font-semibold text-gray-900">
                     Medical Clinic
                 </span>
                 <p className="mt-0.5 text-xs text-gray-500 capitalize">
-                    {role}
+                    {user ? `${user.firstName} ${user.lastName} · ${role}` : role}
                 </p>
             </div>
 
-            <ul className="flex-1 space-y-1 px-3 py-4">
+            <ul className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
                 {ROLE_LINKS[role].map((link) => (
                     <li key={link.to}>
                         <NavLink

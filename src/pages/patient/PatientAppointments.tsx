@@ -1,0 +1,452 @@
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import axios from "axios";
+import { api } from "../../api";
+import { useAuth } from "../../context/AuthContext";
+
+interface Appointment {
+    appointmentId: number;
+    appointmentDate: string;
+    appointmentTime: string | null;
+    doctorName: string;
+    specialty: string | null;
+    status: string;
+}
+
+interface Doctor {
+    doctorId: number;
+    doctorName: string;
+}
+
+interface TimeSlot {
+    timeSlotId: number;
+    startTime: string;
+}
+
+function today() {
+    const d = new Date();
+
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function showTime(value: string | null) {
+    if (!value) return "N/A";
+
+    const [hour, minute = "00"] = value.split(":");
+    const h = Number(hour);
+
+    if (!Number.isInteger(h) || h < 0 || h > 23) return value;
+
+    return `${h % 12 || 12}:${minute} ${h >= 12 ? "PM" : "AM"}`;
+}
+
+
+//get the error message from the backend
+function getErrorMessage(err: unknown, fallback: string) {
+    if (axios.isAxiosError(err)) {
+        const detail = err.response?.data?.error ?? err.response?.data?.message;
+
+        if (typeof detail === "string" && detail) {
+            return detail;
+        }
+
+        if (!err.response) {
+            return "Can't reach the backend. Make sure it is running.";
+        }
+
+        return `${fallback} (HTTP ${err.response.status})`;
+    }
+
+    return fallback;
+}
+
+
+export function PatientAppointments() {
+    const { user } = useAuth();
+    const patientId = user?.role === "patient" ? user.id : null;
+
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [loadingDoctors, setLoadingDoctors] = useState(true);
+    const [times, setTimes] = useState<TimeSlot[]>([]);
+
+    const [doctorId, setDoctorId] = useState("");
+    const [date, setDate] = useState("");
+    const [timeSlotId, setTimeSlotId] = useState("");
+
+    const [loading, setLoading] = useState(true);
+    const [checking, setChecking] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    const [historyError, setHistoryError] = useState("");
+    const [doctorError, setDoctorError] = useState("");
+    const [slotError, setSlotError] = useState("");
+    const [bookingError, setBookingError] = useState("");
+    const [message, setMessage] = useState("");
+    const [refresh, setRefresh] = useState(0);
+
+
+    //load this patients appointment history
+    useEffect(() => {
+        let active = true;
+
+        if (!patientId) {
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setHistoryError("");
+
+        api.get<Appointment[]>(`/api/patient/${patientId}/appointments`)
+            .then(response => {
+                if (active) setAppointments(response.data);
+            })
+            .catch(err => {
+                if (active) {
+                    setHistoryError(getErrorMessage(err, "Could not load your appointments"));
+                }
+            })
+            .finally(() => {
+                if (active) setLoading(false);
+            });
+
+        return () => { active = false; };
+
+    }, [patientId, refresh]);
+
+
+    //get the real doctors from the backend
+    useEffect(() => {
+        let active = true;
+
+        if (!patientId) {
+            setDoctors([]);
+            setLoadingDoctors(false);
+            return;
+        }
+
+        setLoadingDoctors(true);
+        setDoctorError("");
+
+        api.get<Doctor[]>(`/api/patient/${patientId}/booking/doctors`)
+            .then(response => {
+                if (active) {
+                    setDoctors(response.data);
+                }
+            })
+            .catch(err => {
+                if (active) {
+                    setDoctors([]);
+                    setDoctorError(getErrorMessage(err, "Could not load doctors"));
+                }
+            })
+            .finally(() => {
+                if (active) setLoadingDoctors(false);
+            });
+
+        return () => { active = false; };
+
+    }, [patientId]);
+
+
+    //check the open times when the doctor or date changes
+    useEffect(() => {
+        let active = true;
+
+        setTimes([]);
+        setTimeSlotId("");
+        setSlotError("");
+
+        if (!patientId || !doctorId || !date) {
+            setChecking(false);
+            return;
+        }
+
+        setChecking(true);
+
+        api.get<TimeSlot[]>(`/api/patient/${patientId}/booking/slots`, {
+            params: { doctorId, date }
+        })
+            .then(response => {
+                if (active) {
+                    setTimes(response.data);
+                }
+            })
+            .catch(err => {
+                if (active) {
+                    setSlotError(getErrorMessage(err, "Could not check available times"));
+                }
+            })
+            .finally(() => {
+                if (active) setChecking(false);
+            });
+
+        return () => { active = false; };
+
+    }, [patientId, doctorId, date, refresh]);
+
+
+    //book the selected time and refresh the history
+    async function bookAppointment(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        if (!patientId || !doctorId || !date || !timeSlotId) return;
+
+        setSaving(true);
+        setBookingError("");
+        setMessage("");
+
+        try {
+            await api.post(`/api/patient/${patientId}/booking`, {
+                doctorId: Number(doctorId),
+                appointmentDate: date,
+                timeSlotId: Number(timeSlotId)
+            });
+
+            setMessage("Your appointment was booked!");
+
+            setTimeSlotId("");
+            setRefresh(n => n + 1);
+
+        } catch (err) {
+            setBookingError(getErrorMessage(err, "Booking failed. Please try again."));
+
+            setRefresh(n => n + 1);
+
+        } finally {
+            setSaving(false);
+        }
+    }
+
+
+    return (
+        <div className="max-w-5xl mx-auto p-6 space-y-6">
+
+            <div className="rounded-xl bg-gradient-to-r from-blue-700 to-teal-500 p-6 text-white">
+                <p className="text-sm text-blue-100">PATIENT PORTAL</p>
+
+                <h2 className="text-2xl font-bold mt-2">
+                    My Appointments
+                </h2>
+
+                <p className="mt-1">
+                    Hi {user?.firstName || "there"}, schedule your next visit here.
+                </p>
+            </div>
+
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+                <form
+                    onSubmit={bookAppointment}
+                    className="lg:col-span-2 bg-white border rounded-xl p-6 space-y-5"
+                >
+                    <h3 className="text-xl font-semibold text-slate-800">
+                        Book an Appointment
+                    </h3>
+
+                    <label className="block text-sm font-medium text-slate-700">
+                        Doctor
+
+                        <select
+                            className="mt-2 w-full rounded-lg border p-3"
+                            value={doctorId}
+                            required
+                            disabled={loadingDoctors}
+                            onChange={e => {
+                                setDoctorId(e.target.value);
+                                setTimeSlotId("");
+                                setTimes([]);
+                                setMessage("");
+                                setBookingError("");
+                            }}
+                        >
+                            <option value="">
+                                {loadingDoctors ? "Loading doctors..." : "Choose a doctor"}
+                            </option>
+
+                            {doctors.map(d => (
+                                <option key={d.doctorId} value={d.doctorId}>
+                                    {d.doctorName}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+
+                    {doctorError && (
+                        <p className="text-sm text-red-600">
+                            {doctorError}
+                        </p>
+                    )}
+
+                    {!loadingDoctors && doctors.length === 0 && !doctorError && (
+                        <p className="text-sm text-slate-500">
+                            No doctors are currently available.
+                        </p>
+                    )}
+
+
+                    <label className="block text-sm font-medium text-slate-700">
+                        Appointment Date
+
+                        <input
+                            type="date"
+                            required
+                            min={today()}
+                            value={date}
+                            onChange={e => {
+                                setDate(e.target.value);
+                                setTimeSlotId("");
+                                setTimes([]);
+                                setMessage("");
+                                setBookingError("");
+                            }}
+                            className="mt-2 w-full rounded-lg border p-3"
+                        />
+                    </label>
+
+
+                    <div>
+                        <p className="text-sm font-medium text-slate-700 mb-2">
+                            Available Times
+                        </p>
+
+                        {checking && (
+                            <p className="text-sm text-blue-600">
+                                Checking times...
+                            </p>
+                        )}
+
+                        {slotError && (
+                            <p className="text-sm text-red-600">
+                                {slotError}
+                            </p>
+                        )}
+
+                        {!checking && !slotError && doctorId && date && times.length === 0 && (
+                            <p className="text-sm text-slate-500">
+                                No open times found for this date.
+                            </p>
+                        )}
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {times.map(t => (
+                                <button
+                                    key={t.timeSlotId}
+                                    type="button"
+                                    onClick={() => setTimeSlotId(String(t.timeSlotId))}
+                                    className={`rounded-lg border p-3 text-sm ${
+                                        String(t.timeSlotId) === timeSlotId
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                    }`}
+                                >
+                                    {showTime(t.startTime)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+
+                    {bookingError && (
+                        <p className="text-red-600 text-sm">
+                            {bookingError}
+                        </p>
+                    )}
+
+                    {message && (
+                        <p className="text-green-700 text-sm">
+                            {message}
+                        </p>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={!timeSlotId || saving || checking}
+                        className="rounded-lg bg-blue-600 px-5 py-3 text-white font-medium disabled:opacity-50"
+                    >
+                        {saving ? "Booking..." : "Confirm Appointment"}
+                    </button>
+                </form>
+
+
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 h-fit">
+                    <h3 className="font-semibold text-lg text-slate-800">
+                        Your Selection
+                    </h3>
+
+                    <p className="mt-4 text-sm text-slate-600">Doctor</p>
+                    <p className="font-medium">
+                        {doctors.find(d => String(d.doctorId) === doctorId)?.doctorName || "Not selected"}
+                    </p>
+
+                    <p className="mt-4 text-sm text-slate-600">Date</p>
+                    <p className="font-medium">
+                        {date || "Not selected"}
+                    </p>
+
+                    <p className="mt-4 text-sm text-slate-600">Time</p>
+                    <p className="font-medium">
+                        {showTime(
+                            times.find(t => String(t.timeSlotId) === timeSlotId)?.startTime ?? null
+                        )}
+                    </p>
+                </div>
+            </div>
+
+
+            <div className="bg-white border rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-slate-800 mb-4">
+                    Appointment History
+                </h3>
+
+                {loading && <p>Loading appointments...</p>}
+
+                {historyError && (
+                    <p className="text-red-600 text-sm">
+                        {historyError}
+                    </p>
+                )}
+
+                {!loading && !historyError && appointments.length === 0 && (
+                    <p>No appointments found.</p>
+                )}
+
+                {!loading && !historyError && appointments.length > 0 && (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-100">
+                                <tr>
+                                    <th className="p-3">Date</th>
+                                    <th className="p-3">Time</th>
+                                    <th className="p-3">Doctor</th>
+                                    <th className="p-3">Specialty</th>
+                                    <th className="p-3">Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {appointments.map(a => (
+                                    <tr key={a.appointmentId} className="border-b">
+                                        <td className="p-3">
+                                            {a.appointmentDate?.slice(0, 10)}
+                                        </td>
+
+                                        <td className="p-3">
+                                            {showTime(a.appointmentTime)}
+                                        </td>
+
+                                        <td className="p-3">{a.doctorName}</td>
+                                        <td className="p-3">{a.specialty || "N/A"}</td>
+                                        <td className="p-3">{a.status}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

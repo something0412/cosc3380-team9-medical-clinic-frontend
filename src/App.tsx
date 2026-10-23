@@ -3,13 +3,14 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { RoleLayout } from "./layouts/RoleLayout";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { HomePage } from "./pages/public/HomePage";
-import { ComingSoon } from "./pages/public/ComingSoon";
 import { NotFound } from "./pages/public/NotFound";
 import { FindDoctorPage } from "./pages/public/FindDoctor";
 import { DoctorProfilePage } from "./pages/public/DoctorProfile";
 import { LocationsPage } from "./pages/public/Locations";
 import { LocationDetailsPage } from "./pages/public/LocationDetails";
 import { ServicesPage } from "./pages/public/Services";
+import { AboutPage } from "./pages/public/About";
+import { ContactPage } from "./pages/public/Contact";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
@@ -57,8 +58,8 @@ function App() {
         <Route path="/locations" element={<LocationsPage />} />
         <Route path="/locations/:id" element={<LocationDetailsPage />} />
         <Route path="/services" element={<ServicesPage />} />
-        <Route path="/about" element={<ComingSoon title="About Us" />} />
-        <Route path="/contact" element={<ComingSoon title="Contact Us" />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

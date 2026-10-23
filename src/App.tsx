@@ -21,7 +21,7 @@ import { AdminSchedules } from "./pages/admin/Schedules";
 import { AdminScheduleCreate, AdminScheduleEdit } from "./pages/admin/ScheduleForm";
 import { AdminShiftSettings } from "./pages/admin/ShiftSettings";
 
-import { LoginPage } from "./pages/auth/Login";
+import { EmployeeLoginPage, PatientLoginPage } from "./pages/auth/Login";
 
 import { DoctorDashboard } from "./pages/doctor/Dashboard";
 
@@ -55,7 +55,8 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Route>
 
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<PatientLoginPage />} />
+      <Route path="/employee/login" element={<EmployeeLoginPage />} />
 
       {/* patient routes */}
       <Route path="/patient" element={<RoleLayout role="patient" />}>

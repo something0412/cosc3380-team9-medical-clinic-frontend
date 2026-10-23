@@ -1,14 +1,15 @@
 import { useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { ErrorText, Field, IdField, SubmitButton } from "../../components/FormControls";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
+import { Link, Navigate } from "react-router-dom";
+import { ErrorText, Field, IdField } from "../../components/FormControls";
+import { LogoMark } from "../../components/public/icons";
+import { FOCUS, PRIMARY_BUTTON } from "../../components/public/shared";
 import { useAuth } from "../../context/AuthContext";
 import type { AuthUser } from "../../context/AuthContext";
 import { api, apiErrorMessage } from "../../api";
 import type { PatientAuthResponse, PatientSignupRequest, StaffAuthResponse } from "../../types";
 import { formatId, parseId } from "../../utils/id";
 
-type Tab = "patient" | "staff";
 type PatientMode = "login" | "signup";
 
 const EMPTY_SIGNUP: PatientSignupRequest & { confirmPassword: string } = {
@@ -21,63 +22,69 @@ const EMPTY_SIGNUP: PatientSignupRequest & { confirmPassword: string } = {
   confirmPassword: "",
 };
 
-export function LoginPage() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(true);
-  const [tab, setTab] = useState<Tab>("patient");
+const TEXT_BUTTON = `rounded font-semibold text-teal-700 hover:text-navy hover:underline ${FOCUS}`;
 
-  function finishLogin(user: AuthUser) {
-    login(user);
-    navigate(`/${user.role}/dashboard`, { replace: true });
+const HEADING = "text-center font-heading text-[1.75rem] leading-tight font-semibold text-navy";
+
+// patient sign in and registration
+export function PatientLoginPage() {
+  const { login } = useAuth();
+  return (
+    <AuthPage help="Need help signing in? Call your clinic office.">
+      <PatientPanel onLogin={login} />
+    </AuthPage>
+  );
+}
+
+// employee sign in; the backend decides which workspace they get
+export function EmployeeLoginPage() {
+  const { login } = useAuth();
+  return (
+    <AuthPage help="Can't sign in? Ask a clinic administrator to reset your password or reactivate your login.">
+      <StaffPanel onLogin={login} />
+    </AuthPage>
+  );
+}
+
+function AuthPage({ help, children }: { help: string; children: ReactNode }) {
+  const { role, loading } = useAuth();
+
+  // anyone already signed in (including right after signing in) goes to their own dashboard
+  if (role) {
+    return <Navigate to={`/${role}/dashboard`} replace />;
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="flex flex-col items-center gap-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Medical Clinic</h1>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="rounded-lg bg-blue-600 px-8 py-3 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-        >
-          Sign In
-        </button>
-      </div>
+    // extra padding at the bottom so the column sits a little above center
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4 pt-8 pb-12 text-slate-700">
+      <div className="w-full max-w-[22rem]">
+        <header className="flex justify-center">
+          <Link to="/" aria-label="Medical Clinic home" className={`flex items-center gap-3 rounded-lg text-navy ${FOCUS}`}>
+            <LogoMark />
+            <span className="leading-tight">
+              <span className="block text-lg font-bold tracking-tight">Medical Clinic</span>
+              <span className="block text-[0.65rem] font-semibold tracking-[0.16em] text-teal-700 uppercase">Primary &amp; Specialty Care</span>
+            </span>
+          </Link>
+        </header>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setOpen(false)}>
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex border-b border-gray-200">
-              {(["patient", "staff"] as Tab[]).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTab(t)}
-                  className={`flex-1 py-3 text-sm font-medium capitalize ${
-                    tab === t ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close"
-                className="px-4 text-lg text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="p-6">
-              {tab === "patient" ? <PatientPanel onLogin={finishLogin} /> : <StaffPanel onLogin={finishLogin} />}
-            </div>
+        <main className="mt-10">
+          {/* the shared form fields use blue focus styles, so switch them to teal here */}
+          <div className="[&_input:focus]:border-teal-600 [&_input:focus]:ring-teal-600">
+            {loading ? <p className="text-center text-sm text-slate-500">Checking your sign-in...</p> : children}
           </div>
-        </div>
-      )}
+          <p className="mt-6 text-center text-sm leading-relaxed text-slate-500">{help}</p>
+        </main>
+      </div>
     </div>
+  );
+}
+
+function FormButton({ submitting, label }: { submitting: boolean; label: string }) {
+  return (
+    <button type="submit" disabled={submitting} className={`${PRIMARY_BUTTON} w-full disabled:opacity-60`}>
+      {submitting ? "Please wait..." : label}
+    </button>
   );
 }
 
@@ -149,15 +156,11 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
   if (created) {
     return (
       <div className="space-y-4 text-center">
-        <h2 className="text-lg font-semibold text-gray-900">Account created</h2>
-        <p className="text-sm text-gray-600">Your patient number is</p>
-        <p className="text-4xl font-bold text-blue-600">{formatId(created.patientId)}</p>
-        <p className="text-sm text-gray-600">Save this number. You'll need it with your email and password to log in.</p>
-        <button
-          type="button"
-          onClick={() => onLogin(toPatientUser(created))}
-          className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-        >
+        <h1 className={HEADING}>Account created</h1>
+        <p className="text-sm text-slate-600">Your patient number is</p>
+        <p className="text-4xl font-bold tracking-wider text-navy">{formatId(created.patientId)}</p>
+        <p className="text-sm text-slate-600">Save this number. You'll need it with your email and password to sign in.</p>
+        <button type="button" onClick={() => onLogin(toPatientUser(created))} className={`${PRIMARY_BUTTON} w-full`}>
           Continue to Patient Portal
         </button>
       </div>
@@ -169,39 +172,46 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
 
   return mode === "login" ? (
     <form onSubmit={handleLogin} className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">Patient Login</h2>
-      <IdField label="Patient Number" value={patientId} onChange={setPatientId} />
+      <h1 className={`${HEADING} mb-6`}>Patient Sign In</h1>
+      <div>
+        <IdField label="Patient number" value={patientId} onChange={setPatientId} />
+        <p className="mt-1 text-xs text-slate-500">Use the patient number you received when you created your account.</p>
+      </div>
       <Field label="Email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       <Field label="Password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <ErrorText message={error} />
-      <SubmitButton submitting={submitting} label="Log In" />
-      <p className="text-center text-sm text-gray-600">
+      <div className="pt-1">
+        <FormButton submitting={submitting} label="Sign In" />
+      </div>
+      <p className="text-center text-sm text-slate-600">
         New patient?{" "}
-        <button type="button" onClick={() => switchMode("signup")} className="font-medium text-blue-600 hover:underline">
+        <button type="button" onClick={() => switchMode("signup")} className={TEXT_BUTTON}>
           Create an account
         </button>
       </p>
     </form>
   ) : (
     <form onSubmit={handleSignup} className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">Create Patient Account</h2>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="First Name" required value={signup.firstName} onChange={set("firstName")} />
-        <Field label="Last Name" required value={signup.lastName} onChange={set("lastName")} />
+      <h1 className={`${HEADING} mb-6`}>Create your patient account</h1>
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
+        <Field label="First name" required value={signup.firstName} onChange={set("firstName")} />
+        <Field label="Last name" required value={signup.lastName} onChange={set("lastName")} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Date of Birth" type="date" required value={signup.dob} onChange={set("dob")} />
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
+        <Field label="Date of birth" type="date" required value={signup.dob} onChange={set("dob")} />
         <Field label="Phone" type="tel" required value={signup.phone} onChange={set("phone")} />
       </div>
       <Field label="Email" type="email" required autoComplete="email" value={signup.email} onChange={set("email")} />
       <Field label="Password" type="password" required minLength={8} autoComplete="new-password" value={signup.password} onChange={set("password")} />
-      <Field label="Confirm Password" type="password" required autoComplete="new-password" value={signup.confirmPassword} onChange={set("confirmPassword")} />
+      <Field label="Confirm password" type="password" required autoComplete="new-password" value={signup.confirmPassword} onChange={set("confirmPassword")} />
       <ErrorText message={error} />
-      <SubmitButton submitting={submitting} label="Create Account" />
-      <p className="text-center text-sm text-gray-600">
+      <div className="pt-1">
+        <FormButton submitting={submitting} label="Create Account" />
+      </div>
+      <p className="text-center text-sm text-slate-600">
         Already have an account?{" "}
-        <button type="button" onClick={() => switchMode("login")} className="font-medium text-blue-600 hover:underline">
-          Log in
+        <button type="button" onClick={() => switchMode("login")} className={TEXT_BUTTON}>
+          Sign in
         </button>
       </p>
     </form>
@@ -220,7 +230,7 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     setError("");
     const id = parseId(employeeId);
     if (!id) {
-      setError("Invalid staff ID. It must be 8 digits, e.g. 00001001.");
+      setError("Invalid employee ID. It must be 8 digits, e.g. 00001001.");
       return;
     }
     setSubmitting(true);
@@ -237,11 +247,13 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
 
   return (
     <form onSubmit={handleLogin} className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">Staff Login</h2>
-      <IdField label="Staff ID" value={employeeId} onChange={setEmployeeId} />
+      <h1 className={`${HEADING} mb-6`}>Employee Sign In</h1>
+      <IdField label="Employee ID" value={employeeId} onChange={setEmployeeId} />
       <Field label="Password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <ErrorText message={error} />
-      <SubmitButton submitting={submitting} label="Log In" />
+      <div className="pt-1">
+        <FormButton submitting={submitting} label="Sign In" />
+      </div>
     </form>
   );
 }

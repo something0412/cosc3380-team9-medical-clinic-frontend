@@ -50,7 +50,7 @@ export function Sidebar({ role }: { role: Role }) {
 
     function handleLogout() {
         logout();
-        navigate("/login", { replace: true });
+        navigate(role === "patient" ? "/login" : "/employee/login", { replace: true });
     }
 
     return (

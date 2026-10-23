@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { RoleLayout } from "./layouts/RoleLayout";
+import { StaffTypeGuard } from "./layouts/StaffTypeGuard";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { HomePage } from "./pages/public/HomePage";
 import { NotFound } from "./pages/public/NotFound";
@@ -42,14 +43,17 @@ import { EmployeeLoginPage, PatientLoginPage } from "./pages/auth/Login";
 
 import { DoctorDashboard } from "./pages/doctor/Dashboard";
 import LabOrders from "./pages/doctor/lab_orders";
-import Patients from "./pages/doctor/patients";
+import DoctorPatients from "./pages/doctor/patients";
 import Referrals from "./pages/doctor/referrals";
 import { StaffDashboard } from "./pages/staff/Dashboard";
-import { StaffAppointment } from "./pages/staff/Appoinment";
+import { StaffBilling } from "./pages/staff/Billing";
+import { FrontDesk } from "./pages/staff/frontdesk/FrontDesk";
+import { Patients } from "./pages/staff/frontdesk/Patients";
+import { Receipt } from "./pages/staff/frontdesk/Receipt";
+import { Schedule } from "./pages/staff/frontdesk/Schedule";
 import { PatientCharts } from "./pages/staff/nursing/PatientCharts";
 import { RNPage } from "./pages/staff/nursing/RNPage";
-import { CRNAPage } from "./pages/staff/nursing/CRNAPage";
-import { NAPage } from "./pages/staff/nursing/NAPage";
+import { Supplies } from "./pages/staff/nursing/Supplies";
 
 import { PatientDashboard } from "./pages/patient/PatientDashboard";
 import { PatientForms } from "./pages/patient/PatientForms";
@@ -96,7 +100,7 @@ function App() {
                 <Route path="dashboard" element={<DoctorDashboard />} />
                 <Route path="lab-orders" element={<LabOrders />} />
                 <Route path="referrals" element={<Referrals />} />
-                <Route path="patients" element={<Patients />} />
+                <Route path="patients" element={<DoctorPatients />} />
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
 
@@ -147,15 +151,25 @@ function App() {
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
 
-            {/* staff routes */}
-            <Route path="/staff" element={<RoleLayout role="staff" />}>
+{/*staffroutes*/}
+<Route path="/staff" element={<RoleLayout role="staff" />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<StaffDashboard />} />
-                <Route path="appointment" element={<StaffAppointment />} />
-                <Route path="charts" element={<PatientCharts />} />
-                <Route path="rn" element={<RNPage />} />
-                <Route path="crna" element={<CRNAPage />} />
-                <Route path="na" element={<NAPage />} />
+                <Route element={<StaffTypeGuard staffType="receptionist" />}>
+                    <Route path="front-desk" element={<FrontDesk />} />
+                    <Route path="patients" element={<Patients />} />
+                    <Route path="schedule" element={<Schedule />} />
+                    <Route path="billing" element={<StaffBilling />} />
+                    <Route
+                        path="billing/receipts/:paymentId"
+                        element={<Receipt />}
+                    />
+                </Route>
+                <Route element={<StaffTypeGuard staffType="nurse" />}>
+                    <Route path="charts" element={<PatientCharts />} />
+                    <Route path="rn" element={<RNPage />} />
+                    <Route path="supplies" element={<Supplies />} />
+                </Route>
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
         </Routes>

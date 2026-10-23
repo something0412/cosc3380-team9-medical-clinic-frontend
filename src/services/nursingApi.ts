@@ -1,110 +1,188 @@
-// All backend calls for the nursing pages live in this one file, so when
-// the backend routes are built this is the only place to hook them up.
-// Each function lists the route it needs; the data shapes are in types.ts.
+// All backend calls for the nursing pages live in this one file. Each
+// function lists the route it calls; the data shapes are in types.ts.
 //
-// Until those routes exist, set VITE_USE_MOCK_DATA=true in .env.local to
-// use the fake data in mockNursingData.ts instead.
+// The backend knows who is logged in (session cookie), rejects anyone
+// who isn't a nurse and limits nurses to their own office.
 
 import { api } from "../api";
 import type {
-  AnesthesiaRecord,
+  Allergy,
+  AllergyType,
   Appointment,
-  NurseType,
+  HomeMedCategory,
+  LabOrder,
+  LabStatus,
+  LabTestType,
+  MedicationOption,
+  OfficeSupply,
   Patient,
   PatientChart,
+  SupplyOrder,
+  VisitSummary,
   Vitals,
 } from "../types";
-import { mockAnesthesia, mockAppointments, mockCharts } from "./mockNursingData";
+import { today } from "../utils/dates";
 
-const USE_MOCKS = import.meta.env.VITE_USE_MOCK_DATA === "true";
+// --- Patients and the day's visits -------------------------------------------
 
-// The vitals a nurse types in (the backend adds the id and timestamp).
-export type NewVitals = Omit<Vitals, "vitalsId" | "patientId" | "recordedAt" | "recordedBy">;
-
-// GET /api/patients (already exists on the backend)
+// GET /api/patients
 export async function getPatients(): Promise<Patient[]> {
-  if (USE_MOCKS) return Object.values(mockCharts).map((c) => c.patient);
   const res = await api.get<Patient[]>("/api/patients");
   return res.data;
 }
 
-// GET /api/appointments?date=YYYY-MM-DD
-export async function getTodaysAppointments(): Promise<Appointment[]> {
-  if (USE_MOCKS) return [...mockAppointments];
-  // "en-CA" formats the date as YYYY-MM-DD in local time.
-  const today = new Date().toLocaleDateString("en-CA");
-  const res = await api.get<Appointment[]>("/api/appointments", { params: { date: today } });
+// GET /api/appointments?date=today&officeId=
+export async function getTodaysAppointments(officeId?: number): Promise<Appointment[]> {
+  const res = await api.get<Appointment[]>("/api/appointments", {
+    params: officeId ? { date: today(), officeId } : { date: today() },
+  });
   return res.data;
 }
 
 // GET /api/patients/:patientId/chart
 export async function getPatientChart(patientId: number): Promise<PatientChart> {
-  if (USE_MOCKS) return { ...mockCharts[patientId] };
   const res = await api.get<PatientChart>(`/api/patients/${patientId}/chart`);
   return res.data;
 }
 
+// --- Vitals ---------------------------------------------------------------------
+
+// The vitals a nurse types in (the backend adds the rest).
+export type NewVitals = Pick<
+  Vitals,
+  "temperatureF" | "heartRateBpm" | "systolic" | "diastolic" | "weightLbs" | "heightInches"
+>;
+
 // POST /api/patients/:patientId/vitals
-export async function addVitals(patientId: number, role: NurseType, vitals: NewVitals) {
-  if (USE_MOCKS) {
-    const chart = mockCharts[patientId];
-    chart.vitals = [
-      { ...vitals, vitalsId: Date.now(), patientId, recordedAt: new Date().toISOString(), recordedBy: role },
-      ...chart.vitals,
-    ];
-    return;
-  }
-  await api.post(`/api/patients/${patientId}/vitals`, { ...vitals, recordedBy: role });
-}
-
-// POST /api/patients/:patientId/notes
-export async function addNote(patientId: number, role: NurseType, body: string) {
-  if (USE_MOCKS) {
-    const chart = mockCharts[patientId];
-    chart.notes = [
-      { noteId: Date.now(), patientId, createdAt: new Date().toISOString(), authorRole: role, body },
-      ...chart.notes,
-    ];
-    return;
-  }
-  await api.post(`/api/patients/${patientId}/notes`, { authorRole: role, body });
-}
-
-// POST /api/patients/:patientId/medications/:medicationId/give  (RN only)
-export async function giveMedication(patientId: number, medicationId: number) {
-  if (USE_MOCKS) {
-    const chart = mockCharts[patientId];
-    chart.medications = chart.medications.map((m) =>
-      m.medicationId === medicationId ? { ...m, lastGivenAt: new Date().toISOString() } : m,
-    );
-    return;
-  }
-  await api.post(`/api/patients/${patientId}/medications/${medicationId}/give`);
-}
-
-// PATCH /api/appointments/:appointmentId/room  (NA)
-export async function roomPatient(appointmentId: number, roomNumber: string) {
-  if (USE_MOCKS) {
-    const appt = mockAppointments.find((a) => a.appointmentId === appointmentId);
-    if (appt) appt.roomNumber = roomNumber;
-    return;
-  }
-  await api.patch(`/api/appointments/${appointmentId}/room`, { roomNumber });
-}
-
-// GET /api/appointments/:appointmentId/anesthesia  (CRNA)
-// Returns null if no record has been filled in yet.
-export async function getAnesthesiaRecord(appointmentId: number): Promise<AnesthesiaRecord | null> {
-  if (USE_MOCKS) return mockAnesthesia[appointmentId] ?? null;
-  const res = await api.get<AnesthesiaRecord | null>(`/api/appointments/${appointmentId}/anesthesia`);
+export async function addVitals(
+  patientId: number,
+  appointmentId: number | null,
+  vitals: NewVitals,
+): Promise<Vitals> {
+  const res = await api.post<Vitals>(`/api/patients/${patientId}/vitals`, {
+    ...vitals,
+    appointmentId,
+  });
   return res.data;
 }
 
-// PUT /api/appointments/:appointmentId/anesthesia  (CRNA, creates or updates)
-export async function saveAnesthesiaRecord(record: AnesthesiaRecord) {
-  if (USE_MOCKS) {
-    mockAnesthesia[record.appointmentId] = record;
-    return;
-  }
-  await api.put(`/api/appointments/${record.appointmentId}/anesthesia`, record);
+// --- Allergies --------------------------------------------------------------------
+
+// GET /api/allergy-types
+export async function getAllergyTypes(): Promise<AllergyType[]> {
+  const res = await api.get<AllergyType[]>("/api/allergy-types");
+  return res.data;
+}
+
+type AllergyInput = { reaction: string; severity: Allergy["severity"] };
+
+// POST /api/patients/:patientId/allergies
+export async function addAllergy(
+  patientId: number,
+  allergy: AllergyInput & { allergyTypeId: number },
+) {
+  await api.post(`/api/patients/${patientId}/allergies`, allergy);
+}
+
+// PATCH /api/allergies/:allergyId
+export async function updateAllergy(allergyId: number, allergy: AllergyInput) {
+  await api.patch(`/api/allergies/${allergyId}`, allergy);
+}
+
+// PATCH /api/allergies/:allergyId/deactivate
+export async function removeAllergy(allergyId: number) {
+  await api.patch(`/api/allergies/${allergyId}/deactivate`);
+}
+
+// --- Home medications (what the patient already takes; not prescriptions) -------
+
+// GET /api/medications
+export async function getMedications(): Promise<MedicationOption[]> {
+  const res = await api.get<MedicationOption[]>("/api/medications");
+  return res.data;
+}
+
+export type HomeMedDetails = { category: HomeMedCategory | null; dosage: string; frequency: string };
+
+// POST /api/patients/:patientId/home-medications — either a medicationId
+// from the list or a typed medicationName.
+export async function addHomeMedication(
+  patientId: number,
+  med: HomeMedDetails & { medicationId: number | null; medicationName: string },
+) {
+  await api.post(`/api/patients/${patientId}/home-medications`, med);
+}
+
+// PATCH /api/home-medications/:homeMedicationId
+export async function updateHomeMedication(homeMedicationId: number, med: HomeMedDetails) {
+  await api.patch(`/api/home-medications/${homeMedicationId}`, med);
+}
+
+// PATCH /api/home-medications/:homeMedicationId/deactivate
+export async function stopHomeMedication(homeMedicationId: number) {
+  await api.patch(`/api/home-medications/${homeMedicationId}/deactivate`);
+}
+
+// --- Visit notes -------------------------------------------------------------------
+
+// GET /api/appointments/:appointmentId/summary
+export async function getVisitSummary(appointmentId: number): Promise<VisitSummary | null> {
+  const res = await api.get<VisitSummary | null>(`/api/appointments/${appointmentId}/summary`);
+  return res.data;
+}
+
+// POST /api/appointments/:appointmentId/notes
+export async function addVisitNote(appointmentId: number, text: string) {
+  await api.post(`/api/appointments/${appointmentId}/notes`, { text });
+}
+
+// --- Lab orders --------------------------------------------------------------------
+
+// GET /api/lab-test-types
+export async function getLabTestTypes(): Promise<LabTestType[]> {
+  const res = await api.get<LabTestType[]>("/api/lab-test-types");
+  return res.data;
+}
+
+// GET /api/patients/:patientId/lab-orders
+export async function getLabOrders(patientId: number): Promise<LabOrder[]> {
+  const res = await api.get<LabOrder[]>(`/api/patients/${patientId}/lab-orders`);
+  return res.data;
+}
+
+// POST /api/lab-orders
+export async function orderLab(order: { patientId: number; labTestTypeId: number; appointmentId: number | null }) {
+  await api.post("/api/lab-orders", order);
+}
+
+// PATCH /api/lab-orders/:labOrderId — move the status on and/or save results.
+export async function updateLabOrder(
+  labOrderId: number,
+  update: { status: Exclude<LabStatus, "Ordered"> | null; resultNotes: string },
+) {
+  await api.patch(`/api/lab-orders/${labOrderId}`, update);
+}
+
+// --- Supplies ------------------------------------------------------------------------
+
+// GET /api/office-supplies?officeId=
+export async function getOfficeSupplies(officeId: number): Promise<OfficeSupply[]> {
+  const res = await api.get<OfficeSupply[]>("/api/office-supplies", { params: { officeId } });
+  return res.data;
+}
+
+// POST /api/office-supplies/:officeSupplyId/use
+export async function recordSupplyUse(officeSupplyId: number, quantity: number) {
+  await api.post(`/api/office-supplies/${officeSupplyId}/use`, { quantity });
+}
+
+// GET /api/supply-orders?officeId=
+export async function getSupplyOrders(officeId: number): Promise<SupplyOrder[]> {
+  const res = await api.get<SupplyOrder[]>("/api/supply-orders", { params: { officeId } });
+  return res.data;
+}
+
+// POST /api/supply-orders
+export async function requestRestock(supplyId: number, quantity: number) {
+  await api.post("/api/supply-orders", { supplyId, quantity });
 }

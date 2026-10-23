@@ -1,7 +1,9 @@
 import type { Appointment } from "../types";
+import { timeOf } from "../utils/dates";
 
-// Today's appointments as a clickable list. Used on the left side of the
-// RN, CRNA and NA pages. Each page filters the list before passing it in.
+// Today's appointments as a clickable list, for the nurse's Clinical
+// Queue. Each shows where the patient is (set by the receptionist's
+// check-in and the nurse's notes) and flags severe allergies.
 export function AppointmentList({
   appointments,
   selectedId,
@@ -12,7 +14,7 @@ export function AppointmentList({
   onSelect: (appointment: Appointment) => void;
 }) {
   if (appointments.length === 0) {
-    return <p className="text-sm text-gray-500">No patients right now.</p>;
+    return <p className="text-sm text-gray-500">No patients today.</p>;
   }
 
   return (
@@ -30,18 +32,22 @@ export function AppointmentList({
           >
             <p className="font-medium text-gray-900">{a.patientName}</p>
             <p className="text-sm text-gray-600">
-              {new Date(a.scheduledAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-              {" · "}
-              {a.doctorName}
+              {timeOf(a.scheduledAt)} · {a.specialty} · {a.doctorName}
             </p>
-            {/* Check-in status comes from the receptionist. */}
-            <p className={`text-sm ${a.status === "Checked In" ? "font-medium text-green-700" : "text-gray-500"}`}>
-              {a.status}
-              {a.roomNumber && ` · Room ${a.roomNumber}`}
+            <p className={`text-sm ${a.visitState === "Waiting" ? "font-medium text-green-700" : "text-gray-500"}`}>
+              {queueStatus(a)}
             </p>
+            {a.hasSevereAllergy && <p className="text-sm font-semibold text-red-700">Severe allergy</p>}
           </button>
         </li>
       ))}
     </ul>
   );
+}
+
+// "Waiting · checked in at 9:02 AM", "With nurse", "Done" or "Not here yet".
+function queueStatus(a: Appointment) {
+  if (a.visitState === "Waiting") return `Waiting · checked in at ${timeOf(a.checkedInAt!)}`;
+  if (a.visitState === "Expected") return "Not checked in yet";
+  return a.visitState;
 }

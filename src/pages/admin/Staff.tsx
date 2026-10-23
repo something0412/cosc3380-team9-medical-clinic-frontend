@@ -44,9 +44,15 @@ export function AdminStaff() {
 
     // load roles, offices and specialties
     useEffect(() => {
-        api.get<StaffOptions>("/api/admin/staff/options")
-            .then((res) => setOptions(res.data))
-            .catch((err) => setError(apiErrorMessage(err)));
+        async function loadOptions() {
+            try {
+                const res = await api.get<StaffOptions>("/api/admin/staff/options");
+                setOptions(res.data);
+            } catch (err) {
+                setError(apiErrorMessage(err));
+            }
+        }
+        loadOptions();
     }, []);
 
     // load staff list

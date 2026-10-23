@@ -33,10 +33,14 @@ import { AdminStaff } from "./pages/admin/Staff";
 
 import { LoginPage } from "./pages/auth/Login";
 
+import { DoctorAppointments } from "./pages/doctor/Appointments";
 import { DoctorDashboard } from "./pages/doctor/Dashboard";
-import LabOrders from "./pages/doctor/lab_orders";
-import Patients from "./pages/doctor/patients";
-import Referrals from "./pages/doctor/referrals";
+import { DoctorLabOrders } from "./pages/doctor/LabOrders";
+import { DoctorPatientChart } from "./pages/doctor/PatientChart";
+import { DoctorPatients } from "./pages/doctor/Patients";
+import { DoctorReferrals } from "./pages/doctor/Referrals";
+import { DoctorSchedule } from "./pages/doctor/Schedule";
+import { DoctorVisit } from "./pages/doctor/Visit";
 import { StaffDashboard } from "./pages/staff/Dashboard";
 import { StaffAppointment } from "./pages/staff/Appoinment";
 import { PatientCharts } from "./pages/staff/nursing/PatientCharts";
@@ -98,9 +102,13 @@ function App() {
             <Route path="/doctor" element={<RoleLayout role="doctor" />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<DoctorDashboard />} />
-                <Route path="lab-orders" element={<LabOrders />} />
-                <Route path="referrals" element={<Referrals />} />
-                <Route path="patients" element={<Patients />} />
+                <Route path="lab-orders" element={<DoctorLabOrders />} />
+                <Route path="referrals" element={<DoctorReferrals />} />
+                <Route path="patients" element={<DoctorPatients />} />
+                <Route path="patients/:id" element={<DoctorPatientChart />} />
+                <Route path="appointments" element={<DoctorAppointments />} />
+                <Route path="appointments/:id" element={<DoctorVisit />} />
+                <Route path="schedule" element={<DoctorSchedule />} />
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
 

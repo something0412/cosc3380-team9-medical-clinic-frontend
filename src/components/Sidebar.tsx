@@ -21,11 +21,20 @@ const ROLE_LINKS: Record<Role, { to: string; label: string; staffTypes?: StaffTy
     ],
     doctor: [
         { to: "/doctor/dashboard", label: "Dashboard" },
+        { to: "/doctor/lab-orders", label: "Lab Orders" },
+        { to: "/doctor/patients", label: "Patients" },
+        { to: "/doctor/referrals", label: "Referrals" },
         { to: "/doctor/profile", label: "My Profile" },
     ],
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },
+        { to: "/admin/employees", label: "Employees" },
+        { to: "/admin/offices", label: "Offices" },
+        { to: "/admin/specialties", label: "Specialties" },
+        { to: "/admin/schedules", label: "Schedules" },
         { to: "/admin/analytics", label: "Analytics" },
+        { to: "/admin/staff", label: "Staff" },
+        { to: "/admin/patients", label: "Patients" },
         { to: "/admin/profile", label: "My Profile" },
     ],
     staff: [
@@ -61,7 +70,9 @@ export function Sidebar({ role }: { role: Role }) {
                     Medical Clinic
                 </span>
                 <p className="mt-0.5 text-xs text-gray-500 capitalize">
-                    {user ? `${user.firstName} ${user.lastName} · ${role}` : role}
+                    {user
+                        ? `${user.firstName} ${user.lastName} · ${role}`
+                        : role}
                 </p>
             </div>
 

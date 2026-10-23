@@ -1,29 +1,14 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowIcon } from "../../components/public/icons";
-import { CONTAINER, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_HEADING, usePortalLink } from "../../components/public/shared";
+import { CONTAINER, FOCUS, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_HEADING, usePortalLink } from "../../components/public/shared";
+import { getPublicSpecialties } from "../../services/publicApi";
+import type { PublicSpecialty } from "../../services/publicApi";
+import { specialtyDescription } from "../../utils/specialties";
 import hero900 from "../../assets/images/home/hero-consultation-900.webp";
 import hero1600 from "../../assets/images/home/hero-consultation-1600.webp";
 import waitingRoom800 from "../../assets/images/home/locations-waiting-room-800.webp";
 import waitingRoom1200 from "../../assets/images/home/locations-waiting-room-1200.webp";
-
-const SERVICES = [
-  {
-    name: "Primary Care",
-    text: "Checkups, preventive screenings, and everyday health concerns, with family medicine and internal medicine physicians.",
-  },
-  {
-    name: "Cardiology",
-    text: "Diagnosis and ongoing care for heart conditions, blood pressure, and cholesterol.",
-  },
-  {
-    name: "Neurology",
-    text: "Care for conditions of the brain, spine, and nerves, such as headaches and seizures.",
-  },
-  {
-    name: "Dermatology",
-    text: "Treatment for skin, hair, and nail conditions, plus routine skin cancer screenings.",
-  },
-];
 
 // what visitors can do on the Locations pages
 const LOCATION_FEATURES = [
@@ -105,7 +90,40 @@ function PortalNotice() {
   );
 }
 
+const PREVIEW_COUNT = 4;
+
 function ServicesPreview() {
+  const [specialties, setSpecialties] = useState<PublicSpecialty[] | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSpecialties() {
+      try {
+        const data = await getPublicSpecialties();
+        if (active) setSpecialties(data);
+      } catch {
+        if (active) setFailed(true);
+      }
+    }
+
+    loadSpecialties();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // specialties with doctors first, starting with the ones that don't need a referral
+  const ordered = [...(specialties ?? [])].sort(
+    (a, b) =>
+      Number(b.doctorCount > 0) - Number(a.doctorCount > 0) ||
+      Number(a.requiresReferral) - Number(b.requiresReferral) ||
+      a.name.localeCompare(b.name)
+  );
+  const preview = ordered.slice(0, PREVIEW_COUNT);
+  const others = ordered.slice(PREVIEW_COUNT).map((s) => s.name).sort((a, b) => a.localeCompare(b));
+
   return (
     <section className="py-16 lg:py-20">
       <div className={`${CONTAINER} grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16`}>
@@ -120,19 +138,56 @@ function ServicesPreview() {
           </div>
         </div>
 
-        <div>
-          <ul className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
-            {SERVICES.map((service) => (
-              <li key={service.name} className="border-t border-slate-200 pt-5">
-                <h3 className="font-semibold text-navy">{service.name}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.text}</p>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-8 border-t border-slate-200 pt-5 text-sm text-slate-600">
-            We also have specialists in orthopedics and endocrinology.
-          </p>
-        </div>
+        {failed || specialties?.length === 0 ? (
+          <div className="self-start border-t border-slate-200 pt-5">
+            <p className="leading-relaxed text-slate-600">
+              Our doctors provide primary care and a range of specialty care. See our Services page for the areas of care we
+              currently offer.
+            </p>
+          </div>
+        ) : specialties === null ? (
+          // placeholders the same shape as the list, so the page doesn't jump when data arrives
+          <div aria-busy="true">
+            <p className="sr-only">Loading services</p>
+            <ul aria-hidden="true" className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+              {Array.from({ length: PREVIEW_COUNT }, (_, i) => (
+                <li key={i} className="border-t border-slate-200 pt-5">
+                  <div className="h-5 w-2/5 rounded bg-slate-100" />
+                  <div className="mt-3 h-3.5 w-full rounded bg-slate-100" />
+                  <div className="mt-2 h-3.5 w-full rounded bg-slate-100" />
+                  <div className="mt-2 h-3.5 w-3/5 rounded bg-slate-100" />
+                </li>
+              ))}
+            </ul>
+            <div aria-hidden="true" className="mt-8 border-t border-slate-200 pt-5">
+              <div className="h-3.5 w-3/4 rounded bg-slate-100" />
+            </div>
+          </div>
+        ) : (
+          <div>
+            <ul className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+              {preview.map((specialty) => (
+                <li key={specialty.specialtyId} className="border-t border-slate-200 pt-5">
+                  <h3 className="font-semibold break-words text-navy">
+                    {specialty.doctorCount > 0 ? (
+                      <Link to={`/find-a-doctor?specialty=${specialty.specialtyId}`} className={`rounded hover:underline ${FOCUS}`}>
+                        {specialty.name}
+                      </Link>
+                    ) : (
+                      specialty.name
+                    )}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{specialtyDescription(specialty.name)}</p>
+                </li>
+              ))}
+            </ul>
+            {others.length > 0 && (
+              <p className="mt-8 border-t border-slate-200 pt-5 text-sm text-slate-600">
+                Other areas of care: {new Intl.ListFormat("en", { type: "conjunction" }).format(others)}.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

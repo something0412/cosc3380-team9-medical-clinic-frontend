@@ -7,6 +7,8 @@ import { ComingSoon } from "./pages/public/ComingSoon";
 import { NotFound } from "./pages/public/NotFound";
 import { FindDoctorPage } from "./pages/public/FindDoctor";
 import { DoctorProfilePage } from "./pages/public/DoctorProfile";
+import { LocationsPage } from "./pages/public/Locations";
+import { LocationDetailsPage } from "./pages/public/LocationDetails";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
@@ -51,7 +53,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/find-a-doctor" element={<FindDoctorPage />} />
         <Route path="/find-a-doctor/:id" element={<DoctorProfilePage />} />
-        <Route path="/locations" element={<ComingSoon title="Locations" />} />
+        <Route path="/locations" element={<LocationsPage />} />
+        <Route path="/locations/:id" element={<LocationDetailsPage />} />
         <Route path="/services" element={<ComingSoon title="Services" />} />
         <Route path="/about" element={<ComingSoon title="About Us" />} />
         <Route path="/contact" element={<ComingSoon title="Contact Us" />} />

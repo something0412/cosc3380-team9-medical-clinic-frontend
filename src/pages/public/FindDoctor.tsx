@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { DoctorAvatar } from "../../components/public/DoctorAvatar";
-import { CONTAINER, FOCUS, SECONDARY_BUTTON } from "../../components/public/shared";
+import { CONTAINER, FIELD_INPUT, FIELD_LABEL, FOCUS, SECONDARY_BUTTON } from "../../components/public/shared";
 import { getPublicDoctors, getPublicOffices, getPublicSpecialties } from "../../services/publicApi";
 import type { PublicDoctor, PublicOffice, PublicSpecialty } from "../../services/publicApi";
-
-const LABEL = "block text-sm font-medium text-slate-700";
-const FIELD =
-  "mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600";
 
 export function FindDoctorPage() {
   const [doctors, setDoctors] = useState<PublicDoctor[]>([]);
@@ -103,19 +99,19 @@ export function FindDoctorPage() {
             className="mt-8 grid gap-4 rounded-xl bg-white p-5 ring-1 ring-slate-200 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end"
           >
             <label className="sm:col-span-2 lg:col-span-1">
-              <span className={LABEL}>Doctor name</span>
+              <span className={FIELD_LABEL}>Doctor name</span>
               <input
                 type="search"
                 value={search}
                 onChange={(e) => setFilter("q", e.target.value)}
                 placeholder="First or last name"
                 autoComplete="off"
-                className={FIELD}
+                className={FIELD_INPUT}
               />
             </label>
             <label>
-              <span className={LABEL}>Specialty</span>
-              <select value={specialtyId} onChange={(e) => setFilter("specialty", e.target.value)} className={FIELD}>
+              <span className={FIELD_LABEL}>Specialty</span>
+              <select value={specialtyId} onChange={(e) => setFilter("specialty", e.target.value)} className={FIELD_INPUT}>
                 <option value="">All specialties</option>
                 {specialties.map((s) => (
                   <option key={s.specialtyId} value={s.specialtyId}>
@@ -125,8 +121,8 @@ export function FindDoctorPage() {
               </select>
             </label>
             <label>
-              <span className={LABEL}>Location</span>
-              <select value={officeId} onChange={(e) => setFilter("office", e.target.value)} className={FIELD}>
+              <span className={FIELD_LABEL}>Location</span>
+              <select value={officeId} onChange={(e) => setFilter("office", e.target.value)} className={FIELD_INPUT}>
                 <option value="">All locations</option>
                 {offices.map((o) => (
                   <option key={o.officeId} value={o.officeId}>

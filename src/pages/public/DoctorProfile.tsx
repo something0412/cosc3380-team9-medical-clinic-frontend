@@ -3,20 +3,11 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { isAxiosError } from "axios";
 import { DoctorAvatar } from "../../components/public/DoctorAvatar";
 import { ArrowIcon } from "../../components/public/icons";
-import { CONTAINER, FOCUS, PRIMARY_BUTTON, SECONDARY_BUTTON, usePortalLink } from "../../components/public/shared";
+import { OfficeAddress } from "../../components/public/OfficeAddress";
+import { CONTAINER, FOCUS, PRIMARY_BUTTON, SECONDARY_BUTTON, TEXT_LINK, usePortalLink } from "../../components/public/shared";
 import { getPublicDoctor } from "../../services/publicApi";
 import type { PublicDoctorDetails } from "../../services/publicApi";
-
-const WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-// days in calendar order, with a full work week shortened
-function formatDays(days: string[]) {
-  const ordered = WEEK.filter((day) => days.includes(day));
-  if (ordered.join() === WEEK.slice(0, 5).join()) return "Monday–Friday";
-  return ordered.join(", ");
-}
-
-const TEXT_LINK = `inline-flex items-center gap-1.5 rounded font-semibold text-teal-700 hover:text-navy ${FOCUS}`;
+import { formatDays } from "../../utils/days";
 
 export function DoctorProfilePage() {
   const { id = "" } = useParams();
@@ -143,13 +134,12 @@ export function DoctorProfilePage() {
               <ul className="mt-4 space-y-4">
                 {doctor.offices.map((office) => (
                   <li key={office.officeId} className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
-                    <h3 className="text-lg font-semibold text-navy">{office.name}</h3>
-                    <address className="mt-2 leading-relaxed text-slate-600 not-italic">
-                      {office.street}
-                      {office.apt && `, ${office.apt}`}
-                      <br />
-                      {office.city}, {office.state} {office.zip}
-                    </address>
+                    <h3 className="text-lg font-semibold text-navy">
+                      <Link to={`/locations/${office.officeId}`} className={`rounded hover:underline ${FOCUS}`}>
+                        {office.name}
+                      </Link>
+                    </h3>
+                    <OfficeAddress office={office} className="mt-2 text-slate-600" />
                     <a href={`tel:${office.phone}`} className={`mt-2 inline-block rounded font-semibold text-teal-700 hover:text-navy ${FOCUS}`}>
                       {office.phone}
                     </a>

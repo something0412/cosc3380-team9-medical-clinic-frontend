@@ -19,6 +19,13 @@ export const PRIMARY_BUTTON = `inline-flex items-center justify-center whitespac
 
 export const SECONDARY_BUTTON = `inline-flex items-center justify-center whitespace-nowrap rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-navy transition-colors hover:border-navy hover:bg-slate-50 ${FOCUS}`;
 
+export const TEXT_LINK = `inline-flex items-center gap-1.5 rounded font-semibold text-teal-700 hover:text-navy ${FOCUS}`;
+
+// search and filter fields on public directory pages
+export const FIELD_LABEL = "block text-sm font-medium text-slate-700";
+export const FIELD_INPUT =
+  "mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600";
+
 // section headings; add a text color where used
 export const SECTION_HEADING = "font-heading text-3xl font-semibold leading-tight text-balance lg:text-4xl";
 

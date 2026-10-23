@@ -25,10 +25,16 @@ const SERVICES = [
   },
 ];
 
-// matches the active offices in the database
-const OFFICES = [
-  { name: "Main Street Clinic", street: "1200 Main St, Suite 200", city: "Houston, TX 77002", phone: "713-555-0100" },
-  { name: "Westside Clinic", street: "8850 Westheimer Rd", city: "Houston, TX 77063", phone: "713-555-0200" },
+// what visitors can do on the Locations pages
+const LOCATION_FEATURES = [
+  {
+    title: "Addresses and phone numbers",
+    text: "Search by office name, city, state, or ZIP code to find the location that works for you.",
+  },
+  {
+    title: "Doctors at each location",
+    text: "See which doctors practice at an office, the days they're scheduled there, and the specialties offered.",
+  },
 ];
 
 export function HomePage() {
@@ -49,11 +55,11 @@ function Hero() {
       <div className={`${CONTAINER} grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1fr_1.1fr] lg:gap-14 lg:py-20`}>
         <div className="max-w-xl">
           <h1 className="font-heading text-[2.25rem] font-semibold leading-[1.1] text-balance text-navy sm:text-5xl">
-            Primary and specialty care in Houston
+            Your primary care doctor and specialists, working together
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-slate-600">
             See one of our family or internal medicine physicians for checkups and everyday health concerns, or a
-            specialist for ongoing care. We have two offices in Houston.
+            specialist for ongoing care. Start by finding a doctor or a clinic location.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link to="/find-a-doctor" className={PRIMARY_BUTTON}>
@@ -148,26 +154,16 @@ function LocationsPreview() {
           className="aspect-video w-full rounded-xl object-cover lg:aspect-[4/3]"
         />
         <div>
-          <h2 className={SECTION_HEADING}>Two offices in Houston</h2>
+          <h2 className={SECTION_HEADING}>Find a clinic location</h2>
           <p className="mt-4 text-lg leading-relaxed text-white/80">
-            Call either office with questions about appointments, referrals, or billing.
+            Explore our clinic locations and find the office that works best for you.
           </p>
 
           <ul className="mt-8 grid gap-6 sm:grid-cols-2">
-            {OFFICES.map((office) => (
-              <li key={office.name} className="border-t border-white/20 pt-4">
-                <h3 className="font-semibold">{office.name}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-white/75">
-                  {office.street}
-                  <br />
-                  {office.city}
-                </p>
-                <a
-                  href={`tel:${office.phone}`}
-                  className="mt-2 inline-block rounded text-sm font-semibold text-teal-200 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                >
-                  {office.phone}
-                </a>
+            {LOCATION_FEATURES.map((feature) => (
+              <li key={feature.title} className="border-t border-white/20 pt-4">
+                <h3 className="font-semibold">{feature.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-white/75">{feature.text}</p>
               </li>
             ))}
           </ul>
@@ -176,7 +172,7 @@ function LocationsPreview() {
             to="/locations"
             className="mt-10 inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-navy transition-colors hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
-            View Locations
+            Explore Locations
           </Link>
         </div>
       </div>
@@ -191,7 +187,7 @@ function AboutPreview() {
         <h2 className={`${SECTION_HEADING} text-navy`}>Care that stays connected</h2>
         <div>
           <p className="text-lg leading-relaxed text-slate-600">
-            We're a team of physicians, nurses, and front-desk staff in Houston. Your primary care doctor and any
+            We're a team of physicians, nurses, and front-desk staff. Your primary care doctor and any
             specialist you see work from the same patient record, so each visit picks up where the last one left off.
           </p>
           <div className="mt-6">

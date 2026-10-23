@@ -4,10 +4,6 @@ import type { Role } from "../context/AuthContext";
 
 // sidebar links for each role
 const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
-<<<<<<< HEAD
-    patient: [{ to: "/patient/dashboard", label: "Dashboard" }],
-    doctor: [{ to: "/doctor/dashboard", label: "Dashboard" }, {to: "/doctor/lab-orders", label: "Lab Orders"}, {to: "/doctor/patients", label: "Patients"}, {to: "/doctor/referrals", label: "Referrals"}],
-=======
     patient: [
         { to: "/patient/dashboard", label: "Dashboard" },
         { to: "/patient/appointments", label: "Appointments" },
@@ -18,12 +14,11 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
     ],
     doctor: [
         { to: "/doctor/dashboard", label: "Dashboard" },
-        { to: "/doctor/lab-orders", label: "Lab Orders"}, 
-        { to: "/doctor/patients", label: "Patients"}, 
-        { to: "/doctor/referrals", label: "Referrals"},
-        { to: "/doctor/profile", label: "My Profile" }, 
+        { to: "/doctor/lab-orders", label: "Lab Orders" },
+        { to: "/doctor/patients", label: "Patients" },
+        { to: "/doctor/referrals", label: "Referrals" },
+        { to: "/doctor/profile", label: "My Profile" },
     ],
->>>>>>> aff232696200e8b97a62e2926fe135fedeb6ee36
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/employees", label: "Employees" },
@@ -63,7 +58,9 @@ export function Sidebar({ role }: { role: Role }) {
                     Medical Clinic
                 </span>
                 <p className="mt-0.5 text-xs text-gray-500 capitalize">
-                    {user ? `${user.firstName} ${user.lastName} · ${role}` : role}
+                    {user
+                        ? `${user.firstName} ${user.lastName} · ${role}`
+                        : role}
                 </p>
             </div>
 

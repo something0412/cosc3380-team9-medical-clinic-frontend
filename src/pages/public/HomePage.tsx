@@ -152,10 +152,10 @@ function ServicesPreview() {
             <ul aria-hidden="true" className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
               {Array.from({ length: PREVIEW_COUNT }, (_, i) => (
                 <li key={i} className="border-t border-slate-200 pt-5">
-                  <div className="h-5 w-2/5 rounded bg-slate-100" />
-                  <div className="mt-3 h-3.5 w-full rounded bg-slate-100" />
-                  <div className="mt-2 h-3.5 w-full rounded bg-slate-100" />
-                  <div className="mt-2 h-3.5 w-3/5 rounded bg-slate-100" />
+                  <div className="h-6 w-2/5 rounded bg-slate-100" />
+                  <div className="mt-3 h-4 w-full rounded bg-slate-100" />
+                  <div className="mt-2.5 h-4 w-full rounded bg-slate-100" />
+                  <div className="mt-2.5 h-4 w-3/5 rounded bg-slate-100" />
                 </li>
               ))}
             </ul>
@@ -168,7 +168,7 @@ function ServicesPreview() {
             <ul className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
               {preview.map((specialty) => (
                 <li key={specialty.specialtyId} className="border-t border-slate-200 pt-5">
-                  <h3 className="font-semibold break-words text-navy">
+                  <h3 className="text-lg font-semibold break-words text-navy">
                     {specialty.doctorCount > 0 ? (
                       <Link to={`/find-a-doctor?specialty=${specialty.specialtyId}`} className={`rounded hover:underline ${FOCUS}`}>
                         {specialty.name}
@@ -177,7 +177,7 @@ function ServicesPreview() {
                       specialty.name
                     )}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{specialtyDescription(specialty.name)}</p>
+                  <p className="mt-2 leading-relaxed text-slate-600">{specialtyDescription(specialty.name)}</p>
                 </li>
               ))}
             </ul>
@@ -242,8 +242,8 @@ function AboutPreview() {
         <h2 className={`${SECTION_HEADING} text-navy`}>Care that stays connected</h2>
         <div>
           <p className="text-lg leading-relaxed text-slate-600">
-            We're a team of physicians, nurses, and front-desk staff. Your primary care doctor and any
-            specialist you see work from the same patient record, so each visit picks up where the last one left off.
+            We're a team of physicians, nurses, and front-desk staff. Start with a primary care doctor who gets to know
+            your health, and see one of our specialists when you need more focused care.
           </p>
           <div className="mt-6">
             <TextLink to="/about">Learn about us</TextLink>

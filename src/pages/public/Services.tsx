@@ -46,20 +46,18 @@ export function ServicesPage() {
 
   return (
     <>
-      <section className="border-b border-slate-200 bg-slate-50">
-        <div className={`${CONTAINER} py-10 sm:py-12`}>
-          <h1 className="font-heading text-4xl font-semibold text-navy sm:text-5xl">Our Services</h1>
-          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-slate-600">
-            Explore our areas of care and find a doctor who practices in each one.
-          </p>
-        </div>
+      <section className={`${CONTAINER} pt-10 sm:pt-14`}>
+        <h1 className="font-heading text-4xl font-semibold text-navy sm:text-5xl">Our Services</h1>
+        <p className="mt-3 max-w-2xl text-lg leading-relaxed text-slate-600">
+          Explore our areas of care and find a doctor who practices in each one.
+        </p>
       </section>
 
-      <div className={`${CONTAINER} py-10 lg:py-14`}>
+      <div className={`${CONTAINER} pt-12 pb-16 lg:pb-20`}>
         {loading ? (
-          <p className="text-slate-600">Loading services...</p>
+          <p className="border-t border-slate-200 py-8 text-slate-600">Loading services...</p>
         ) : failed ? (
-          <div role="alert" className="rounded-xl border border-slate-200 bg-white p-6">
+          <div role="alert" className="border-t border-slate-200 py-8">
             <p className="font-semibold text-navy">We couldn't load our services.</p>
             <p className="mt-1 text-slate-600">Please check your connection and try again.</p>
             <button type="button" onClick={retry} className={`${SECONDARY_BUTTON} mt-4`}>
@@ -67,13 +65,13 @@ export function ServicesPage() {
             </button>
           </div>
         ) : specialties.length === 0 ? (
-          <p className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">No services are listed right now. Please check back later.</p>
+          <p className="border-t border-slate-200 py-8 text-slate-600">No services are listed right now. Please check back later.</p>
         ) : (
-          <div className="space-y-14">
+          <div className="space-y-16">
             {direct.length > 0 && (
               <SpecialtyGroup
                 id="no-referral-heading"
-                title="No referral needed"
+                title="No referral required"
                 description="You can see doctors in these areas of care without a referral."
                 specialties={direct}
               />
@@ -111,16 +109,16 @@ function SpecialtyGroup({ id, title, description, specialties }: { id: string; t
   return (
     <section aria-labelledby={id}>
       <div className="max-w-2xl">
-        <h2 id={id} className="font-heading text-2xl font-semibold text-navy sm:text-3xl">
+        <h2 id={id} className="font-heading text-3xl font-semibold text-navy">
           {title}
         </h2>
-        <p className="mt-2 leading-relaxed text-slate-600">{description}</p>
+        <p className="mt-2 text-lg leading-relaxed text-slate-600">{description}</p>
       </div>
 
-      <ul className="mt-6 grid gap-x-12 md:grid-cols-2">
+      <ul className="mt-6 grid gap-x-12 border-b border-slate-200 md:grid-cols-2">
         {specialties.map((specialty) => (
           <li key={specialty.specialtyId} className="border-t border-slate-200 py-6">
-            <h3 className="text-lg font-semibold break-words text-navy">{specialty.name}</h3>
+            <h3 className="text-xl font-semibold break-words text-navy">{specialty.name}</h3>
             <p className="mt-2 leading-relaxed text-slate-600">{specialtyDescription(specialty.name)}</p>
             {specialty.doctorCount > 0 ? (
               <Link

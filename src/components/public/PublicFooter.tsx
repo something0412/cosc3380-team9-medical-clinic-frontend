@@ -15,7 +15,7 @@ export function PublicFooter() {
             <span className="text-lg font-bold tracking-tight">Medical Clinic</span>
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/70">
-            Primary and specialty care, with one patient record across all of our locations.
+            Primary and specialty care across our clinic locations.
           </p>
         </div>
 

@@ -41,6 +41,26 @@ function showTime(value: string | null) {
 }
 
 
+//get the error message from the backend
+function getErrorMessage(err: unknown, fallback: string) {
+    if (axios.isAxiosError(err)) {
+        const detail = err.response?.data?.error ?? err.response?.data?.message;
+
+        if (typeof detail === "string" && detail) {
+            return detail;
+        }
+
+        if (!err.response) {
+            return "Can't reach the backend. Make sure it is running.";
+        }
+
+        return `${fallback} (HTTP ${err.response.status})`;
+    }
+
+    return fallback;
+}
+
+
 export function PatientAppointments() {
     const { user } = useAuth();
     const patientId = user?.role === "patient" ? user.id : null;
@@ -59,6 +79,8 @@ export function PatientAppointments() {
     const [saving, setSaving] = useState(false);
 
     const [historyError, setHistoryError] = useState("");
+    const [doctorError, setDoctorError] = useState("");
+    const [slotError, setSlotError] = useState("");
     const [bookingError, setBookingError] = useState("");
     const [message, setMessage] = useState("");
     const [refresh, setRefresh] = useState(0);
@@ -80,8 +102,10 @@ export function PatientAppointments() {
             .then(response => {
                 if (active) setAppointments(response.data);
             })
-            .catch(() => {
-                if (active) setHistoryError("Could not load your appointments");
+            .catch(err => {
+                if (active) {
+                    setHistoryError(getErrorMessage(err, "Could not load your appointments"));
+                }
             })
             .finally(() => {
                 if (active) setLoading(false);
@@ -92,19 +116,36 @@ export function PatientAppointments() {
     }, [patientId, refresh]);
 
 
-    //get the doctors when the page opens
+    //get the real doctors from the backend
     useEffect(() => {
+        let active = true;
+
         if (!patientId) {
+            setDoctors([]);
             setLoadingDoctors(false);
             return;
         }
 
         setLoadingDoctors(true);
+        setDoctorError("");
 
         api.get<Doctor[]>(`/api/patient/${patientId}/booking/doctors`)
-            .then(response => setDoctors(response.data))
-            .catch(() => setBookingError("Could not load doctors"))
-            .finally(() => setLoadingDoctors(false));
+            .then(response => {
+                if (active) {
+                    setDoctors(response.data);
+                }
+            })
+            .catch(err => {
+                if (active) {
+                    setDoctors([]);
+                    setDoctorError(getErrorMessage(err, "Could not load doctors"));
+                }
+            })
+            .finally(() => {
+                if (active) setLoadingDoctors(false);
+            });
+
+        return () => { active = false; };
 
     }, [patientId]);
 
@@ -115,8 +156,12 @@ export function PatientAppointments() {
 
         setTimes([]);
         setTimeSlotId("");
+        setSlotError("");
 
-        if (!patientId || !doctorId || !date) return;
+        if (!patientId || !doctorId || !date) {
+            setChecking(false);
+            return;
+        }
 
         setChecking(true);
 
@@ -124,10 +169,14 @@ export function PatientAppointments() {
             params: { doctorId, date }
         })
             .then(response => {
-                if (active) setTimes(response.data);
+                if (active) {
+                    setTimes(response.data);
+                }
             })
-            .catch(() => {
-                if (active) setBookingError("Could not check available times");
+            .catch(err => {
+                if (active) {
+                    setSlotError(getErrorMessage(err, "Could not check available times"));
+                }
             })
             .finally(() => {
                 if (active) setChecking(false);
@@ -157,18 +206,11 @@ export function PatientAppointments() {
 
             setMessage("Your appointment was booked!");
 
+            setTimeSlotId("");
             setRefresh(n => n + 1);
 
         } catch (err) {
-            const detail = axios.isAxiosError(err)
-                ? err.response?.data?.error
-                : null;
-
-            setBookingError(
-                typeof detail === "string"
-                    ? detail
-                    : "Booking failed. Please try again."
-            );
+            setBookingError(getErrorMessage(err, "Booking failed. Please try again."));
 
             setRefresh(n => n + 1);
 
@@ -211,13 +253,18 @@ export function PatientAppointments() {
                             className="mt-2 w-full rounded-lg border p-3"
                             value={doctorId}
                             required
+                            disabled={loadingDoctors}
                             onChange={e => {
                                 setDoctorId(e.target.value);
+                                setTimeSlotId("");
+                                setTimes([]);
                                 setMessage("");
                                 setBookingError("");
                             }}
                         >
-                            <option value="">Choose a doctor</option>
+                            <option value="">
+                                {loadingDoctors ? "Loading doctors..." : "Choose a doctor"}
+                            </option>
 
                             {doctors.map(d => (
                                 <option key={d.doctorId} value={d.doctorId}>
@@ -227,15 +274,15 @@ export function PatientAppointments() {
                         </select>
                     </label>
 
-                    {loadingDoctors && (
-                        <p className="text-sm text-slate-500">
-                            Loading doctors...
+                    {doctorError && (
+                        <p className="text-sm text-red-600">
+                            {doctorError}
                         </p>
                     )}
 
-                    {!loadingDoctors && doctors.length === 0 && !bookingError && (
+                    {!loadingDoctors && doctors.length === 0 && !doctorError && (
                         <p className="text-sm text-slate-500">
-                            No doctors with a schedule yet.
+                            No doctors are currently available.
                         </p>
                     )}
 
@@ -250,6 +297,8 @@ export function PatientAppointments() {
                             value={date}
                             onChange={e => {
                                 setDate(e.target.value);
+                                setTimeSlotId("");
+                                setTimes([]);
                                 setMessage("");
                                 setBookingError("");
                             }}
@@ -269,7 +318,13 @@ export function PatientAppointments() {
                             </p>
                         )}
 
-                        {!checking && doctorId && date && times.length === 0 && (
+                        {slotError && (
+                            <p className="text-sm text-red-600">
+                                {slotError}
+                            </p>
+                        )}
+
+                        {!checking && !slotError && doctorId && date && times.length === 0 && (
                             <p className="text-sm text-slate-500">
                                 No open times found for this date.
                             </p>

@@ -1,46 +1,32 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Icon } from "../../components/public/icons";
-import type { IconName } from "../../components/public/icons";
-import { CONTAINER, EYEBROW, PRIMARY_BUTTON, SECONDARY_BUTTON, usePortalLink } from "../../components/public/shared";
+import { ArrowIcon } from "../../components/public/icons";
+import { CONTAINER, FOCUS, PRIMARY_BUTTON, SECONDARY_BUTTON, SECTION_HEADING, usePortalLink } from "../../components/public/shared";
+import { getPublicSpecialties } from "../../services/publicApi";
+import type { PublicSpecialty } from "../../services/publicApi";
+import { specialtyDescription } from "../../utils/specialties";
 import hero900 from "../../assets/images/home/hero-consultation-900.webp";
 import hero1600 from "../../assets/images/home/hero-consultation-1600.webp";
 import waitingRoom800 from "../../assets/images/home/locations-waiting-room-800.webp";
 import waitingRoom1200 from "../../assets/images/home/locations-waiting-room-1200.webp";
 
-const SERVICES: { icon: IconName; name: string; text: string }[] = [
+// what visitors can do on the Locations pages
+const LOCATION_FEATURES = [
   {
-    icon: "stethoscope",
-    name: "Primary Care",
-    text: "Checkups, preventive screenings, and care for everyday health concerns.",
+    title: "Addresses and phone numbers",
+    text: "Search by office name, city, state, or ZIP code to find the location that works for you.",
   },
   {
-    icon: "heart",
-    name: "Cardiology",
-    text: "Diagnosis and ongoing care for heart conditions, blood pressure, and cholesterol.",
+    title: "Doctors at each location",
+    text: "See which doctors practice at an office, the days they're scheduled there, and the specialties offered.",
   },
-  {
-    icon: "pulse",
-    name: "Neurology",
-    text: "Care for conditions of the brain, spine, and nerves, such as headaches and seizures.",
-  },
-  {
-    icon: "drop",
-    name: "Dermatology",
-    text: "Treatment for skin, hair, and nail conditions, plus routine skin cancer screenings.",
-  },
-];
-
-const VALUES: { icon: IconName; title: string; text: string }[] = [
-  { icon: "people", title: "Patient-centered", text: "Care plans built around your needs and goals." },
-  { icon: "pin", title: "Accessible", text: "Offices in several states and online access to your care." },
-  { icon: "link", title: "Coordinated", text: "Primary and specialty doctors working as one team." },
 ];
 
 export function HomePage() {
   return (
     <>
       <Hero />
-      <QuickActions />
+      <PortalNotice />
       <ServicesPreview />
       <LocationsPreview />
       <AboutPreview />
@@ -49,130 +35,168 @@ export function HomePage() {
 }
 
 function Hero() {
-  const portal = usePortalLink();
-
   return (
     <section className="bg-slate-50">
-      <div className={`${CONTAINER} grid items-center gap-10 pb-24 pt-10 sm:pt-14 lg:grid-cols-[1fr_1.1fr] lg:gap-14 lg:pb-32 lg:pt-16`}>
+      <div className={`${CONTAINER} grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1fr_1.1fr] lg:gap-14 lg:py-20`}>
         <div className="max-w-xl">
-          <p className={EYEBROW}>Welcome to Medical Clinic</p>
-          <h1 className="mt-4 text-balance text-[2.1rem] font-bold leading-[1.12] tracking-tight text-navy sm:text-[2.6rem] xl:text-5xl">
-            Trusted care for every stage of life
+          <h1 className="font-heading text-[2.25rem] font-semibold leading-[1.1] text-balance text-navy sm:text-5xl">
+            Your primary care doctor and specialists, working together
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-slate-600">
-            Our primary care physicians and specialists work together across offices in several states, so your care stays
-            connected wherever you are.
+            See one of our family or internal medicine physicians for checkups and everyday health concerns, or a
+            specialist for ongoing care. Start by finding a doctor or a clinic location.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to={portal.appointmentsTo} className={PRIMARY_BUTTON}>
-              <Icon name="calendar" className="h-5 w-5" />
-              Book Appointment
-            </Link>
-            <Link to="/find-a-doctor" className={SECONDARY_BUTTON}>
-              <Icon name="doctor" className="h-5 w-5" />
+            <Link to="/find-a-doctor" className={PRIMARY_BUTTON}>
               Find a Doctor
             </Link>
+            <Link to="/locations" className={SECONDARY_BUTTON}>
+              Locations
+            </Link>
           </div>
-          <p className="mt-4 text-sm text-slate-500">
-            Online booking is coming soon. Patients can view their appointments in the Patient Portal.
-          </p>
         </div>
 
-        <div className="relative">
-          <div aria-hidden="true" className="absolute -bottom-5 -left-5 hidden h-2/3 w-2/3 rounded-3xl bg-teal-100/70 lg:block" />
-          <img
-            src={hero1600}
-            srcSet={`${hero900} 900w, ${hero1600} 1600w`}
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            width={1600}
-            height={1067}
-            fetchPriority="high"
-            alt="A doctor listening to a patient during an appointment"
-            className="relative aspect-[3/2] w-full rounded-2xl object-cover object-[40%_50%] shadow-xl ring-1 ring-slate-900/5 lg:aspect-[4/3]"
-          />
-        </div>
+        <img
+          src={hero1600}
+          srcSet={`${hero900} 900w, ${hero1600} 1600w`}
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          width={1600}
+          height={1067}
+          fetchPriority="high"
+          alt="A doctor listening to a patient during an appointment"
+          className="aspect-[3/2] w-full rounded-xl object-cover object-[40%_50%] lg:aspect-[4/3]"
+        />
       </div>
     </section>
   );
 }
 
-function QuickActions() {
+function PortalNotice() {
   const portal = usePortalLink();
-  const actions: { icon: IconName; title: string; text: string; to: string }[] = [
-    { icon: "calendar", title: "Appointments", text: "View your upcoming and past visits in the Patient Portal.", to: portal.appointmentsTo },
-    { icon: "doctor", title: "Find a Doctor", text: "Browse our physicians by specialty and location.", to: "/find-a-doctor" },
-    { icon: "pin", title: "Locations", text: "Find a Medical Clinic office near you.", to: "/locations" },
-  ];
+
+  // this note is written for patients
+  if (portal.isEmployee) return null;
 
   return (
-    <section aria-label="Quick actions" className={`${CONTAINER} relative z-10 -mt-14 lg:-mt-20`}>
-      <ul className="grid divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-slate-900/5 md:grid-cols-3 md:divide-x md:divide-y-0">
-        {actions.map((action) => (
-          <li key={action.title}>
-            <Link
-              to={action.to}
-              className="group flex h-full items-start gap-4 p-6 transition-colors md:flex-col lg:flex-row hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 lg:p-7"
-            >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 transition-colors group-hover:bg-teal-100">
-                <Icon name={action.icon} />
-              </span>
-              <span className="w-full flex-1">
-                <span className="flex items-center justify-between gap-2 font-semibold text-navy">
-                  {action.title}
-                  <Icon name="arrow" className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-blue-600" />
-                </span>
-                <span className="mt-1 block text-sm leading-relaxed text-slate-600">{action.text}</span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <section aria-label="Patient Portal" className="border-y border-slate-200 bg-white">
+      <div className={`${CONTAINER} flex flex-col gap-3 py-6 md:flex-row md:items-center md:justify-between md:gap-8`}>
+        <p className="leading-relaxed text-slate-600">
+          <span className="font-semibold text-navy">Already a patient?</span> View your appointments, medical records,
+          forms, and billing in the Patient Portal.
+        </p>
+        <TextLink to={portal.to}>{`Go to ${portal.label}`}</TextLink>
+      </div>
     </section>
   );
 }
 
+const PREVIEW_COUNT = 4;
+
 function ServicesPreview() {
+  const [specialties, setSpecialties] = useState<PublicSpecialty[] | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSpecialties() {
+      try {
+        const data = await getPublicSpecialties();
+        if (active) setSpecialties(data);
+      } catch {
+        if (active) setFailed(true);
+      }
+    }
+
+    loadSpecialties();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // specialties with doctors first, starting with the ones that don't need a referral
+  const ordered = [...(specialties ?? [])].sort(
+    (a, b) =>
+      Number(b.doctorCount > 0) - Number(a.doctorCount > 0) ||
+      Number(a.requiresReferral) - Number(b.requiresReferral) ||
+      a.name.localeCompare(b.name)
+  );
+  const preview = ordered.slice(0, PREVIEW_COUNT);
+  const others = ordered.slice(PREVIEW_COUNT).map((s) => s.name).sort((a, b) => a.localeCompare(b));
+
   return (
-    <section className="py-20 lg:py-24">
-      <div className={CONTAINER}>
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-2xl">
-            <p className={EYEBROW}>Our services</p>
-            <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-navy lg:text-4xl">Primary and specialty care in one place</h2>
-            <p className="mt-4 leading-relaxed text-slate-600">
-              Start with a primary care physician who knows your history. When you need a specialist, your doctor's referral
-              connects you with our team.
-            </p>
+    <section className="py-16 lg:py-20">
+      <div className={`${CONTAINER} grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16`}>
+        <div className="max-w-xl">
+          <h2 className={`${SECTION_HEADING} text-navy`}>From checkups to specialist care</h2>
+          <p className="mt-4 leading-relaxed text-slate-600">
+            Your primary care doctor is the first stop for most health needs. If you need more specialized care, they can
+            refer you to one of our specialists.
+          </p>
+          <div className="mt-6">
+            <TextLink to="/services">View all services</TextLink>
           </div>
-          <TextLink to="/services">View all services</TextLink>
         </div>
 
-        <ul className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-2 xl:grid-cols-4">
-          {SERVICES.map((service) => (
-            <li key={service.name} className="bg-white p-7">
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                <Icon name={service.icon} />
-              </span>
-              <h3 className="mt-5 text-lg font-semibold text-navy">{service.name}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{service.text}</p>
-            </li>
-          ))}
-        </ul>
+        {failed || specialties?.length === 0 ? (
+          <div className="self-start border-t border-slate-200 pt-5">
+            <p className="leading-relaxed text-slate-600">
+              Our doctors provide primary care and a range of specialty care. See our Services page for the areas of care we
+              currently offer.
+            </p>
+          </div>
+        ) : specialties === null ? (
+          // placeholders the same shape as the list, so the page doesn't jump when data arrives
+          <div aria-busy="true">
+            <p className="sr-only">Loading services</p>
+            <ul aria-hidden="true" className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+              {Array.from({ length: PREVIEW_COUNT }, (_, i) => (
+                <li key={i} className="border-t border-slate-200 pt-5">
+                  <div className="h-6 w-2/5 rounded bg-slate-100" />
+                  <div className="mt-3 h-4 w-full rounded bg-slate-100" />
+                  <div className="mt-2.5 h-4 w-full rounded bg-slate-100" />
+                  <div className="mt-2.5 h-4 w-3/5 rounded bg-slate-100" />
+                </li>
+              ))}
+            </ul>
+            <div aria-hidden="true" className="mt-8 border-t border-slate-200 pt-5">
+              <div className="h-3.5 w-3/4 rounded bg-slate-100" />
+            </div>
+          </div>
+        ) : (
+          <div>
+            <ul className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+              {preview.map((specialty) => (
+                <li key={specialty.specialtyId} className="border-t border-slate-200 pt-5">
+                  <h3 className="text-lg font-semibold break-words text-navy">
+                    {specialty.doctorCount > 0 ? (
+                      <Link to={`/find-a-doctor?specialty=${specialty.specialtyId}`} className={`rounded hover:underline ${FOCUS}`}>
+                        {specialty.name}
+                      </Link>
+                    ) : (
+                      specialty.name
+                    )}
+                  </h3>
+                  <p className="mt-2 leading-relaxed text-slate-600">{specialtyDescription(specialty.name)}</p>
+                </li>
+              ))}
+            </ul>
+            {others.length > 0 && (
+              <p className="mt-8 border-t border-slate-200 pt-5 text-sm text-slate-600">
+                Other areas of care: {new Intl.ListFormat("en", { type: "conjunction" }).format(others)}.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
 function LocationsPreview() {
-  const points = [
-    "Primary and specialty care at our offices",
-    "Your records available at every location",
-    "Referrals coordinated with your primary physician",
-  ];
-
   return (
     <section className="bg-navy text-white">
-      <div className={`${CONTAINER} grid items-center gap-12 py-20 lg:grid-cols-2 lg:gap-16 lg:py-24`}>
+      <div className={`${CONTAINER} grid items-center gap-10 py-16 lg:grid-cols-2 lg:gap-16 lg:py-20`}>
         <img
           src={waitingRoom1200}
           srcSet={`${waitingRoom800} 800w, ${waitingRoom1200} 1200w`}
@@ -182,29 +206,28 @@ function LocationsPreview() {
           loading="lazy"
           decoding="async"
           alt="A bright clinic waiting room with seating and a reception desk"
-          className="aspect-video w-full rounded-2xl object-cover shadow-2xl ring-1 ring-white/10 lg:aspect-[3/2]"
+          className="aspect-video w-full rounded-xl object-cover lg:aspect-[4/3]"
         />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-300">Locations</p>
-          <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight lg:text-4xl">Connected care across multiple states</h2>
+          <h2 className={SECTION_HEADING}>Find a clinic location</h2>
           <p className="mt-4 text-lg leading-relaxed text-white/80">
-            Every Medical Clinic office shares one patient record and one Patient Portal, so your care stays coordinated no
-            matter which location you visit.
+            Explore our clinic locations and find the office that works best for you.
           </p>
-          <ul className="mt-8 space-y-3">
-            {points.map((point) => (
-              <li key={point} className="flex items-start gap-3 text-white/90">
-                <Icon name="check" className="mt-0.5 h-5 w-5 shrink-0 text-teal-300" />
-                {point}
+
+          <ul className="mt-8 grid gap-6 sm:grid-cols-2">
+            {LOCATION_FEATURES.map((feature) => (
+              <li key={feature.title} className="border-t border-white/20 pt-4">
+                <h3 className="font-semibold">{feature.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-white/75">{feature.text}</p>
               </li>
             ))}
           </ul>
+
           <Link
             to="/locations"
-            className="mt-10 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-navy shadow-sm transition-colors hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="mt-10 inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-navy transition-colors hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
-            View Locations
-            <Icon name="arrow" className="h-4 w-4" />
+            Explore Locations
           </Link>
         </div>
       </div>
@@ -214,29 +237,18 @@ function LocationsPreview() {
 
 function AboutPreview() {
   return (
-    <section className="py-20 lg:py-24">
-      <div className={`${CONTAINER} grid gap-12 xl:grid-cols-[1fr_1.25fr] xl:items-center xl:gap-16`}>
+    <section className="py-16 lg:py-20">
+      <div className={`${CONTAINER} grid gap-6 lg:grid-cols-[1fr_1.25fr] lg:gap-16`}>
+        <h2 className={`${SECTION_HEADING} text-navy`}>One team across our locations</h2>
         <div>
-          <p className={EYEBROW}>About us</p>
-          <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-navy lg:text-4xl">Patient centered care, made accessible</h2>
-          <p className="mt-4 leading-relaxed text-slate-600">
-            Medical Clinic is a group of physicians, nurses, and staff dedicated to making quality healthcare easier to reach.
-            We listen first, explain clearly, and work as one team for every patient.
+          <p className="text-lg leading-relaxed text-slate-600">
+            Our physicians, nurses, and receptionists work together across our clinic locations. Learn how our offices,
+            doctors, and areas of care fit together.
           </p>
           <div className="mt-6">
             <TextLink to="/about">Learn about us</TextLink>
           </div>
         </div>
-
-        <ul className="grid gap-8 sm:grid-cols-3 sm:gap-6">
-          {VALUES.map((value) => (
-            <li key={value.title} className="border-t-2 border-teal-500 pt-5">
-              <Icon name={value.icon} className="h-6 w-6 text-teal-600" />
-              <h3 className="mt-3 font-semibold text-navy">{value.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-slate-600">{value.text}</p>
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );
@@ -246,10 +258,10 @@ function TextLink({ to, children }: { to: string; children: string }) {
   return (
     <Link
       to={to}
-      className="group inline-flex shrink-0 items-center gap-1.5 rounded font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+      className="group inline-flex shrink-0 items-center gap-1.5 rounded font-semibold text-teal-700 hover:text-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
     >
       {children}
-      <Icon name="arrow" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+      <ArrowIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
     </Link>
   );
 }

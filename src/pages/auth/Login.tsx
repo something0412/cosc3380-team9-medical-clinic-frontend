@@ -3,14 +3,12 @@ import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { ErrorText, Field, IdField } from "../../components/FormControls";
 import { LogoMark } from "../../components/public/icons";
-import { CONTAINER, FOCUS, PRIMARY_BUTTON } from "../../components/public/shared";
+import { FOCUS, PRIMARY_BUTTON } from "../../components/public/shared";
 import { useAuth } from "../../context/AuthContext";
 import type { AuthUser } from "../../context/AuthContext";
 import { api, apiErrorMessage } from "../../api";
 import type { PatientAuthResponse, PatientSignupRequest, StaffAuthResponse } from "../../types";
 import { formatId, parseId } from "../../utils/id";
-import waitingRoom800 from "../../assets/images/home/locations-waiting-room-800.webp";
-import waitingRoom1200 from "../../assets/images/home/locations-waiting-room-1200.webp";
 
 type PatientMode = "login" | "signup";
 
@@ -26,15 +24,13 @@ const EMPTY_SIGNUP: PatientSignupRequest & { confirmPassword: string } = {
 
 const TEXT_BUTTON = `rounded font-semibold text-teal-700 hover:text-navy hover:underline ${FOCUS}`;
 
+const HEADING = "text-center font-heading text-[1.75rem] leading-tight font-semibold text-navy";
+
 // patient sign in and registration
 export function PatientLoginPage() {
   const { login } = useAuth();
   return (
-    <AuthPage
-      title="Patient Portal"
-      description="View your appointments, medical records, forms, and billing in one place."
-      help="Need help signing in? Call your clinic office."
-    >
+    <AuthPage help="Need help signing in? Call your clinic office.">
       <PatientPanel onLogin={login} />
     </AuthPage>
   );
@@ -44,17 +40,13 @@ export function PatientLoginPage() {
 export function EmployeeLoginPage() {
   const { login } = useAuth();
   return (
-    <AuthPage
-      title="Employee Portal"
-      description="Sign in with your employee ID. You'll go straight to the workspace for your role."
-      help="Can't sign in? Ask a clinic administrator to reset your password or reactivate your login."
-    >
+    <AuthPage help="Can't sign in? Ask a clinic administrator to reset your password or reactivate your login.">
       <StaffPanel onLogin={login} />
     </AuthPage>
   );
 }
 
-function AuthPage({ title, description, help, children }: { title: string; description: string; help: string; children: ReactNode }) {
+function AuthPage({ help, children }: { help: string; children: ReactNode }) {
   const { role, loading } = useAuth();
 
   // anyone already signed in (including right after signing in) goes to their own dashboard
@@ -63,42 +55,27 @@ function AuthPage({ title, description, help, children }: { title: string; descr
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-700">
-      <header className="border-b border-slate-200 bg-white">
-        <div className={`${CONTAINER} flex h-18 items-center justify-between gap-4`}>
+    // extra padding at the bottom so the column sits a little above center
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4 pt-8 pb-12 text-slate-700">
+      <div className="w-full max-w-[22rem]">
+        <header className="flex justify-center">
           <Link to="/" aria-label="Medical Clinic home" className={`flex items-center gap-3 rounded-lg text-navy ${FOCUS}`}>
             <LogoMark />
-            <span className="text-lg font-bold tracking-tight">Medical Clinic</span>
+            <span className="leading-tight">
+              <span className="block text-lg font-bold tracking-tight">Medical Clinic</span>
+              <span className="block text-[0.65rem] font-semibold tracking-[0.16em] text-teal-700 uppercase">Primary &amp; Specialty Care</span>
+            </span>
           </Link>
-          <Link to="/" className={`rounded text-sm font-semibold text-teal-700 hover:text-navy ${FOCUS}`}>
-            Back to website
-          </Link>
-        </div>
-      </header>
+        </header>
 
-      <main className="grid flex-1 lg:grid-cols-[1fr_minmax(0,0.85fr)]">
-        <div className="flex justify-center px-4 py-12 sm:px-6 sm:py-16 lg:items-center">
-          <div className="w-full max-w-md">
-            <h1 className="font-heading text-3xl font-semibold text-navy sm:text-4xl">{title}</h1>
-            <p className="mt-3 leading-relaxed text-slate-600">{description}</p>
-
-            {/* the shared form fields use blue focus styles, so switch them to teal here */}
-            <div className="mt-8 rounded-xl bg-white p-6 ring-1 ring-slate-200 sm:p-8 [&_input:focus]:border-teal-600 [&_input:focus]:ring-teal-600">
-              {loading ? <p className="text-sm text-slate-500">Checking your sign-in...</p> : children}
-            </div>
-
-            <p className="mt-6 text-sm leading-relaxed text-slate-600">{help}</p>
+        <main className="mt-10">
+          {/* the shared form fields use blue focus styles, so switch them to teal here */}
+          <div className="[&_input:focus]:border-teal-600 [&_input:focus]:ring-teal-600">
+            {loading ? <p className="text-center text-sm text-slate-500">Checking your sign-in...</p> : children}
           </div>
-        </div>
-
-        <img
-          src={waitingRoom1200}
-          srcSet={`${waitingRoom800} 800w, ${waitingRoom1200} 1200w`}
-          sizes="45vw"
-          alt=""
-          className="hidden h-full w-full object-cover lg:block"
-        />
-      </main>
+          <p className="mt-6 text-center text-sm leading-relaxed text-slate-500">{help}</p>
+        </main>
+      </div>
     </div>
   );
 }
@@ -179,7 +156,7 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
   if (created) {
     return (
       <div className="space-y-4 text-center">
-        <h2 className="text-lg font-semibold text-navy">Account created</h2>
+        <h1 className={HEADING}>Account created</h1>
         <p className="text-sm text-slate-600">Your patient number is</p>
         <p className="text-4xl font-bold tracking-wider text-navy">{formatId(created.patientId)}</p>
         <p className="text-sm text-slate-600">Save this number. You'll need it with your email and password to sign in.</p>
@@ -195,7 +172,7 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
 
   return mode === "login" ? (
     <form onSubmit={handleLogin} className="space-y-4">
-      <h2 className="text-lg font-semibold text-navy">Sign in</h2>
+      <h1 className={`${HEADING} mb-6`}>Patient Sign In</h1>
       <div>
         <IdField label="Patient number" value={patientId} onChange={setPatientId} />
         <p className="mt-1 text-xs text-slate-500">The 8-digit number you received when you created your account.</p>
@@ -203,7 +180,9 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
       <Field label="Email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       <Field label="Password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <ErrorText message={error} />
-      <FormButton submitting={submitting} label="Sign In" />
+      <div className="pt-1">
+        <FormButton submitting={submitting} label="Sign In" />
+      </div>
       <p className="text-center text-sm text-slate-600">
         New patient?{" "}
         <button type="button" onClick={() => switchMode("signup")} className={TEXT_BUTTON}>
@@ -213,7 +192,7 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     </form>
   ) : (
     <form onSubmit={handleSignup} className="space-y-4">
-      <h2 className="text-lg font-semibold text-navy">Create your account</h2>
+      <h1 className={`${HEADING} mb-6`}>Create your patient account</h1>
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
         <Field label="First name" required value={signup.firstName} onChange={set("firstName")} />
         <Field label="Last name" required value={signup.lastName} onChange={set("lastName")} />
@@ -226,7 +205,9 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
       <Field label="Password" type="password" required minLength={8} autoComplete="new-password" value={signup.password} onChange={set("password")} />
       <Field label="Confirm password" type="password" required autoComplete="new-password" value={signup.confirmPassword} onChange={set("confirmPassword")} />
       <ErrorText message={error} />
-      <FormButton submitting={submitting} label="Create Account" />
+      <div className="pt-1">
+        <FormButton submitting={submitting} label="Create Account" />
+      </div>
       <p className="text-center text-sm text-slate-600">
         Already have an account?{" "}
         <button type="button" onClick={() => switchMode("login")} className={TEXT_BUTTON}>
@@ -266,11 +247,13 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
 
   return (
     <form onSubmit={handleLogin} className="space-y-4">
-      <h2 className="text-lg font-semibold text-navy">Sign in</h2>
+      <h1 className={`${HEADING} mb-6`}>Employee Sign In</h1>
       <IdField label="Employee ID" value={employeeId} onChange={setEmployeeId} />
       <Field label="Password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <ErrorText message={error} />
-      <FormButton submitting={submitting} label="Sign In" />
+      <div className="pt-1">
+        <FormButton submitting={submitting} label="Sign In" />
+      </div>
     </form>
   );
 }

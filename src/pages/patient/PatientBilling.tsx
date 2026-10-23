@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../../api";
+import { api, apiErrorMessage } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
 interface Invoice {
@@ -29,17 +29,20 @@ export function PatientBilling() {
     const [billing, setBilling] = useState<BillingData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [refresh, setRefresh] = useState(0);
 
+
+    //load the patient's billing information
     useEffect(() => {
         let active = true;
 
         async function loadBilling() {
             setLoading(true);
             setError("");
-            setBilling(null);
 
             if (patientId === null || !Number.isSafeInteger(patientId) || patientId <= 0) {
                 if (active) {
+                    setBilling(null);
                     setError("Patient information was not found. Please log in again.");
                     setLoading(false);
                 }
@@ -53,14 +56,14 @@ export function PatientBilling() {
 
                 if (active) {
                     setBilling(response.data);
-                    setError("");
                 }
-            } catch (err) {
-                console.error("Could not load patient billing:", err);
 
+            } catch (err) {
                 if (active) {
-                    setError("Billing information could not be loaded.");
+                    setBilling(null);
+                    setError(apiErrorMessage(err));
                 }
+
             } finally {
                 if (active) setLoading(false);
             }
@@ -69,87 +72,205 @@ export function PatientBilling() {
         loadBilling();
 
         return () => { active = false; };
-    }, [patientId]);
 
-    const money = (amount: number | string) => {
-        return `$${Number(amount).toFixed(2)}`;
-    };
+    }, [patientId, refresh]);
 
+
+    //format numbers as money
+    function money(amount: number | string) {
+        const value = Number(amount);
+
+        if (!Number.isFinite(value)) return "N/A";
+
+        return `$${value.toFixed(2)}`;
+    }
+
+
+    //calculate how much was paid for an invoice
+    function amountPaid(invoiceId: number) {
+        if (!billing) return 0;
+
+        return billing.payments
+            .filter(payment => payment.invoiceId === invoiceId)
+            .reduce((total, payment) => {
+                return total + Number(payment.amountPaid);
+            }, 0);
+    }
+
+
+    //calculate the remaining amount on an invoice
+    function remainingBalance(invoice: Invoice) {
+        const paid = amountPaid(invoice.invoiceId);
+
+        return Math.max(0, Number(invoice.amount) - paid);
+    }
+
+
+    //calculate the patient's total balance
     const balance = billing?.invoices.reduce((total, invoice) => {
-        const paid = billing.payments
-            .filter((payment) => payment.invoiceId === invoice.invoiceId)
-            .reduce((sum, payment) => sum + Number(payment.amountPaid), 0);
-
-        return total + Math.max(0, Number(invoice.amount) - paid);
+        return total + remainingBalance(invoice);
     }, 0) ?? 0;
+
+
+    //calculate total payments
+    const totalPayments = billing?.payments.reduce((total, payment) => {
+        return total + Number(payment.amountPaid);
+    }, 0) ?? 0;
+
 
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-6">
+
             <div>
                 <h2 className="text-2xl font-bold">Billing & Payments</h2>
+
                 <p className="text-gray-600 mt-1">
                     View your invoices, remaining balance, and payment history.
                 </p>
             </div>
 
-            {loading && <p>Loading billing information...</p>}
-            {error && <p className="text-red-600">{error}</p>}
 
-            {billing && (
+            <div>
+                <button
+                    type="button"
+                    onClick={() => setRefresh(n => n + 1)}
+                    disabled={loading}
+                    className="border rounded-lg px-4 py-2 hover:bg-gray-100 disabled:opacity-50"
+                >
+                    {loading ? "Loading..." : "Refresh Billing"}
+                </button>
+            </div>
+
+
+            {loading && (
+                <p>Loading billing information...</p>
+            )}
+
+            {error && (
+                <p className="text-red-600" role="alert">
+                    {error}
+                </p>
+            )}
+
+
+            {billing && !loading && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
                         <div className="border rounded-lg p-5">
-                            <h3 className="font-semibold">Outstanding Balance</h3>
-                            <p className="text-2xl font-bold mt-2">{money(balance)}</p>
+                            <h3 className="font-semibold">
+                                Outstanding Balance
+                            </h3>
+
+                            <p className="text-2xl font-bold mt-2">
+                                {money(balance)}
+                            </p>
                         </div>
 
                         <div className="border rounded-lg p-5">
-                            <h3 className="font-semibold">Total Invoices</h3>
-                            <p className="text-2xl font-bold mt-2">{billing.invoices.length}</p>
+                            <h3 className="font-semibold">
+                                Total Invoices
+                            </h3>
+
+                            <p className="text-2xl font-bold mt-2">
+                                {billing.invoices.length}
+                            </p>
                         </div>
+
+                        <div className="border rounded-lg p-5">
+                            <h3 className="font-semibold">
+                                Total Payments
+                            </h3>
+
+                            <p className="text-2xl font-bold mt-2">
+                                {money(totalPayments)}
+                            </p>
+                        </div>
+
                     </div>
 
+
                     <div className="border rounded-lg p-5">
-                        <h3 className="text-lg font-semibold mb-4">My Invoices</h3>
+
+                        <h3 className="text-lg font-semibold mb-4">
+                            My Invoices
+                        </h3>
 
                         {billing.invoices.length === 0 ? (
-                            <p className="text-gray-500">No invoices found.</p>
+                            <p className="text-gray-500">
+                                No invoices found.
+                            </p>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
+
                                     <thead>
                                         <tr className="border-b">
                                             <th className="p-3">Invoice ID</th>
                                             <th className="p-3">Date</th>
                                             <th className="p-3">Amount</th>
+                                            <th className="p-3">Paid</th>
+                                            <th className="p-3">Remaining</th>
                                             <th className="p-3">Status</th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
-                                        {billing.invoices.map((invoice) => (
-                                            <tr key={invoice.invoiceId} className="border-b">
-                                                <td className="p-3">#{invoice.invoiceId}</td>
+                                        {billing.invoices.map(invoice => (
+                                            <tr
+                                                key={invoice.invoiceId}
+                                                className="border-b"
+                                            >
+                                                <td className="p-3">
+                                                    #{invoice.invoiceId}
+                                                </td>
+
                                                 <td className="p-3">
                                                     {invoice.issueDate?.slice(0, 10) || "N/A"}
                                                 </td>
-                                                <td className="p-3">{money(invoice.amount)}</td>
-                                                <td className="p-3">{invoice.status}</td>
+
+                                                <td className="p-3">
+                                                    {money(invoice.amount)}
+                                                </td>
+
+                                                <td className="p-3">
+                                                    {money(amountPaid(invoice.invoiceId))}
+                                                </td>
+
+                                                <td className="p-3">
+                                                    {money(remainingBalance(invoice))}
+                                                </td>
+
+                                                <td className="p-3">
+                                                    {invoice.status}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
+
                                 </table>
                             </div>
                         )}
+
                     </div>
 
+
                     <div className="border rounded-lg p-5">
-                        <h3 className="text-lg font-semibold mb-4">Payment History</h3>
+
+                        <h3 className="text-lg font-semibold mb-4">
+                            Payment History
+                        </h3>
 
                         {billing.payments.length === 0 ? (
-                            <p className="text-gray-500">No payments found.</p>
+                            <p className="text-gray-500">
+                                No payments found.
+                            </p>
                         ) : (
                             <div className="overflow-x-auto">
+
                                 <table className="w-full text-left">
+
                                     <thead>
                                         <tr className="border-b">
                                             <th className="p-3">Payment ID</th>
@@ -159,29 +280,50 @@ export function PatientBilling() {
                                             <th className="p-3">Method</th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
-                                        {billing.payments.map((payment) => (
-                                            <tr key={payment.paymentId} className="border-b">
-                                                <td className="p-3">#{payment.paymentId}</td>
-                                                <td className="p-3">#{payment.invoiceId}</td>
+                                        {billing.payments.map(payment => (
+                                            <tr
+                                                key={payment.paymentId}
+                                                className="border-b"
+                                            >
+                                                <td className="p-3">
+                                                    #{payment.paymentId}
+                                                </td>
+
+                                                <td className="p-3">
+                                                    #{payment.invoiceId}
+                                                </td>
+
                                                 <td className="p-3">
                                                     {payment.paymentDate?.slice(0, 10) || "N/A"}
                                                 </td>
-                                                <td className="p-3">{money(payment.amountPaid)}</td>
-                                                <td className="p-3">{payment.paymentType}</td>
+
+                                                <td className="p-3">
+                                                    {money(payment.amountPaid)}
+                                                </td>
+
+                                                <td className="p-3">
+                                                    {payment.paymentType}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
+
                                 </table>
                             </div>
                         )}
+
                     </div>
+
 
                     <p className="text-sm text-gray-500">
                         Online payments are not available yet.
                     </p>
+
                 </>
             )}
+
         </div>
     );
 }

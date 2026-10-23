@@ -19,6 +19,8 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },
         { to: "/admin/analytics", label: "Analytics" },
+        { to: "/admin/staff", label: "Staff" },
+        { to: "/admin/patients", label: "Patients" },
         { to: "/admin/profile", label: "My Profile" },
     ],
     staff: [

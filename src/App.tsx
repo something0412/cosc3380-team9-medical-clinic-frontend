@@ -7,6 +7,8 @@ import { ComingSoon } from "./pages/public/ComingSoon";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
+import { AdminPatients } from "./pages/admin/Patients";
+import { AdminStaff } from "./pages/admin/Staff";
 
 import { LoginPage } from "./pages/auth/Login";
 
@@ -66,6 +68,8 @@ function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="analytics" element={<AdminAnalytics />} />
+        <Route path="staff" element={<AdminStaff />} />
+        <Route path="patients" element={<AdminPatients />} />
         <Route path="profile" element={<StaffProfile />} />
       </Route>
 

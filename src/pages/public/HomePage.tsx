@@ -239,11 +239,11 @@ function AboutPreview() {
   return (
     <section className="py-16 lg:py-20">
       <div className={`${CONTAINER} grid gap-6 lg:grid-cols-[1fr_1.25fr] lg:gap-16`}>
-        <h2 className={`${SECTION_HEADING} text-navy`}>Care that stays connected</h2>
+        <h2 className={`${SECTION_HEADING} text-navy`}>One team across our locations</h2>
         <div>
           <p className="text-lg leading-relaxed text-slate-600">
-            We're a team of physicians, nurses, and front-desk staff. Start with a primary care doctor who gets to know
-            your health, and see one of our specialists when you need more focused care.
+            Our physicians, nurses, and receptionists work together across our clinic locations. Learn how our offices,
+            doctors, and areas of care fit together.
           </p>
           <div className="mt-6">
             <TextLink to="/about">Learn about us</TextLink>

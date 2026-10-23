@@ -34,7 +34,9 @@ import { AdminStaff } from "./pages/admin/Staff";
 import { LoginPage } from "./pages/auth/Login";
 
 import { DoctorDashboard } from "./pages/doctor/Dashboard";
-
+import LabOrders from "./pages/doctor/lab_orders";
+import Patients from "./pages/doctor/patients";
+import Referrals from "./pages/doctor/referrals";
 import { StaffDashboard } from "./pages/staff/Dashboard";
 import { StaffAppointment } from "./pages/staff/Appoinment";
 import { PatientCharts } from "./pages/staff/nursing/PatientCharts";
@@ -96,6 +98,9 @@ function App() {
             <Route path="/doctor" element={<RoleLayout role="doctor" />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<DoctorDashboard />} />
+                <Route path="lab-orders" element={<LabOrders />} />
+                <Route path="referrals" element={<Referrals />} />
+                <Route path="patients" element={<Patients />} />
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
 

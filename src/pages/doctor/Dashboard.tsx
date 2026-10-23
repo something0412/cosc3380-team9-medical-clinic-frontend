@@ -1,33 +1,119 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { api, apiErrorMessage } from "../../api";
+import { Section } from "../../components/ProfileUI";
+import { StatCard } from "../../components/StatCard";
+import { useAuth } from "../../context/AuthContext";
+
+interface DashboardData {
+  myPatients: number;
+  todayAppointments: number;
+  pendingLabs: number;
+  referralsToReview: number;
+  upcomingAppointments: {
+    appointmentId: number;
+    patientId: number;
+    patientName: string;
+    date: string;
+    time: string;
+    specialty: string;
+  }[];
+  recentResults: {
+    labOrderId: number;
+    patientId: number;
+    patientName: string;
+    testName: string;
+    orderDate: string;
+  }[];
+}
 
 export function DoctorDashboard() {
+  const { user } = useAuth();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState("");
+
+  // load dashboard
+  useEffect(() => {
+    async function loadDashboard() {
+      try {
+        const res = await api.get<DashboardData>("/api/doctor/dashboard");
+        setData(res.data);
+      } catch (err) {
+        setError(apiErrorMessage(err));
+      }
+    }
+    loadDashboard();
+  }, []);
+
   return (
-    <main className="mx-auto min-h-screen w-[calc(100%-40px)] max-w-[1200px] font-sans">
-      <header className="mb-5"><h1 className="text-3xl font-bold">Hello, DOCTORNAME</h1><p>Here's some information:</p></header>
-
-      <div className="grid grid-cols-1 gap-5 min-[901px]:grid-cols-3">
-        <section className="flex h-[500px] min-h-0 flex-col rounded-[10px] border border-black p-4" aria-labelledby="appointments-heading">
-          <div className="mb-3 flex items-center justify-between gap-4"><h2 id="appointments-heading">Appointments</h2><Link to="/doctor/appointments">View all</Link></div>
-          <ul className="min-h-0 flex-1 list-none overflow-y-auto">
-            <li className="border border-black p-[10px]"><h3>Patient Name</h3><time dateTime="2026-10-18T14:30">2:30 PM</time></li>
-            <li className="border border-black p-[10px]"><h3>Another Patient</h3><time dateTime="2026-10-18T15:00">3:00 PM</time></li>
-          </ul>
-        </section>
-
-        <section className="flex h-[500px] min-h-0 flex-col rounded-[10px] border border-black p-4" aria-labelledby="labs-heading">
-          <div className="mb-3 flex items-center justify-between gap-4"><h2 id="labs-heading">Lab Orders</h2><Link to="/doctor/lab-orders">View all</Link></div>
-          <ul className="min-h-0 flex-1 list-none overflow-y-auto">
-            <li className="border border-black p-[10px]"><h3>Lab Order #123</h3><p>Completed</p></li>
-          </ul>
-        </section>
-
-        <section className="flex h-[500px] min-h-0 flex-col rounded-[10px] border border-black p-4" aria-labelledby="referrals-heading">
-          <div className="mb-3 flex items-center justify-between gap-4"><h2 id="referrals-heading">Referrals</h2><Link to="/doctor/referrals">View all</Link></div>
-          <ul className="min-h-0 flex-1 list-none overflow-y-auto">
-            <li className="border border-black p-[10px]"><h3>Dr. Example</h3><p>Pending</p></li>
-          </ul>
-        </section>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Hello, Dr. {user?.lastName}</h1>
+        <p className="mt-1 text-gray-600">Here's what's happening today.</p>
       </div>
-    </main>
+
+      {error && <p className="text-red-600">{error}</p>}
+      {!data && !error && <p>Loading dashboard...</p>}
+
+      {data && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="My Patients" value={String(data.myPatients)} note="Assigned to you" />
+            <StatCard label="Appointments Today" value={String(data.todayAppointments)} />
+            <StatCard label="Labs Waiting" value={String(data.pendingLabs)} note="Ordered, no result yet" />
+            <StatCard label="Referrals to Review" value={String(data.referralsToReview)} note="Sent to you" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Section title="Upcoming Appointments" action={<Link to="/doctor/appointments" className="text-sm text-blue-600 hover:underline">View all</Link>}>
+              {data.upcomingAppointments.length === 0 ? (
+                <p className="text-gray-500">No upcoming appointments.</p>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {data.upcomingAppointments.map((a) => (
+                    <li key={a.appointmentId} className="flex justify-between py-2 text-sm">
+                      <Link to={`/doctor/appointments/${a.appointmentId}`} className="font-medium text-blue-600 hover:underline">
+                        {a.patientName}
+                      </Link>
+                      <span className="text-gray-600">
+                        {a.date} · {a.time} · {a.specialty}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+
+            <Section title="Recent Lab Results" action={<Link to="/doctor/lab-orders" className="text-sm text-blue-600 hover:underline">View all</Link>}>
+              {data.recentResults.length === 0 ? (
+                <p className="text-gray-500">No lab results yet.</p>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {data.recentResults.map((r) => (
+                    <li key={r.labOrderId} className="flex justify-between py-2 text-sm">
+                      <span>
+                        <span className="font-medium text-gray-900">{r.testName}</span>
+                        {" · "}
+                        <Link to={`/doctor/patients/${r.patientId}`} className="text-blue-600 hover:underline">
+                          {r.patientName}
+                        </Link>
+                      </span>
+                      <span className="text-gray-600">{r.orderDate}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+          </div>
+
+          {data.referralsToReview > 0 && (
+            <p className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
+              You have {data.referralsToReview} referral(s) waiting for your answer.{" "}
+              <Link to="/doctor/referrals" className="font-medium underline">Review them</Link>
+            </p>
+          )}
+        </>
+      )}
+    </div>
   );
 }

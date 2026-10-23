@@ -35,6 +35,13 @@ const STATUS_COLORS: Record<string, string> = {
   Expired: "bg-red-100 text-red-800",
   Denied: "bg-red-100 text-red-800",
   Revoked: "bg-gray-200 text-gray-700",
+  Completed: "bg-green-100 text-green-800",
+  Approved: "bg-green-100 text-green-800",
+  Scheduled: "bg-blue-100 text-blue-800",
+  Ordered: "bg-yellow-100 text-yellow-800",
+  InProgress: "bg-blue-100 text-blue-800",
+  Cancelled: "bg-gray-200 text-gray-700",
+  "No Show": "bg-red-100 text-red-800",
 };
 
 export function StatusBadge({ status }: { status: string }) {

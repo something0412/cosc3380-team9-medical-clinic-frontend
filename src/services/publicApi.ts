@@ -25,6 +25,11 @@ export interface PublicDoctorDetails extends Omit<PublicDoctor, "offices"> {
   offices: (PublicOffice & { days: string[] })[];
 }
 
+export interface PublicOfficeDetails extends PublicOffice {
+  doctors: { doctorId: number; firstName: string; lastName: string; days: string[] }[];
+  specialties: { specialtyId: number; name: string }[];
+}
+
 export interface PublicSpecialty {
   specialtyId: number;
   name: string;
@@ -44,6 +49,11 @@ export async function getPublicDoctor(doctorId: string) {
 
 export async function getPublicOffices() {
   const res = await api.get<PublicOffice[]>("/api/public/offices");
+  return res.data;
+}
+
+export async function getPublicOffice(officeId: string) {
+  const res = await api.get<PublicOfficeDetails>(`/api/public/offices/${encodeURIComponent(officeId)}`);
   return res.data;
 }
 

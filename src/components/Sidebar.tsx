@@ -42,6 +42,11 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
         { to: "/staff/na", label: "NA Workspace" },
         { to: "/staff/profile", label: "My Profile" },
     ],
+    lab: [
+        { to: "/lab/dashboard", label: "Dashboard" },
+        { to: "/lab/orders", label: "Lab Orders" },
+        { to: "/lab/profile", label: "My Profile" },
+    ],
 };
 
 export function Sidebar({ role }: { role: Role }) {

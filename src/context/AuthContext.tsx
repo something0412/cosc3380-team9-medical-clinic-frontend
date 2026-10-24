@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { api } from "../api";
 
-export type Role = "patient" | "doctor" | "admin" | "staff";
+export type Role = "patient" | "doctor" | "admin" | "staff" | "lab";
 
 export interface AuthUser {
   role: Role;

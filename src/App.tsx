@@ -48,6 +48,8 @@ import { DoctorPatients } from "./pages/doctor/Patients";
 import { DoctorReferrals } from "./pages/doctor/Referrals";
 import { DoctorSchedule } from "./pages/doctor/Schedule";
 import { DoctorVisit } from "./pages/doctor/Visit";
+import { LabDashboard } from "./pages/lab/Dashboard";
+import { LabOrders } from "./pages/lab/LabOrders";
 import { StaffDashboard } from "./pages/staff/Dashboard";
 import { StaffAppointment } from "./pages/staff/Appoinment";
 import { PatientCharts } from "./pages/staff/nursing/PatientCharts";
@@ -164,6 +166,14 @@ function App() {
                 <Route path="rn" element={<RNPage />} />
                 <Route path="crna" element={<CRNAPage />} />
                 <Route path="na" element={<NAPage />} />
+                <Route path="profile" element={<StaffProfile />} />
+            </Route>
+
+            {/* lab technician routes */}
+            <Route path="/lab" element={<RoleLayout role="lab" />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<LabDashboard />} />
+                <Route path="orders" element={<LabOrders />} />
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
         </Routes>

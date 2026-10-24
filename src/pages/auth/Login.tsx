@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { ErrorText, Field, IdField } from "../../components/FormControls";
 import { LogoMark } from "../../components/public/icons";
 import { FOCUS, PRIMARY_BUTTON } from "../../components/public/shared";
@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import type { AuthUser } from "../../context/AuthContext";
 import { api, apiErrorMessage } from "../../api";
 import type { PatientAuthResponse, PatientSignupRequest, StaffAuthResponse } from "../../types";
+import { safeBookingPath } from "../../utils/bookingLinks";
 import { formatId, parseId } from "../../utils/id";
 
 type PatientMode = "login" | "signup";
@@ -29,9 +30,13 @@ const HEADING = "text-center font-heading text-[1.75rem] leading-tight font-semi
 // patient sign in and registration
 export function PatientLoginPage() {
   const { login } = useAuth();
+  const [params] = useSearchParams();
+  // a booking page to return to afterwards, ignored unless it's one of ours
+  const bookingPath = safeBookingPath(params.get("next"));
+  const initialMode: PatientMode = params.get("mode") === "signup" ? "signup" : "login";
   return (
-    <AuthPage help="Need help signing in? Call your clinic office.">
-      <PatientPanel onLogin={login} />
+    <AuthPage help="Need help signing in? Call your clinic office." bookingPath={bookingPath}>
+      <PatientPanel onLogin={login} initialMode={initialMode} booking={!!bookingPath} />
     </AuthPage>
   );
 }
@@ -46,12 +51,13 @@ export function EmployeeLoginPage() {
   );
 }
 
-function AuthPage({ help, children }: { help: string; children: ReactNode }) {
+function AuthPage({ help, children, bookingPath = null }: { help: string; children: ReactNode; bookingPath?: string | null }) {
   const { role, loading } = useAuth();
 
-  // anyone already signed in (including right after signing in) goes to their own dashboard
+  // anyone already signed in (including right after signing in) goes to their own dashboard,
+  // except a patient who came from booking, who goes back to their appointment
   if (role) {
-    return <Navigate to={`/${role}/dashboard`} replace />;
+    return <Navigate to={role === "patient" && bookingPath ? bookingPath : `/${role}/dashboard`} replace />;
   }
 
   return (
@@ -92,8 +98,8 @@ function toPatientUser(p: PatientAuthResponse): AuthUser {
   return { role: "patient", id: p.patientId, firstName: p.firstName, lastName: p.lastName };
 }
 
-function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
-  const [mode, setMode] = useState<PatientMode>("login");
+function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthUser) => void; initialMode: PatientMode; booking: boolean }) {
+  const [mode, setMode] = useState<PatientMode>(initialMode);
   const [patientId, setPatientId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -161,7 +167,7 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
         <p className="text-4xl font-bold tracking-wider text-navy">{formatId(created.patientId)}</p>
         <p className="text-sm text-slate-600">Save this number. You'll need it with your email and password to sign in.</p>
         <button type="button" onClick={() => onLogin(toPatientUser(created))} className={`${PRIMARY_BUTTON} w-full`}>
-          Continue to Patient Portal
+          {booking ? "Continue to your appointment" : "Continue to Patient Portal"}
         </button>
       </div>
     );
@@ -172,7 +178,8 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
 
   return mode === "login" ? (
     <form onSubmit={handleLogin} className="space-y-4">
-      <h1 className={`${HEADING} mb-6`}>Patient Sign In</h1>
+      <h1 className={`${HEADING} ${booking ? "mb-2" : "mb-6"}`}>Patient Sign In</h1>
+      {booking && <p className="mb-6 text-center text-sm leading-relaxed text-slate-600">Sign in to finish booking your appointment.</p>}
       <div>
         <IdField label="Patient number" value={patientId} onChange={setPatientId} />
         <p className="mt-1 text-xs text-slate-500">Use the patient number you received when you created your account.</p>
@@ -192,7 +199,8 @@ function PatientPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     </form>
   ) : (
     <form onSubmit={handleSignup} className="space-y-4">
-      <h1 className={`${HEADING} mb-6`}>Create your patient account</h1>
+      <h1 className={`${HEADING} ${booking ? "mb-2" : "mb-6"}`}>Create your patient account</h1>
+      {booking && <p className="mb-6 text-center text-sm leading-relaxed text-slate-600">Create your account to finish booking your appointment.</p>}
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
         <Field label="First name" required value={signup.firstName} onChange={set("firstName")} />
         <Field label="Last name" required value={signup.lastName} onChange={set("lastName")} />

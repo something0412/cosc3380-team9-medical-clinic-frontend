@@ -10,6 +10,7 @@ export interface AuthUser {
   id: number;
   firstName: string;
   lastName: string;
+  employeeType?: string;
 }
 
 interface AuthContextValue {

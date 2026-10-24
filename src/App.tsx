@@ -11,6 +11,9 @@ import { LocationDetailsPage } from "./pages/public/LocationDetails";
 import { ServicesPage } from "./pages/public/Services";
 import { AboutPage } from "./pages/public/About";
 import { ContactPage } from "./pages/public/Contact";
+import { BookAppointmentPage } from "./pages/public/BookAppointment";
+import { BookReviewPage } from "./pages/public/BookReview";
+import { BookConfirmationPage } from "./pages/public/BookConfirmation";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { AdminAnalytics } from "./pages/admin/Analytics";
@@ -73,6 +76,9 @@ function App() {
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/book" element={<BookAppointmentPage />} />
+        <Route path="/book/review" element={<BookReviewPage />} />
+        <Route path="/book/confirmed/:appointmentId" element={<BookConfirmationPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

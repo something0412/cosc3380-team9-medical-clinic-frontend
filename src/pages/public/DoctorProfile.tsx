@@ -14,6 +14,7 @@ type ProfileResult = { id: string; status: "ready" | "missing" | "failed"; docto
 export function DoctorProfilePage() {
   const { id = "" } = useParams();
   const location = useLocation();
+  const portal = usePortalLink();
   const [result, setResult] = useState<ProfileResult | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -92,6 +93,12 @@ export function DoctorProfilePage() {
   // the API lists the primary specialty first
   const [main, ...others] = doctor.specialties;
 
+  // only doctors with a scheduled location can be booked, and a specialty is filled in
+  // only when the doctor has just one, otherwise the patient picks it on the booking page
+  const booking = new URLSearchParams({ doctor: String(doctor.doctorId) });
+  if (doctor.specialties.length === 1) booking.set("specialty", String(main.specialtyId));
+  const bookingPath = doctor.offices.length > 0 && !portal.isEmployee ? `/book?${booking}` : null;
+
   return (
     <>
       <section className={`${CONTAINER} pt-10 sm:pt-14`}>
@@ -102,6 +109,11 @@ export function DoctorProfilePage() {
             <h1 className="font-heading text-4xl font-semibold text-navy sm:text-5xl">{name}</h1>
             <p className="mt-2 text-xl text-slate-700">{main ? main.name : "Specialty not listed"}</p>
             {others.length > 0 && <p className="mt-1 text-slate-500">Also practices {others.map((s) => s.name).join(", ")}</p>}
+            {bookingPath && (
+              <Link to={bookingPath} className={`${PRIMARY_BUTTON} mt-5`}>
+                Book an Appointment
+              </Link>
+            )}
           </div>
         </div>
       </section>

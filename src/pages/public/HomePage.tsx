@@ -44,14 +44,14 @@ function Hero() {
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-slate-600">
             See one of our family or internal medicine physicians for checkups and everyday health concerns, or a
-            specialist for ongoing care. Start by finding a doctor or a clinic location.
+            specialist for ongoing care. Book an appointment online, or start by finding a doctor.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to="/find-a-doctor" className={PRIMARY_BUTTON}>
-              Find a Doctor
+            <Link to="/book" className={PRIMARY_BUTTON}>
+              Book an Appointment
             </Link>
-            <Link to="/locations" className={SECONDARY_BUTTON}>
-              Locations
+            <Link to="/find-a-doctor" className={SECONDARY_BUTTON}>
+              Find a Doctor
             </Link>
           </div>
         </div>

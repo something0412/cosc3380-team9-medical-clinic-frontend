@@ -26,8 +26,10 @@ export function PublicFooter() {
         </FooterColumn>
 
         <FooterColumn title="Patients">
+          {/* online booking is for patients, so employees don't get the link */}
+          {!portal.isEmployee && <FooterLink to="/book">Book an Appointment</FooterLink>}
           <FooterLink to={portal.to}>{portal.label}</FooterLink>
-          <FooterLink to={portal.appointmentsTo}>Appointments</FooterLink>
+          <FooterLink to={portal.appointmentsTo}>{portal.isEmployee ? "Appointments" : "My Appointments"}</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Clinic">

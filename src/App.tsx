@@ -54,11 +54,15 @@ import { DoctorVisit } from "./pages/doctor/Visit";
 import { LabDashboard } from "./pages/lab/Dashboard";
 import { LabOrders } from "./pages/lab/LabOrders";
 import { StaffDashboard } from "./pages/staff/Dashboard";
-import { StaffAppointment } from "./pages/staff/Appoinment";
-import { PatientCharts } from "./pages/staff/nursing/PatientCharts";
-import { RNPage } from "./pages/staff/nursing/RNPage";
-import { CRNAPage } from "./pages/staff/nursing/CRNAPage";
-import { NAPage } from "./pages/staff/nursing/NAPage";
+import { NurseTodayPatients } from "./pages/nurse/TodayPatients";
+import { NurseIntake } from "./pages/nurse/Intake";
+import { NursePatients } from "./pages/nurse/Patients";
+import { NursePatientChart } from "./pages/nurse/PatientChart";
+import { NurseSupplies } from "./pages/nurse/Supplies";
+import { ReceptionistAppointments } from "./pages/receptionist/Appointments";
+import { ReceptionistPatients } from "./pages/receptionist/Patients";
+import { ReceptionistPatientDetail } from "./pages/receptionist/PatientDetail";
+import { ReceptionistBilling } from "./pages/receptionist/Billing";
 
 import { PatientDashboard } from "./pages/patient/PatientDashboard";
 import { PatientForms } from "./pages/patient/PatientForms";
@@ -163,16 +167,24 @@ function App() {
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
 
-            {/* staff routes */}
+            {/* staff routes (nurses and receptionists) */}
             <Route path="/staff" element={<RoleLayout role="staff" />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<StaffDashboard />} />
-                <Route path="appointment" element={<StaffAppointment />} />
-                <Route path="charts" element={<PatientCharts />} />
-                <Route path="rn" element={<RNPage />} />
-                <Route path="crna" element={<CRNAPage />} />
-                <Route path="na" element={<NAPage />} />
                 <Route path="profile" element={<StaffProfile />} />
+
+                {/* nurse pages */}
+                <Route path="nurse/today" element={<NurseTodayPatients />} />
+                <Route path="nurse/today/:appointmentId" element={<NurseIntake />} />
+                <Route path="nurse/patients" element={<NursePatients />} />
+                <Route path="nurse/patients/:patientId" element={<NursePatientChart />} />
+                <Route path="nurse/supplies" element={<NurseSupplies />} />
+
+                {/* receptionist pages */}
+                <Route path="reception/appointments" element={<ReceptionistAppointments />} />
+                <Route path="reception/patients" element={<ReceptionistPatients />} />
+                <Route path="reception/patients/:patientId" element={<ReceptionistPatientDetail />} />
+                <Route path="reception/billing" element={<ReceptionistBilling />} />
             </Route>
 
             {/* lab technician routes */}

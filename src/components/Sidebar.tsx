@@ -32,16 +32,8 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
         { to: "/admin/patients", label: "Patients" },
         { to: "/admin/profile", label: "My Profile" },
     ],
-    staff: [
-        { to: "/staff/dashboard", label: "Dashboard" },
-        { to: "/staff/appointment", label: "Patient Appointments" },
-        // Nursing pages: one shared chart lookup + one tab per nurse type.
-        { to: "/staff/charts", label: "Patient Charts" },
-        { to: "/staff/rn", label: "RN Workspace" },
-        { to: "/staff/crna", label: "CRNA Workspace" },
-        { to: "/staff/na", label: "NA Workspace" },
-        { to: "/staff/profile", label: "My Profile" },
-    ],
+    // nurses and receptionists both log in as staff; their links are below
+    staff: [],
     lab: [
         { to: "/lab/dashboard", label: "Dashboard" },
         { to: "/lab/orders", label: "Lab Orders" },
@@ -49,9 +41,29 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
     ],
 };
 
+// staff sidebar links for each employee type
+const STAFF_LINKS: Record<string, { to: string; label: string }[]> = {
+    Nurse: [
+        { to: "/staff/dashboard", label: "Dashboard" },
+        { to: "/staff/nurse/today", label: "Today's Patients" },
+        { to: "/staff/nurse/patients", label: "Patients" },
+        { to: "/staff/nurse/supplies", label: "Supplies" },
+        { to: "/staff/profile", label: "My Profile" },
+    ],
+    Receptionist: [
+        { to: "/staff/dashboard", label: "Dashboard" },
+        { to: "/staff/reception/appointments", label: "Appointments" },
+        { to: "/staff/reception/patients", label: "Patients" },
+        { to: "/staff/reception/billing", label: "Billing" },
+        { to: "/staff/profile", label: "My Profile" },
+    ],
+};
+
 export function Sidebar({ role }: { role: Role }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const links = role === "staff" ? (STAFF_LINKS[user?.employeeType ?? ""] ?? []) : ROLE_LINKS[role];
+    const roleLabel = role === "staff" && user?.employeeType ? user.employeeType : role;
 
     function handleLogout() {
         logout();
@@ -66,13 +78,13 @@ export function Sidebar({ role }: { role: Role }) {
                 </span>
                 <p className="mt-0.5 text-xs text-gray-500 capitalize">
                     {user
-                        ? `${user.firstName} ${user.lastName} · ${role}`
-                        : role}
+                        ? `${user.firstName} ${user.lastName} · ${roleLabel}`
+                        : roleLabel}
                 </p>
             </div>
 
             <ul className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-                {ROLE_LINKS[role].map((link) => (
+                {links.map((link) => (
                     <li key={link.to}>
                         <NavLink
                             to={link.to}

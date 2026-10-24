@@ -15,12 +15,18 @@ interface Appointment {
 
 interface Doctor {
     doctorId: number;
-    doctorName: string;
+    firstName: string;
+    lastName: string;
+    specialties: { specialtyId: number; name: string }[];
 }
 
 interface TimeSlot {
     timeSlotId: number;
     startTime: string;
+    officeName: string;
+    specialtyId: number;
+    requiresReferral: boolean;
+    referralId: number | null;
 }
 
 function today() {
@@ -94,18 +100,19 @@ export function PatientAppointments() {
 
     //get the doctors when the page opens
     useEffect(() => {
-        if (!patientId) {
-            setLoadingDoctors(false);
-            return;
+        async function loadDoctors() {
+            if (!patientId) return;
+            try {
+                const response = await api.get<Doctor[]>("/api/public/doctors");
+                setDoctors(response.data);
+            } catch {
+                setBookingError("Could not load doctors");
+            } finally {
+                setLoadingDoctors(false);
+            }
         }
 
-        setLoadingDoctors(true);
-
-        api.get<Doctor[]>(`/api/patient/${patientId}/booking/doctors`)
-            .then(response => setDoctors(response.data))
-            .catch(() => setBookingError("Could not load doctors"))
-            .finally(() => setLoadingDoctors(false));
-
+        loadDoctors();
     }, [patientId]);
 
 
@@ -113,49 +120,56 @@ export function PatientAppointments() {
     useEffect(() => {
         let active = true;
 
-        setTimes([]);
-        setTimeSlotId("");
+        async function loadTimes() {
+            setChecking(true);
+            try {
+                const response = await api.get<TimeSlot[]>("/api/availability", {
+                    params: { doctorId, date }
+                });
+                if (active) setTimes(response.data);
+            } catch {
+                if (active) setBookingError("Could not check available times");
+            } finally {
+                if (active) setChecking(false);
+            }
+        }
 
         if (!patientId || !doctorId || !date) return;
-
-        setChecking(true);
-
-        api.get<TimeSlot[]>(`/api/patient/${patientId}/booking/slots`, {
-            params: { doctorId, date }
-        })
-            .then(response => {
-                if (active) setTimes(response.data);
-            })
-            .catch(() => {
-                if (active) setBookingError("Could not check available times");
-            })
-            .finally(() => {
-                if (active) setChecking(false);
-            });
+        loadTimes();
 
         return () => { active = false; };
 
     }, [patientId, doctorId, date, refresh]);
+
+    // specialists need an approved referral before any time can be booked
+    const needsReferral = times.length > 0 && times.every(t => t.requiresReferral && !t.referralId);
+    const openTimes = needsReferral ? [] : times;
+    const selectedDoctor = doctors.find(d => String(d.doctorId) === doctorId);
+    const selectedSlot = times.find(t => String(t.timeSlotId) === timeSlotId);
 
 
     //book the selected time and refresh the history
     async function bookAppointment(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (!patientId || !doctorId || !date || !timeSlotId) return;
+        const slot = selectedSlot;
+        if (!patientId || !doctorId || !date || !slot) return;
 
         setSaving(true);
         setBookingError("");
         setMessage("");
 
         try {
-            await api.post(`/api/patient/${patientId}/booking`, {
+            await api.post("/api/appointments", {
                 doctorId: Number(doctorId),
-                appointmentDate: date,
-                timeSlotId: Number(timeSlotId)
+                specialtyId: slot.specialtyId,
+                date,
+                timeSlotId: slot.timeSlotId,
+                referralId: slot.referralId
             });
 
             setMessage("Your appointment was booked!");
+            setTimeSlotId("");
 
             setRefresh(n => n + 1);
 
@@ -213,6 +227,8 @@ export function PatientAppointments() {
                             required
                             onChange={e => {
                                 setDoctorId(e.target.value);
+                                setTimes([]);
+                                setTimeSlotId("");
                                 setMessage("");
                                 setBookingError("");
                             }}
@@ -221,7 +237,8 @@ export function PatientAppointments() {
 
                             {doctors.map(d => (
                                 <option key={d.doctorId} value={d.doctorId}>
-                                    {d.doctorName}
+                                    Dr. {d.firstName} {d.lastName}
+                                    {d.specialties.length > 0 && ` (${d.specialties.map(s => s.name).join(", ")})`}
                                 </option>
                             ))}
                         </select>
@@ -250,6 +267,8 @@ export function PatientAppointments() {
                             value={date}
                             onChange={e => {
                                 setDate(e.target.value);
+                                setTimes([]);
+                                setTimeSlotId("");
                                 setMessage("");
                                 setBookingError("");
                             }}
@@ -275,8 +294,14 @@ export function PatientAppointments() {
                             </p>
                         )}
 
+                        {!checking && needsReferral && (
+                            <p className="text-sm text-amber-700">
+                                This specialist needs an approved referral from your doctor before you can book.
+                            </p>
+                        )}
+
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {times.map(t => (
+                            {openTimes.map(t => (
                                 <button
                                     key={t.timeSlotId}
                                     type="button"
@@ -323,7 +348,7 @@ export function PatientAppointments() {
 
                     <p className="mt-4 text-sm text-slate-600">Doctor</p>
                     <p className="font-medium">
-                        {doctors.find(d => String(d.doctorId) === doctorId)?.doctorName || "Not selected"}
+                        {selectedDoctor ? `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}` : "Not selected"}
                     </p>
 
                     <p className="mt-4 text-sm text-slate-600">Date</p>
@@ -333,9 +358,12 @@ export function PatientAppointments() {
 
                     <p className="mt-4 text-sm text-slate-600">Time</p>
                     <p className="font-medium">
-                        {showTime(
-                            times.find(t => String(t.timeSlotId) === timeSlotId)?.startTime ?? null
-                        )}
+                        {showTime(selectedSlot?.startTime ?? null)}
+                    </p>
+
+                    <p className="mt-4 text-sm text-slate-600">Office</p>
+                    <p className="font-medium">
+                        {selectedSlot?.officeName || "Not selected"}
                     </p>
                 </div>
             </div>

@@ -245,7 +245,7 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     try {
       const res = await api.post<StaffAuthResponse>("/api/auth/staff/login", { employeeId: id, password });
       const staff = res.data;
-      onLogin({ role: staff.role, id: staff.employeeId, firstName: staff.firstName, lastName: staff.lastName });
+      onLogin({ role: staff.role, id: staff.employeeId, firstName: staff.firstName, lastName: staff.lastName, employeeType: staff.employeeType });
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {

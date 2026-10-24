@@ -126,7 +126,7 @@ export interface StaffAuthResponse {
   firstName: string;
   lastName: string;
   employeeType: string;
-  role: "doctor" | "admin" | "staff";
+  role: "doctor" | "admin" | "staff" | "lab";
 }
 
 export interface PatientSignupRequest {

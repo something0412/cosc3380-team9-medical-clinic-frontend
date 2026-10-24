@@ -35,7 +35,6 @@ export const EYEBROW = "text-xs font-semibold uppercase tracking-[0.14em] text-t
 // existing appointment pages; other roles use their dashboard
 const APPOINTMENT_PAGES: Partial<Record<Role, string>> = {
   patient: "/patient/appointments",
-  staff: "/staff/appointment",
 };
 
 // portal and appointment links based on who is signed in

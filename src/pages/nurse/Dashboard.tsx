@@ -1,34 +1,40 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import { Section } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 
 interface DashboardData {
   todayAppointments: number;
+  notArrived: number;
+  checkedIn: number;
+  completed: number;
   waitingForVitals: number;
-  criticalToday: number;
-  lowStock: number;
   waitingList: {
     appointmentId: number;
     patientName: string;
-    time: string;
+    startTime: string;
     doctorName: string;
+    checkedInAt: string | null;
   }[];
 }
 
 export function NurseDashboard() {
   const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [lowStock, setLowStock] = useState(0);
   const [error, setError] = useState("");
 
-  // load dashboard
+  // load dashboard and count low stock supplies
   useEffect(() => {
     async function loadDashboard() {
       try {
         const res = await api.get<DashboardData>("/api/nurse/dashboard");
         setData(res.data);
+        const suppliesRes = await api.get<{ lowStock: boolean }[]>("/api/nurse/supplies");
+        setLowStock(suppliesRes.data.filter((s) => s.lowStock).length);
       } catch (err) {
         setError(apiErrorMessage(err));
       }
@@ -37,46 +43,36 @@ export function NurseDashboard() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hello, {user?.firstName}</h1>
-        <p className="mt-1 text-gray-600">Today's work at your office.</p>
-      </div>
-
-      {error && <p className="text-red-600">{error}</p>}
-      {!data && !error && <p>Loading dashboard...</p>}
+    <PortalPage eyebrow="Nursing" title={`Hello, ${user?.firstName ?? ""}`} description="Today's work at your office.">
+      <PageError message={error} />
+      {!data && !error && <p className="text-slate-500">Loading dashboard...</p>}
 
       {data && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Appointments Today" value={String(data.todayAppointments)} note="At your office" />
-            <StatCard label="Waiting for Vitals" value={String(data.waitingForVitals)} />
-            <StatCard label="Critical Vitals Today" value={String(data.criticalToday)} />
-            <StatCard label="Low Stock Supplies" value={String(data.lowStock)} note="At or below reorder level" />
+            <StatCard label="Appointments Today" value={String(data.todayAppointments)} note={`${data.completed} completed`} />
+            <StatCard label="Not Arrived Yet" value={String(data.notArrived)} />
+            <StatCard label="Waiting for Vitals" value={String(data.waitingForVitals)} note={`${data.checkedIn} checked in`} />
+            <StatCard label="Low Stock Supplies" value={String(lowStock)} note="At or below reorder level" />
           </div>
-
-          {data.criticalToday > 0 && (
-            <p className="rounded-lg border-2 border-red-500 bg-red-50 p-4 text-sm font-medium text-red-900">
-              🚨 {data.criticalToday} vitals reading(s) today were critical. Let the doctor know.
-            </p>
-          )}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Section
               title="Waiting for Vitals"
-              action={<Link to="/staff/nurse/today" className="text-sm text-blue-600 hover:underline">View all</Link>}
+              action={<Link to="/staff/nurse/today" className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">View all</Link>}
             >
               {data.waitingList.length === 0 ? (
-                <p className="text-gray-500">Nobody is waiting for vitals.</p>
+                <p className="text-slate-500">Nobody checked in is waiting for vitals.</p>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-slate-100">
                   {data.waitingList.map((a) => (
                     <li key={a.appointmentId} className="flex justify-between py-2 text-sm">
-                      <Link to={`/staff/nurse/today/${a.appointmentId}`} className="font-medium text-blue-600 hover:underline">
+                      <Link to={`/staff/nurse/today/${a.appointmentId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
                         {a.patientName}
                       </Link>
-                      <span className="text-gray-600">
-                        {a.time} · Dr. {a.doctorName}
+                      <span className="text-slate-600">
+                        {a.startTime} · Dr. {a.doctorName}
+                        {a.checkedInAt && ` · arrived ${a.checkedInAt.slice(11)}`}
                       </span>
                     </li>
                   ))}
@@ -86,19 +82,17 @@ export function NurseDashboard() {
 
             <Section
               title="Supplies"
-              action={<Link to="/staff/nurse/supplies" className="text-sm text-blue-600 hover:underline">Open supplies</Link>}
+              action={<Link to="/staff/nurse/supplies" className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">Open supplies</Link>}
             >
-              {data.lowStock === 0 ? (
-                <p className="text-gray-500">All supplies are stocked.</p>
+              {lowStock === 0 ? (
+                <p className="text-slate-500">All supplies are stocked.</p>
               ) : (
-                <p className="text-sm text-yellow-900">
-                  {data.lowStock} supply item(s) are running low. Check the supplies page to order more.
-                </p>
+                <p className="text-sm text-amber-900">{lowStock} supply item(s) are running low. Check the supplies page to order more.</p>
               )}
             </Section>
           </div>
         </>
       )}
-    </div>
+    </PortalPage>
   );
 }

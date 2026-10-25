@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
+import { ADMIN_SECONDARY_BUTTON } from "../../components/admin/styles";
+import { Field } from "../../components/FormControls";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import { StatusBadge } from "../../components/ProfileUI";
 
 interface Appointment {
   appointmentId: number;
   patientId: number;
   patientName: string;
-  time: string;
+  date: string;
+  startTime: string;
   doctorName: string;
   specialty: string;
   status: string;
-  hasVitals: boolean;
+  checkedIn: boolean;
+  checkedInAt: string | null;
 }
 
 export function NurseTodayPatients() {
@@ -38,83 +43,71 @@ export function NurseTodayPatients() {
   }, [date]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Today's Patients</h1>
-        <p className="mt-1 text-gray-600">Appointments at your office and their vitals.</p>
-      </div>
-
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium text-gray-700">Day</span>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-          />
-        </label>
+    <PortalPage
+      eyebrow="Nursing"
+      title="Today's Patients"
+      description="Appointments at your office. Vitals and notes can be recorded once the front desk checks the patient in."
+    >
+      <div className="flex flex-wrap items-end gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="w-48">
+          <Field label="Day" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
         {date && (
-          <button
-            type="button"
-            onClick={() => setDate("")}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
+          <button type="button" onClick={() => setDate("")} className={ADMIN_SECONDARY_BUTTON}>
             Back to today
           </button>
         )}
       </div>
 
-      {error && <p className="text-red-600">{error}</p>}
+      <PageError message={error} />
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="w-full whitespace-nowrap text-left text-sm">
-          <thead className="bg-gray-50">
-            <tr className="border-b text-gray-500">
-              <th className="p-3 font-medium">Time</th>
-              <th className="p-3 font-medium">Patient</th>
-              <th className="p-3 font-medium">Doctor</th>
-              <th className="p-3 font-medium">Specialty</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium">Vitals</th>
-              <th className="p-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={7} className="p-3 text-gray-500">Loading appointments...</td></tr>
-            ) : appointments.length === 0 ? (
-              <tr><td colSpan={7} className="p-3 text-gray-500">No appointments on this day.</td></tr>
-            ) : (
-              appointments.map((a) => (
-                <tr key={a.appointmentId} className="border-b last:border-0">
-                  <td className="p-3">{a.time}</td>
-                  <td className="p-3">
-                    <Link to={`/staff/nurse/today/${a.appointmentId}`} className="font-medium text-blue-600 hover:underline">
-                      {a.patientName}
-                    </Link>
-                  </td>
-                  <td className="p-3">Dr. {a.doctorName}</td>
-                  <td className="p-3">{a.specialty}</td>
-                  <td className="p-3"><StatusBadge status={a.status} /></td>
-                  <td className="p-3">
-                    {a.hasVitals ? (
-                      <span className="text-green-700">Done</span>
-                    ) : (
-                      <span className="text-yellow-700">Not yet</span>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <Link to={`/staff/nurse/today/${a.appointmentId}`} className="text-blue-600 hover:underline">
-                      Open intake
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Time</th>
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Doctor</th>
+                <th className="px-4 py-3">Specialty</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">Loading appointments...</td></tr>
+              ) : appointments.length === 0 ? (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-slate-500">No appointments on this day.</td></tr>
+              ) : (
+                appointments.map((a) => (
+                  <tr key={a.appointmentId} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">{a.startTime}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <Link to={`/staff/nurse/today/${a.appointmentId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
+                        {a.patientName}
+                      </Link>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">Dr. {a.doctorName}</td>
+                    <td className="px-4 py-3 text-slate-700">{a.specialty}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        to={`/staff/nurse/today/${a.appointmentId}`}
+                        className="whitespace-nowrap font-medium text-navy hover:text-teal-700 hover:underline"
+                      >
+                        Open intake
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </PortalPage>
   );
 }

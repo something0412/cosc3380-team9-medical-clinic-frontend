@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api, apiErrorMessage } from "../../api";
+import { AdminPage } from "../../components/admin/AdminPage";
 import { SelectField } from "../../components/FormControls";
+import { PageError } from "../../components/PortalPage";
 import { StatusBadge, TextButton } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
@@ -60,12 +62,7 @@ export function AdminPatients() {
     }
 
     return (
-        <div className="mx-auto max-w-6xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Patients</h1>
-                <p className="mt-1 text-gray-600">Manage patient accounts.</p>
-            </div>
-
+        <AdminPage title="Patients" description="Activate or deactivate patient accounts.">
             <div className="w-48">
                 <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
                     <option value="active">Active</option>
@@ -74,12 +71,12 @@ export function AdminPatients() {
                 </SelectField>
             </div>
 
-            {error && <p className="text-red-600">{error}</p>}
+            <PageError message={error} />
 
-            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table className="w-full whitespace-nowrap text-left text-sm">
-                    <thead className="bg-gray-50">
-                        <tr className="border-b text-gray-500">
+                    <thead className="bg-slate-50">
+                        <tr className="border-b text-slate-500">
                             <th className="p-3 font-medium">Name</th>
                             <th className="p-3 font-medium">Patient ID</th>
                             <th className="p-3 font-medium">Joined</th>
@@ -91,13 +88,13 @@ export function AdminPatients() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={7} className="p-3 text-gray-500">Loading patients...</td></tr>
+                            <tr><td colSpan={7} className="p-3 text-slate-500">Loading patients...</td></tr>
                         ) : patients.length === 0 ? (
-                            <tr><td colSpan={7} className="p-3 text-gray-500">No patients match this filter.</td></tr>
+                            <tr><td colSpan={7} className="p-3 text-slate-500">No patients match this filter.</td></tr>
                         ) : (
                             patients.map((p) => (
                                 <tr key={p.patientId} className="border-b last:border-0">
-                                    <td className="p-3 font-medium text-gray-900">{p.lastName}, {p.firstName}</td>
+                                    <td className="p-3 font-medium text-slate-900">{p.lastName}, {p.firstName}</td>
                                     <td className="p-3">{formatId(p.patientId)}</td>
                                     <td className="p-3">{p.joinedDate ?? ""}</td>
                                     <td className="p-3">{p.phone}</td>
@@ -114,6 +111,6 @@ export function AdminPatients() {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </AdminPage>
     );
 }

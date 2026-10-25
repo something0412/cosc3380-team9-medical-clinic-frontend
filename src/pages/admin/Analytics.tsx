@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, apiErrorMessage } from "../../api";
+import { AdminPage } from "../../components/admin/AdminPage";
 import { BarChart } from "../../components/BarChart";
 import { Section, StatusBadge } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
@@ -18,20 +19,16 @@ export function AdminAnalytics() {
     const [tab, setTab] = useState<Tab>("appointments");
 
     return (
-        <div className="mx-auto max-w-6xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-                <p className="mt-1 text-gray-600">Overview of clinic analytics.</p>
-            </div>
+        <AdminPage title="Analytics" description="Appointment activity and billing collections across the clinic.">
 
-            <div className="flex gap-6 border-b border-gray-200">
+            <div className="flex gap-6 border-b border-slate-200">
                 {([["appointments", "Appointment Activity"], ["billing", "Billing & Collections"]] as [Tab, string][]).map(([key, label]) => (
                     <button
                         key={key}
                         type="button"
                         onClick={() => setTab(key)}
                         className={`-mb-px border-b-2 pb-3 text-sm font-medium ${
-                            tab === key ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
+                            tab === key ? "border-navy text-navy" : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                     >
                         {label}
@@ -40,7 +37,7 @@ export function AdminAnalytics() {
             </div>
 
             {tab === "appointments" ? <AppointmentActivity /> : <BillingCollections />}
-        </div>
+        </AdminPage>
     );
 }
 
@@ -116,7 +113,7 @@ function AppointmentActivity() {
             </div>
 
             <Section title="Booking Channel">
-                <div className="flex h-4 overflow-hidden rounded-full bg-gray-100">
+                <div className="flex h-4 overflow-hidden rounded-full bg-slate-100">
                     {channels.map((c, i) => (
                         <div
                             key={c.name}
@@ -131,9 +128,9 @@ function AppointmentActivity() {
                         <div key={c.name} className="flex items-start gap-3">
                             <span className="mt-1.5 h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: CHART_COLORS[i] }} />
                             <div>
-                                <p className="text-sm text-gray-500">{c.name}</p>
-                                <p className="text-2xl font-bold text-gray-900">{percent(c.count, data.total)}</p>
-                                <p className="text-xs text-gray-400">{c.count} appointments</p>
+                                <p className="text-sm text-slate-500">{c.name}</p>
+                                <p className="text-2xl font-bold text-slate-900">{percent(c.count, data.total)}</p>
+                                <p className="text-xs text-slate-400">{c.count} appointments</p>
                             </div>
                         </div>
                     ))}
@@ -152,7 +149,7 @@ function AppointmentActivity() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead>
-                            <tr className="border-b text-gray-500">
+                            <tr className="border-b text-slate-500">
                                 <th className="p-2 font-medium">Specialty</th>
                                 <th className="p-2 text-right font-medium">Completed Visits</th>
                                 <th className="p-2 text-right font-medium">Scheduled</th>
@@ -164,7 +161,7 @@ function AppointmentActivity() {
                         <tbody>
                             {data.bySpecialty.map((s) => (
                                 <tr key={s.specialty} className="border-b">
-                                    <td className="p-2 font-medium text-gray-900">{s.specialty}</td>
+                                    <td className="p-2 font-medium text-slate-900">{s.specialty}</td>
                                     <td className="p-2 text-right">{s.completed}</td>
                                     <td className="p-2 text-right">{s.scheduled}</td>
                                     <td className="p-2 text-right">{s.cancelled}</td>
@@ -174,7 +171,7 @@ function AppointmentActivity() {
                             ))}
                         </tbody>
                         <tfoot>
-                            <tr className="font-semibold text-gray-900">
+                            <tr className="font-semibold text-slate-900">
                                 <td className="p-2">Total</td>
                                 <td className="p-2 text-right">{data.completed}</td>
                                 <td className="p-2 text-right">{data.scheduled}</td>
@@ -260,7 +257,7 @@ function BillingCollections() {
                     <select
                         value={year}
                         onChange={(e) => setYear(Number(e.target.value))}
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm"
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
                         aria-label="Year"
                     >
                         {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
@@ -283,12 +280,12 @@ function BillingCollections() {
                         {data.byPaymentType.map((t) => (
                             <li key={t.paymentType}>
                                 <div className="mb-1 flex justify-between text-sm">
-                                    <span className="text-gray-700">{t.paymentType}</span>
-                                    <span className="font-medium text-gray-900">
-                                        {money(t.amount)} <span className="font-normal text-gray-400">· {t.payments} payments</span>
+                                    <span className="text-slate-700">{t.paymentType}</span>
+                                    <span className="font-medium text-slate-900">
+                                        {money(t.amount)} <span className="font-normal text-slate-400">· {t.payments} payments</span>
                                     </span>
                                 </div>
-                                <div className="h-2 rounded-full bg-gray-100">
+                                <div className="h-2 rounded-full bg-slate-100">
                                     <div className="h-2 rounded-full" style={{ width: `${(t.amount / maxTypeAmount) * 100}%`, backgroundColor: CHART_COLORS[0] }} />
                                 </div>
                             </li>
@@ -305,8 +302,8 @@ function BillingCollections() {
                         ].map(([status, count]) => (
                             <li key={status} className="flex items-center justify-between">
                                 <StatusBadge status={String(status)} />
-                                <span className="text-sm text-gray-700">
-                                    <span className="font-medium text-gray-900">{count}</span> ({percent(Number(count), data.invoiceCount)})
+                                <span className="text-sm text-slate-700">
+                                    <span className="font-medium text-slate-900">{count}</span> ({percent(Number(count), data.invoiceCount)})
                                 </span>
                             </li>
                         ))}
@@ -316,12 +313,12 @@ function BillingCollections() {
 
             <Section title="Unpaid Invoices">
                 {data.unpaidInvoices.length === 0 ? (
-                    <p className="text-gray-500">No unpaid invoices.</p>
+                    <p className="text-slate-500">No unpaid invoices.</p>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <thead>
-                                <tr className="border-b text-gray-500">
+                                <tr className="border-b text-slate-500">
                                     <th className="p-2 font-medium">Invoice</th>
                                     <th className="p-2 font-medium">Patient</th>
                                     <th className="p-2 font-medium">Issued</th>
@@ -334,7 +331,7 @@ function BillingCollections() {
                                 {data.unpaidInvoices.map((i) => (
                                     <tr key={i.invoiceId} className="border-b">
                                         <td className="p-2">#{i.invoiceId}</td>
-                                        <td className="p-2 font-medium text-gray-900">{i.patientName}</td>
+                                        <td className="p-2 font-medium text-slate-900">{i.patientName}</td>
                                         <td className="p-2">{i.issueDate}</td>
                                         <td className="p-2 text-right">{money(i.amount)}</td>
                                         <td className="p-2 text-right font-medium">{money(i.balance)}</td>

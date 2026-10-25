@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, apiErrorMessage } from "../../api";
+import { AdminPage } from "../../components/admin/AdminPage";
+import { PageError } from "../../components/PortalPage";
 import { BarChart } from "../../components/BarChart";
 import { Section } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
@@ -49,14 +51,9 @@ export function AdminDashboard() {
     const totalSignups = data?.signupsByMonth.reduce((sum, m) => sum + m.signups, 0) ?? 0;
 
     return (
-        <div className="mx-auto max-w-6xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                <p className="mt-1 text-gray-600">Overview of clinic activity.</p>
-            </div>
-
-            {loading && <p>Loading dashboard...</p>}
-            {error && <p className="text-red-600">{error}</p>}
+        <AdminPage title="Dashboard" description="Overview of clinic activity.">
+            {loading && <p className="text-slate-500">Loading dashboard...</p>}
+            <PageError message={error} />
 
             {data && (
                 <>
@@ -73,14 +70,14 @@ export function AdminDashboard() {
                             <select
                                 value={year}
                                 onChange={(e) => setYear(Number(e.target.value))}
-                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm"
+                                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
                                 aria-label="Year"
                             >
                                 {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
                             </select>
                         }
                     >
-                        <p className="mb-4 text-sm text-gray-500">{totalSignups} new patient accounts this year</p>
+                        <p className="mb-4 text-sm text-slate-500">{totalSignups} new patient accounts this year</p>
                         <BarChart
                             labels={MONTHS}
                             series={[{ name: "Sign-ups", values: data.signupsByMonth.map((m) => m.signups) }]}
@@ -88,6 +85,6 @@ export function AdminDashboard() {
                     </Section>
                 </>
             )}
-        </div>
+        </AdminPage>
     );
 }

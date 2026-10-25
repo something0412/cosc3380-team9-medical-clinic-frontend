@@ -2,12 +2,13 @@ import { useState } from "react";
 import type { ButtonHTMLAttributes, FormEvent, ReactNode } from "react";
 import { apiErrorMessage } from "../api";
 import { ErrorText, Field } from "./FormControls";
+import { ADMIN_DANGER_BUTTON, ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "./admin/styles";
 
 export function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-gray-200 bg-white p-5">
+    <section className="rounded-lg border border-slate-200 bg-white p-5">
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-navy">{title}</h3>
         {action}
       </div>
       {children}
@@ -22,31 +23,47 @@ export function InfoGrid({ children }: { children: ReactNode }) {
 export function InfoItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
-      <dt className="text-sm text-gray-500">{label}</dt>
-      <dd className="font-medium text-gray-900">{value || "Not provided"}</dd>
+      <dt className="text-sm text-slate-500">{label}</dt>
+      <dd className="font-medium text-slate-900">{value || "Not provided"}</dd>
     </div>
   );
 }
 
+// same badge look as the admin pages
+const GREEN = "bg-green-50 text-green-700 ring-green-600/20";
+const AMBER = "bg-amber-50 text-amber-700 ring-amber-600/20";
+const RED = "bg-red-50 text-red-700 ring-red-600/20";
+const BLUE = "bg-sky-50 text-sky-700 ring-sky-600/20";
+const GRAY = "bg-slate-100 text-slate-600 ring-slate-500/20";
+
 const STATUS_COLORS: Record<string, string> = {
-  Active: "bg-green-100 text-green-800",
-  Verified: "bg-green-100 text-green-800",
-  Pending: "bg-yellow-100 text-yellow-800",
-  Expired: "bg-red-100 text-red-800",
-  Denied: "bg-red-100 text-red-800",
-  Revoked: "bg-gray-200 text-gray-700",
-  Completed: "bg-green-100 text-green-800",
-  Approved: "bg-green-100 text-green-800",
-  Scheduled: "bg-blue-100 text-blue-800",
-  Ordered: "bg-yellow-100 text-yellow-800",
-  InProgress: "bg-blue-100 text-blue-800",
-  Cancelled: "bg-gray-200 text-gray-700",
-  "No Show": "bg-red-100 text-red-800",
+  Active: GREEN,
+  Verified: GREEN,
+  Completed: GREEN,
+  Approved: GREEN,
+  Paid: GREEN,
+  Received: GREEN,
+  Pending: AMBER,
+  Ordered: AMBER,
+  Requested: AMBER,
+  "Refund Requested": AMBER,
+  Overdue: RED,
+  Expired: RED,
+  Denied: RED,
+  "No Show": RED,
+  Refunded: GRAY,
+  Void: GRAY,
+  Revoked: GRAY,
+  Cancelled: GRAY,
+  Inactive: GRAY,
+  Scheduled: BLUE,
+  InProgress: BLUE,
+  "Checked In": BLUE,
 };
 
 export function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status] ?? "bg-gray-100 text-gray-700"}`}>
+    <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${STATUS_COLORS[status] ?? GRAY}`}>
       {status}
     </span>
   );
@@ -55,23 +72,15 @@ export function StatusBadge({ status }: { status: string }) {
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
 
 export function PrimaryButton({ className = "", ...props }: ButtonProps) {
-  return (
-    <button
-      type="submit"
-      {...props}
-      className={`rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 ${className}`}
-    />
-  );
+  return <button type="submit" {...props} className={`${ADMIN_PRIMARY_BUTTON} ${className}`} />;
 }
 
 export function SecondaryButton({ className = "", ...props }: ButtonProps) {
-  return (
-    <button
-      type="button"
-      {...props}
-      className={`rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60 ${className}`}
-    />
-  );
+  return <button type="button" {...props} className={`${ADMIN_SECONDARY_BUTTON} disabled:cursor-not-allowed disabled:opacity-60 ${className}`} />;
+}
+
+export function DangerButton({ className = "", ...props }: ButtonProps) {
+  return <button type="button" {...props} className={`${ADMIN_DANGER_BUTTON} ${className}`} />;
 }
 
 export function TextButton({ danger = false, className = "", ...props }: ButtonProps & { danger?: boolean }) {
@@ -79,7 +88,7 @@ export function TextButton({ danger = false, className = "", ...props }: ButtonP
     <button
       type="button"
       {...props}
-      className={`text-sm font-medium ${danger ? "text-red-600 hover:text-red-700" : "text-blue-600 hover:text-blue-700"} disabled:opacity-60 ${className}`}
+      className={`text-sm font-medium ${danger ? "text-red-600 hover:text-red-700" : "text-navy hover:text-teal-700"} disabled:opacity-60 ${className}`}
     />
   );
 }

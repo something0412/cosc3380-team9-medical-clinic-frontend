@@ -16,6 +16,9 @@ export interface AvailableSlot {
   endTime: string;
   // only the signed in search includes the referral that would be used
   referralId?: number | null;
+  // with includeTaken, taken times come back with available false and why (Booked, Patient booked, Past)
+  available?: boolean;
+  unavailableReason?: string | null;
 }
 
 // what identifies a chosen time, since the office follows from the doctor's schedule that day
@@ -31,6 +34,8 @@ export interface AvailabilitySearch {
   days: number;
   doctorId?: number;
   officeId?: number;
+  // also send taken times so the picker can gray them out
+  includeTaken?: boolean;
 }
 
 // what POST /api/appointments takes from a patient, since the session says who the patient is

@@ -26,8 +26,14 @@ const WEEK_BUTTON = `${TEXT_LINK} text-sm disabled:cursor-not-allowed disabled:t
 
 // a row of days with their open times, then the times for one day grouped by doctor and location
 export function TimeSlotPicker({ days, slots, viewedDay, onViewDay, selected, onSelect, onPreviousWeek, onNextWeek, message }: TimeSlotPickerProps) {
+  // open times per day, and all times per day (taken ones are shown grayed out)
   const counts = new Map<string, number>();
-  for (const slot of slots ?? []) counts.set(slot.date, (counts.get(slot.date) ?? 0) + 1);
+  const totals = new Map<string, number>();
+  for (const slot of slots ?? []) {
+    totals.set(slot.date, (totals.get(slot.date) ?? 0) + 1);
+    if (slot.available !== false) counts.set(slot.date, (counts.get(slot.date) ?? 0) + 1);
+  }
+  const openCount = (slots ?? []).filter((slot) => slot.available !== false).length;
   const daySlots = (slots ?? []).filter((slot) => slot.date === viewedDay);
 
   return (
@@ -50,20 +56,21 @@ export function TimeSlotPicker({ days, slots, viewedDay, onViewDay, selected, on
       </div>
 
       <p className="sr-only" aria-live="polite">
-        {message ? "" : slots === null ? "Loading open times" : `${slots.length} open ${slots.length === 1 ? "time" : "times"} this week`}
+        {message ? "" : slots === null ? "Loading open times" : `${openCount} open ${openCount === 1 ? "time" : "times"} this week`}
       </p>
 
       <div role="group" aria-label="Days" className="mt-5 grid grid-cols-7 border-b border-slate-200">
         {days.map((date) => {
           const count = counts.get(date) ?? 0;
+          const total = totals.get(date) ?? 0;
           const viewed = date === viewedDay;
-          const summary = slots === null ? "" : count === 0 ? "No times" : `${count} ${count === 1 ? "time" : "times"}`;
+          const summary = slots === null ? "" : total === 0 ? "No times" : count === 0 ? "Fully booked" : `${count} ${count === 1 ? "time" : "times"}`;
           return (
             <button
               key={date}
               type="button"
               onClick={() => onViewDay(date)}
-              disabled={count === 0}
+              disabled={total === 0}
               aria-pressed={viewed}
               aria-label={`${formatDate(date, { weekday: "long", month: "long", day: "numeric" })}, ${summary || "loading"}`}
               className={`-mb-px rounded-t border-b-2 px-1 pt-1 pb-3 text-center transition-colors disabled:cursor-default ${FOCUS} ${
@@ -118,7 +125,17 @@ function DayTimes({ date, slots, selected, onSelect }: { date: string; slots: Av
               <p className="text-sm text-slate-600">{group.officeName}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {group.slots.map((slot) => (
+              {group.slots.map((slot) =>
+                slot.available === false ? (
+                  // taken times stay in place, grayed out, so it's clear why they can't be picked
+                  <span
+                    key={slot.timeSlotId}
+                    aria-label={`${formatTime(slot.startTime)} with Dr. ${slot.doctorName}, not available (${slot.unavailableReason ?? "taken"})`}
+                    className="inline-flex min-w-[6.5rem] cursor-not-allowed justify-center rounded-md border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-400"
+                  >
+                    {formatTime(slot.startTime)}
+                  </span>
+                ) : (
                 <label key={slot.timeSlotId}>
                   <input
                     type="radio"
@@ -132,7 +149,8 @@ function DayTimes({ date, slots, selected, onSelect }: { date: string; slots: Av
                     {formatTime(slot.startTime)}
                   </span>
                 </label>
-              ))}
+                )
+              )}
             </div>
           </li>
         ))}

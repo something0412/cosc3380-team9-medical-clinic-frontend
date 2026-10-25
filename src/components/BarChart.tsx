@@ -20,7 +20,7 @@ export function BarChart({ labels, series, formatValue = (v) => String(v), heigh
   return (
     <div>
       {series.length > 1 && (
-        <div className="mb-3 flex flex-wrap gap-4 text-sm text-gray-600">
+        <div className="mb-3 flex flex-wrap gap-4 text-sm text-slate-600">
           {series.map((s, i) => (
             <span key={s.name} className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: CHART_COLORS[i] }} />
@@ -31,7 +31,7 @@ export function BarChart({ labels, series, formatValue = (v) => String(v), heigh
       )}
 
       <div className="flex gap-2">
-        <div className="flex flex-col justify-between pb-6 text-right text-xs text-gray-400" style={{ height }}>
+        <div className="flex flex-col justify-between pb-6 text-right text-xs text-slate-400" style={{ height }}>
           {ticks.map((t, i) => (
             <span key={i} className="-translate-y-1/2 leading-none">{formatValue(Math.round(t))}</span>
           ))}
@@ -40,7 +40,7 @@ export function BarChart({ labels, series, formatValue = (v) => String(v), heigh
         <div className="relative flex-1">
           <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col justify-between" style={{ height: height - 24 }}>
             {ticks.map((_, i) => (
-              <div key={i} className={`border-t ${i === ticks.length - 1 ? "border-gray-300" : "border-gray-100"}`} />
+              <div key={i} className={`border-t ${i === ticks.length - 1 ? "border-slate-300" : "border-slate-100"}`} />
             ))}
           </div>
 
@@ -56,16 +56,16 @@ export function BarChart({ labels, series, formatValue = (v) => String(v), heigh
                       aria-label={`${label} ${s.name}: ${formatValue(s.values[li])}`}
                     >
                       {showValues && (
-                        <span className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 text-xs font-medium text-gray-700">
+                        <span className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 text-xs font-medium text-slate-700">
                           {formatValue(s.values[li])}
                         </span>
                       )}
                     </div>
                   ))}
                 </div>
-                <span className="mt-1 h-5 text-xs text-gray-500">{label}</span>
+                <span className="mt-1 h-5 text-xs text-slate-500">{label}</span>
 
-                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block">
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block">
                   <p className="font-medium">{label}</p>
                   {series.map((s, si) => (
                     <p key={s.name} className="flex items-center gap-2">

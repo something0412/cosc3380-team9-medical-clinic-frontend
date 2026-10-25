@@ -3,18 +3,19 @@ import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import { FormActions, PrimaryButton, SecondaryButton, Section, StatusBadge, TextButton } from "../../components/ProfileUI";
 
 interface OfficeSupply {
   officeSupplyId: number;
   supplyId: number;
   name: string;
-  type: string;
+  supplyType: string;
   quantityOnHand: number;
   reorderThreshold: number;
   expirationDate: string | null;
-  isLow: boolean;
-  expiresSoon: boolean;
+  lowStock: boolean;
+  expiringSoon: boolean;
   onOrder: number;
 }
 
@@ -85,27 +86,24 @@ export function NurseSupplies() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Supplies</h1>
-          <p className="mt-1 text-gray-600">Stock and supply orders for your office.</p>
-        </div>
-        <PrimaryButton type="button" onClick={() => openOrderForm(null)}>New Order</PrimaryButton>
-      </div>
-
-      {error && <p className="text-red-600">{error}</p>}
+    <PortalPage
+      eyebrow="Nursing"
+      title="Supplies"
+      description="Stock and supply orders for your office."
+      actions={<PrimaryButton type="button" onClick={() => openOrderForm(null)}>New Order</PrimaryButton>}
+    >
+      <PageError message={error} />
 
       <Section title="Stock">
         {loading ? (
-          <p className="text-gray-500">Loading supplies...</p>
+          <p className="text-slate-500">Loading supplies...</p>
         ) : supplies.length === 0 ? (
-          <p className="text-gray-500">Your office has no supplies on file.</p>
+          <p className="text-slate-500">Your office has no supplies on file.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full whitespace-nowrap text-left text-sm">
               <thead>
-                <tr className="border-b text-gray-500">
+                <tr className="border-b text-slate-500">
                   <th className="p-2 font-medium">Supply</th>
                   <th className="p-2 font-medium">Type</th>
                   <th className="p-2 font-medium">On Hand</th>
@@ -118,17 +116,17 @@ export function NurseSupplies() {
               <tbody>
                 {supplies.map((s) => (
                   <tr key={s.officeSupplyId} className="border-b last:border-0">
-                    <td className="p-2 font-medium text-gray-900">{s.name}</td>
-                    <td className="p-2">{s.type}</td>
-                    <td className={`p-2 ${s.isLow ? "bg-red-100 font-bold text-red-800" : ""}`}>
+                    <td className="p-2 font-medium text-slate-900">{s.name}</td>
+                    <td className="p-2">{s.supplyType}</td>
+                    <td className={`p-2 ${s.lowStock ? "bg-red-50 font-bold text-red-800" : ""}`}>
                       {s.quantityOnHand}
-                      {s.isLow && " (low)"}
+                      {s.lowStock && " (low)"}
                     </td>
                     <td className="p-2">{s.reorderThreshold}</td>
                     <td className="p-2">{s.onOrder > 0 ? s.onOrder : "—"}</td>
-                    <td className={`p-2 ${s.expiresSoon ? "bg-orange-50 font-medium text-orange-800" : ""}`}>
+                    <td className={`p-2 ${s.expiringSoon ? "bg-amber-50 font-medium text-amber-800" : ""}`}>
                       {s.expirationDate ?? "—"}
-                      {s.expiresSoon && " (soon)"}
+                      {s.expiringSoon && " (soon)"}
                     </td>
                     <td className="p-2">
                       <div className="flex gap-3">
@@ -140,9 +138,9 @@ export function NurseSupplies() {
                 ))}
               </tbody>
             </table>
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-slate-500">
               <span className="rounded bg-red-100 px-1.5 font-bold text-red-800">Red</span> = at or below reorder level,{" "}
-              <span className="rounded bg-orange-50 px-1.5 font-medium text-orange-800">orange</span> = expires within 30 days
+              <span className="rounded bg-orange-50 px-1.5 font-medium text-orange-800">amber</span> = expires within 30 days
             </p>
           </div>
         )}
@@ -150,17 +148,17 @@ export function NurseSupplies() {
 
       <Section title="Supply Orders">
         {loading ? (
-          <p className="text-gray-500">Loading orders...</p>
+          <p className="text-slate-500">Loading orders...</p>
         ) : orders.length === 0 ? (
-          <p className="text-gray-500">No supply orders yet.</p>
+          <p className="text-slate-500">No supply orders yet.</p>
         ) : (
-          <ul className="divide-y divide-gray-100 text-sm">
+          <ul className="divide-y divide-slate-100 text-sm">
             {orders.map((o) => (
               <li key={o.supplyOrderId} className="flex flex-wrap items-center justify-between gap-2 py-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-gray-900">{o.quantityOrdered} × {o.supplyName}</span>
+                  <span className="font-medium text-slate-900">{o.quantityOrdered} × {o.supplyName}</span>
                   <StatusBadge status={o.status} />
-                  <span className="text-gray-500">{o.orderDate} · by {o.orderedBy}</span>
+                  <span className="text-slate-500">{o.orderDate} · by {o.orderedBy}</span>
                 </div>
                 {(o.status === "Pending" || o.status === "Ordered") && (
                   <div className="flex gap-2">
@@ -189,7 +187,7 @@ export function NurseSupplies() {
           onSaved={() => setReloadCount(reloadCount + 1)}
         />
       )}
-    </div>
+    </PortalPage>
   );
 }
 
@@ -217,7 +215,7 @@ function UseSupplyModal({ supply, onClose, onSaved }: { supply: OfficeSupply; on
   return (
     <Modal title={`Use ${supply.name}`} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-600">{supply.quantityOnHand} on hand.</p>
+        <p className="text-sm text-slate-600">{supply.quantityOnHand} on hand.</p>
         <Field
           label="Quantity Used"
           type="number"
@@ -235,7 +233,7 @@ function UseSupplyModal({ supply, onClose, onSaved }: { supply: OfficeSupply; on
 }
 
 function NewOrderModal({ supplyId, onClose, onSaved }: { supplyId: number | null; onClose: () => void; onSaved: () => void }) {
-  const [supplyList, setSupplyList] = useState<{ supplyId: number; name: string; type: string }[]>([]);
+  const [supplyList, setSupplyList] = useState<{ supplyId: number; name: string; supplyType: string }[]>([]);
   const [selectedId, setSelectedId] = useState(supplyId ? String(supplyId) : "");
   const [quantity, setQuantity] = useState("");
   const [error, setError] = useState("");
@@ -276,7 +274,7 @@ function NewOrderModal({ supplyId, onClose, onSaved }: { supplyId: number | null
         <SelectField label="Supply" required value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
           <option value="">Select a supply</option>
           {supplyList.map((s) => (
-            <option key={s.supplyId} value={s.supplyId}>{s.name} ({s.type})</option>
+            <option key={s.supplyId} value={s.supplyId}>{s.name} ({s.supplyType})</option>
           ))}
         </SelectField>
         <Field label="Quantity" type="number" min="1" required value={quantity} onChange={(e) => setQuantity(e.target.value)} />

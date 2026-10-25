@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import { Section } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
@@ -15,7 +16,7 @@ interface DashboardData {
     patientId: number;
     patientName: string;
     date: string;
-    time: string;
+    startTime: string;
     specialty: string;
   }[];
   recentResults: {
@@ -46,14 +47,10 @@ export function DoctorDashboard() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hello, Dr. {user?.lastName}</h1>
-        <p className="mt-1 text-gray-600">Here's what's happening today.</p>
-      </div>
+    <PortalPage eyebrow="Doctor" title={`Hello, Dr. ${user?.lastName ?? ""}`} description="Here's what's happening today.">
 
-      {error && <p className="text-red-600">{error}</p>}
-      {!data && !error && <p>Loading dashboard...</p>}
+      <PageError message={error} />
+      {!data && !error && <p className="text-slate-500">Loading dashboard...</p>}
 
       {data && (
         <>
@@ -65,18 +62,18 @@ export function DoctorDashboard() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Section title="Upcoming Appointments" action={<Link to="/doctor/appointments" className="text-sm text-blue-600 hover:underline">View all</Link>}>
+            <Section title="Upcoming Appointments" action={<Link to="/doctor/appointments" className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">View all</Link>}>
               {data.upcomingAppointments.length === 0 ? (
-                <p className="text-gray-500">No upcoming appointments.</p>
+                <p className="text-slate-500">No upcoming appointments.</p>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-slate-100">
                   {data.upcomingAppointments.map((a) => (
                     <li key={a.appointmentId} className="flex justify-between py-2 text-sm">
-                      <Link to={`/doctor/appointments/${a.appointmentId}`} className="font-medium text-blue-600 hover:underline">
+                      <Link to={`/doctor/appointments/${a.appointmentId}`} className="font-medium font-medium text-navy hover:text-teal-700 hover:underline">
                         {a.patientName}
                       </Link>
-                      <span className="text-gray-600">
-                        {a.date} · {a.time} · {a.specialty}
+                      <span className="text-slate-600">
+                        {a.date} · {a.startTime} · {a.specialty}
                       </span>
                     </li>
                   ))}
@@ -84,21 +81,21 @@ export function DoctorDashboard() {
               )}
             </Section>
 
-            <Section title="Recent Lab Results" action={<Link to="/doctor/lab-orders" className="text-sm text-blue-600 hover:underline">View all</Link>}>
+            <Section title="Recent Lab Results" action={<Link to="/doctor/lab-orders" className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">View all</Link>}>
               {data.recentResults.length === 0 ? (
-                <p className="text-gray-500">No lab results yet.</p>
+                <p className="text-slate-500">No lab results yet.</p>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-slate-100">
                   {data.recentResults.map((r) => (
                     <li key={r.labOrderId} className="flex justify-between py-2 text-sm">
                       <span>
-                        <span className="font-medium text-gray-900">{r.testName}</span>
+                        <span className="font-medium text-slate-900">{r.testName}</span>
                         {" · "}
-                        <Link to={`/doctor/patients/${r.patientId}`} className="text-blue-600 hover:underline">
+                        <Link to={`/doctor/patients/${r.patientId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
                           {r.patientName}
                         </Link>
                       </span>
-                      <span className="text-gray-600">{r.orderDate}</span>
+                      <span className="text-slate-600">{r.orderDate}</span>
                     </li>
                   ))}
                 </ul>
@@ -107,13 +104,13 @@ export function DoctorDashboard() {
           </div>
 
           {data.referralsToReview > 0 && (
-            <p className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
+            <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               You have {data.referralsToReview} referral(s) waiting for your answer.{" "}
               <Link to="/doctor/referrals" className="font-medium underline">Review them</Link>
             </p>
           )}
         </>
       )}
-    </div>
+    </PortalPage>
   );
 }

@@ -13,9 +13,19 @@ import {
   SuccessText,
   TextButton,
 } from "../../components/ProfileUI";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import { useAuth } from "../../context/AuthContext";
 import type { Certificate, CertificateInput, StaffProfile as Profile } from "../../types";
 import { formatId } from "../../utils/id";
+
+// heading label for each employee type
+const PORTAL_NAMES: Record<string, string> = {
+  Doctor: "Doctor",
+  Nurse: "Nursing",
+  Receptionist: "Front Desk",
+  Administrator: "Administration",
+  "Lab Technician": "Laboratory",
+};
 
 export function StaffProfile() {
   const { user } = useAuth();
@@ -48,14 +58,13 @@ export function StaffProfile() {
   const reload = async () => setReloadCount((c) => c + 1);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
-      <div>
-        <h2 className="text-2xl font-bold">My Profile</h2>
-        <p className="mt-1 text-gray-600">View your employee information and manage your certificates and password.</p>
-      </div>
-
-      {loading && <p>Loading profile...</p>}
-      {error && <p className="text-red-600">{error}</p>}
+    <PortalPage
+      eyebrow={PORTAL_NAMES[user?.employeeType ?? ""] ?? "Staff"}
+      title="My Profile"
+      description="View your employee information and manage your certificates and password."
+    >
+      {loading && <p className="text-slate-500">Loading profile...</p>}
+      <PageError message={error} />
 
       {profile && (
         <>
@@ -68,7 +77,7 @@ export function StaffProfile() {
               <InfoItem label="Office" value={profile.officeName} />
               <InfoItem label="Date of Birth" value={profile.dob} />
             </InfoGrid>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-slate-500">
               Your employee information is managed by the clinic. Contact an administrator to make changes.
             </p>
           </Section>
@@ -94,12 +103,12 @@ export function StaffProfile() {
           {profile.doctor && (
             <Section title="Weekly Schedule">
               {profile.doctor.schedule.length === 0 ? (
-                <p className="text-gray-500">No schedule assigned yet.</p>
+                <p className="text-slate-500">No schedule assigned yet.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b text-gray-500">
+                      <tr className="border-b text-slate-500">
                         <th className="p-2 font-medium">Day</th>
                         <th className="p-2 font-medium">Shift</th>
                         <th className="p-2 font-medium">Hours</th>
@@ -139,7 +148,7 @@ export function StaffProfile() {
           <ChangePasswordForm onSubmit={(body) => api.put(`/api/staff/${employeeId}/password`, body)} />
         </>
       )}
-    </div>
+    </PortalPage>
   );
 }
 
@@ -186,7 +195,7 @@ function ContactSection({ profile, onSaved }: SectionProps) {
             <Field label="Work Email" value={profile.email} disabled />
             <Field label="Phone Number" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
-          <p className="text-sm text-gray-500">Your work email is provided by the clinic and can't be changed.</p>
+          <p className="text-sm text-slate-500">Your work email is provided by the clinic and can't be changed.</p>
           <ErrorText message={error} />
           <FormActions saving={saving} onCancel={() => setEditing(false)} />
         </form>
@@ -259,13 +268,13 @@ function CertificatesSection({ profile, onSaved }: SectionProps) {
       action={editingId === null && <SecondaryButton onClick={() => openForm()}>Add Certificate</SecondaryButton>}
     >
       {profile.certificates.length === 0 && editingId === null ? (
-        <p className="text-gray-500">No certificates on file.</p>
+        <p className="text-slate-500">No certificates on file.</p>
       ) : (
         profile.certificates.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b text-gray-500">
+                <tr className="border-b text-slate-500">
                   <th className="p-2 font-medium">Certificate</th>
                   <th className="p-2 font-medium">Issued</th>
                   <th className="p-2 font-medium">Expires</th>
@@ -276,7 +285,7 @@ function CertificatesSection({ profile, onSaved }: SectionProps) {
               <tbody>
                 {profile.certificates.map((c) => (
                   <tr key={c.certificateId} className="border-b">
-                    <td className="p-2 font-medium text-gray-900">{c.name}</td>
+                    <td className="p-2 font-medium text-slate-900">{c.name}</td>
                     <td className="p-2">{c.issueDate}</td>
                     <td className="p-2">{c.expirationDate}</td>
                     <td className="p-2"><StatusBadge status={c.status} /></td>
@@ -297,8 +306,8 @@ function CertificatesSection({ profile, onSaved }: SectionProps) {
       )}
 
       {editingId !== null && (
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-lg bg-gray-50 p-4">
-          <h4 className="font-medium text-gray-900">{editingId ? "Edit Certificate" : "New Certificate"}</h4>
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-lg bg-slate-50 p-4">
+          <h4 className="font-medium text-slate-900">{editingId ? "Edit Certificate" : "New Certificate"}</h4>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Field label="Certificate Name" required placeholder="e.g. BLS, ACLS" value={form.name} onChange={set("name")} />
             <Field label="Issue Date" type="date" required value={form.issueDate} onChange={set("issueDate")} />

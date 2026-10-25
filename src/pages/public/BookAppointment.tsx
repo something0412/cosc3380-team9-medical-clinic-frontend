@@ -165,7 +165,8 @@ export function BookAppointmentPage() {
     if (!weekKey || specialtyId === undefined) return;
     let active = true;
     const key = weekKey;
-    const search = { specialtyId, doctorId, officeId, date: weekStart, days: 7 };
+    // taken times come back too, so the picker can show them grayed out
+    const search = { specialtyId, doctorId, officeId, date: weekStart, days: 7, includeTaken: true };
 
     async function loadWeek() {
       try {
@@ -229,7 +230,7 @@ export function BookAppointmentPage() {
   let selected: AvailableSlot | null | undefined = null;
   let choiceFailed = false;
   if (choice && choiceInWeek) {
-    selected = weekSlots ? (weekSlots.find((s) => isSameSlot(s, choice)) ?? null) : undefined;
+    selected = weekSlots ? (weekSlots.find((s) => isSameSlot(s, choice) && s.available !== false) ?? null) : undefined;
   } else if (choice) {
     const lookup = picked?.key === choiceKey ? picked : null;
     choiceFailed = !!lookup?.failed;
@@ -238,7 +239,7 @@ export function BookAppointmentPage() {
 
   // the day in the URL, then the chosen time's day, then the first day with open times
   const hasTimes = (date: string | null | undefined) => !!date && !!weekSlots?.some((s) => s.date === date);
-  const viewedDay = [params.get("day"), choiceInWeek ? choiceDate : null].find(hasTimes) ?? weekSlots?.[0]?.date ?? null;
+  const viewedDay = [params.get("day"), choiceInWeek ? choiceDate : null].find(hasTimes) ?? weekSlots?.find((s) => s.available !== false)?.date ?? weekSlots?.[0]?.date ?? null;
 
   function update(changes: Record<string, string | null>, push = false) {
     setParams(
@@ -338,7 +339,7 @@ export function BookAppointmentPage() {
         office can help if you think you should have one.
       </Notice>
     );
-  } else if (weekSlots?.length === 0) {
+  } else if (weekSlots && !weekSlots.some((s) => s.available !== false)) {
     // says what was searched without claiming a doctor never offers this care
     const searched = care?.doctor
       ? ` with ${doctorName(care.doctor)}${care.office ? ` at ${care.office.name}` : ""}`

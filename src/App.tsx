@@ -39,7 +39,7 @@ import {
 } from "./pages/admin/ScheduleForm";
 import { AdminShiftSettings } from "./pages/admin/ShiftSettings";
 import { AdminPatients } from "./pages/admin/Patients";
-import { AdminStaff } from "./pages/admin/Staff";
+import { AdminBilling } from "./pages/admin/Billing";
 
 import { EmployeeLoginPage, PatientLoginPage } from "./pages/auth/Login";
 
@@ -162,8 +162,8 @@ function App() {
                     element={<AdminScheduleEdit />}
                 />
                 <Route path="analytics" element={<AdminAnalytics />} />
-                <Route path="staff" element={<AdminStaff />} />
                 <Route path="patients" element={<AdminPatients />} />
+                <Route path="billing" element={<AdminBilling />} />
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
 

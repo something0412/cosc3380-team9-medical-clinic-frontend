@@ -11,9 +11,9 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         aria-modal="true"
         aria-label={title}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="text-xl text-gray-400 hover:text-gray-600">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-navy">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="text-xl text-slate-400 hover:text-slate-600">
             ×
           </button>
         </div>

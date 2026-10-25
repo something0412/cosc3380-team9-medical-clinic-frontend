@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import {
     ChangePasswordForm,
     FormActions,
@@ -58,14 +59,9 @@ export function PatientProfile() {
     const reload = async () => setReloadCount((c) => c + 1);
 
     return (
-        <div className="mx-auto max-w-5xl space-y-6 p-6">
-            <div>
-                <h2 className="text-2xl font-bold">My Profile</h2>
-                <p className="mt-1 text-gray-600">View and update your personal information.</p>
-            </div>
-
-            {loading && <p>Loading profile...</p>}
-            {error && <p className="text-red-600">{error}</p>}
+        <PortalPage eyebrow="Patient Portal" title="My Profile" description="View and update your personal information.">
+            {loading && <p className="text-slate-500">Loading profile...</p>}
+            <PageError message={error} />
 
             {profile && (
                 <>
@@ -77,7 +73,7 @@ export function PatientProfile() {
                             <InfoItem label="Last Name" value={profile.lastName} />
                             <InfoItem label="Date of Birth" value={profile.dob} />
                         </InfoGrid>
-                        <p className="mt-4 text-sm text-gray-500">
+                        <p className="mt-4 text-sm text-slate-500">
                             To change your name or date of birth, please contact the front desk.
                         </p>
                     </Section>
@@ -88,7 +84,7 @@ export function PatientProfile() {
                     <ChangePasswordForm onSubmit={(body) => api.put(`/api/patient/${patientId}/password`, body)} />
                 </>
             )}
-        </div>
+        </PortalPage>
     );
 }
 
@@ -153,7 +149,7 @@ function ContactInfoSection({ profile, onSaved }: SectionProps) {
                             {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
                         </SelectField>
                     </div>
-                    <p className="text-sm text-gray-500">Your email is also the email you use to log in.</p>
+                    <p className="text-sm text-slate-500">Your email is also the email you use to log in.</p>
                     <ErrorText message={error} />
                     <FormActions saving={saving} onCancel={() => setEditing(false)} />
                 </form>
@@ -237,18 +233,18 @@ function EmergencyContactsSection({ profile, onSaved }: SectionProps) {
             action={editingId === null && <SecondaryButton onClick={() => openForm()}>Add Contact</SecondaryButton>}
         >
             {profile.emergencyContacts.length === 0 && editingId === null && (
-                <p className="text-gray-500">No emergency contacts yet.</p>
+                <p className="text-slate-500">No emergency contacts yet.</p>
             )}
 
             <ul className="space-y-3">
                 {profile.emergencyContacts.map((c) => (
-                    <li key={c.emergencyContactId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 p-4">
+                    <li key={c.emergencyContactId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-4">
                         <div>
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-slate-900">
                                 {c.firstName} {c.lastName}
-                                {c.isPrimary && <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">Primary</span>}
+                                {c.isPrimary && <span className="ml-2"><StatusBadge status="Primary" /></span>}
                             </p>
-                            <p className="text-sm text-gray-600">{c.relationship} · {c.phoneNumber}</p>
+                            <p className="text-sm text-slate-600">{c.relationship} · {c.phoneNumber}</p>
                         </div>
                         {editingId === null && (
                             <div className="flex gap-4">
@@ -261,15 +257,15 @@ function EmergencyContactsSection({ profile, onSaved }: SectionProps) {
             </ul>
 
             {editingId !== null && (
-                <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-lg bg-gray-50 p-4">
-                    <h4 className="font-medium text-gray-900">{editingId ? "Edit Contact" : "New Contact"}</h4>
+                <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-lg bg-slate-50 p-4">
+                    <h4 className="font-medium text-slate-900">{editingId ? "Edit Contact" : "New Contact"}</h4>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <Field label="First Name" required value={form.firstName} onChange={set("firstName")} />
                         <Field label="Last Name" required value={form.lastName} onChange={set("lastName")} />
                         <Field label="Relationship" required placeholder="e.g. Spouse, Parent" value={form.relationship} onChange={set("relationship")} />
                         <Field label="Phone Number" type="tel" required value={form.phoneNumber} onChange={set("phoneNumber")} />
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
                         <input type="checkbox" checked={form.isPrimary} onChange={(e) => setForm({ ...form, isPrimary: e.target.checked })} />
                         Primary contact
                     </label>
@@ -324,7 +320,7 @@ function InsuranceSection({ profile, onSaved }: SectionProps) {
                         <Field label="Provider" required value={provider} onChange={(e) => setProvider(e.target.value)} />
                         <Field label="Policy Number" required value={policyNumber} onChange={(e) => setPolicyNumber(e.target.value)} />
                     </div>
-                    <p className="text-sm text-gray-500">Saving will set your insurance to Pending until the front desk verifies it.</p>
+                    <p className="text-sm text-slate-500">Saving will set your insurance to Pending until the front desk verifies it.</p>
                     <ErrorText message={error} />
                     <FormActions saving={saving} onCancel={() => setEditing(false)} />
                 </form>
@@ -335,7 +331,7 @@ function InsuranceSection({ profile, onSaved }: SectionProps) {
                     <InfoItem label="Status" value={<StatusBadge status={insurance.status} />} />
                 </InfoGrid>
             ) : (
-                <p className="text-gray-500">No insurance on file.</p>
+                <p className="text-slate-500">No insurance on file.</p>
             )}
         </Section>
     );

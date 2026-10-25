@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
 import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
+import { CardPaymentForm } from "../../components/CardPaymentForm";
+import type { CardPayment } from "../../components/CardPaymentForm";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { InvoiceLines } from "../../components/InvoiceLines";
 import type { InvoiceItem } from "../../components/InvoiceLines";
@@ -140,23 +142,18 @@ export function ReceptionistBilling() {
 
 function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; onClose: () => void; onChanged: () => void }) {
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
-  const [paymentTypes, setPaymentTypes] = useState<{ paymentTypeId: number; name: string }[]>([]);
-  const [paymentTypeId, setPaymentTypeId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [showPay, setShowPay] = useState(false);
   const [refundPayment, setRefundPayment] = useState<Payment | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [saving, setSaving] = useState(false);
   const [reloadCount, setReloadCount] = useState(0);
 
-  // load the invoice and payment types
+  // load the invoice
   useEffect(() => {
     async function loadInvoice() {
       try {
         const invoiceRes = await api.get<InvoiceDetail>(`/api/receptionist/invoices/${invoiceId}`);
         setInvoice(invoiceRes.data);
-        const typesRes = await api.get("/api/receptionist/payment-types");
-        setPaymentTypes(typesRes.data);
       } catch (err) {
         setError(apiErrorMessage(err));
       }
@@ -169,23 +166,6 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
     setMessage(text);
     setReloadCount(reloadCount + 1);
     onChanged();
-  }
-
-  // take a payment
-  async function takePayment(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    setMessage("");
-    setSaving(true);
-    try {
-      await api.post(`/api/receptionist/invoices/${invoiceId}/payments`, { paymentTypeId: Number(paymentTypeId), amount });
-      setAmount("");
-      handleChanged("Payment recorded.");
-    } catch (err) {
-      setError(apiErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
   }
 
   // cancel a refund request made by mistake
@@ -245,22 +225,22 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
             )}
           </Section>
 
-          {Number(invoice.balance) > 0 && (
-            <form onSubmit={takePayment} className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-              <SelectField label="Payment type" required value={paymentTypeId} onChange={(e) => setPaymentTypeId(e.target.value)}>
-                <option value="">Choose one</option>
-                {paymentTypes.map((t) => (
-                  <option key={t.paymentTypeId} value={t.paymentTypeId}>{t.name}</option>
-                ))}
-              </SelectField>
-              <Field label="Amount" required inputMode="decimal" placeholder={invoice.balance} value={amount} onChange={(e) => setAmount(e.target.value)} />
-              <PrimaryButton disabled={saving}>{saving ? "Saving..." : "Take Payment"}</PrimaryButton>
-            </form>
-          )}
+          {Number(invoice.balance) > 0 && <PrimaryButton type="button" onClick={() => setShowPay(true)}>Take Payment</PrimaryButton>}
 
           <ErrorText message={error} />
           <SuccessText message={message} />
         </div>
+      )}
+
+      {showPay && invoice && (
+        <PayModal
+          invoice={invoice}
+          onClose={() => setShowPay(false)}
+          onDone={(text) => {
+            setShowPay(false);
+            handleChanged(text);
+          }}
+        />
       )}
 
       {refundPayment && (
@@ -306,5 +286,255 @@ function RefundRequestModal({ payment, onClose, onSaved }: { payment: Payment; o
         <FormActions saving={saving} onCancel={onClose} saveLabel="Send Request" />
       </form>
     </Modal>
+  );
+}
+
+interface Insurance {
+  provider: string;
+  policyNumber: string;
+  status: string;
+}
+
+interface PaymentType {
+  paymentTypeId: number;
+  name: string;
+}
+
+// pay an invoice: the patient's insurance first, then card, then cash or check
+function PayModal({ invoice, onClose, onDone }: { invoice: InvoiceDetail; onClose: () => void; onDone: (text: string) => void }) {
+  const [tab, setTab] = useState("insurance");
+  const [insurance, setInsurance] = useState<Insurance | null>(null);
+  const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [reloadCount, setReloadCount] = useState(0);
+
+  // load the patient's insurance and the payment types
+  useEffect(() => {
+    async function loadPaymentInfo() {
+      try {
+        const patientRes = await api.get<{ insurance: Insurance | null }>(`/api/receptionist/patients/${invoice.patientId}`);
+        setInsurance(patientRes.data.insurance);
+        const typesRes = await api.get<PaymentType[]>("/api/receptionist/payment-types");
+        setPaymentTypes(typesRes.data);
+      } catch (err) {
+        setError(apiErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPaymentInfo();
+  }, [invoice.patientId, reloadCount]);
+
+  // the ID of a payment type by its name
+  const typeId = (name: string) => paymentTypes.find((t) => t.name === name)?.paymentTypeId;
+
+  // pay by card (card details are checked by the backend, never saved)
+  async function payByCard(payment: CardPayment) {
+    const { cardType, amount, ...card } = payment;
+    await api.post(`/api/receptionist/invoices/${invoice.invoiceId}/payments`, { paymentTypeId: typeId(cardType), amount, card });
+    onDone(`${cardType} payment of ${money(amount)} recorded.`);
+  }
+
+  return (
+    <Modal title={`Take Payment · Invoice #${invoice.invoiceId}`} onClose={onClose}>
+      <p className="mb-4 text-sm text-slate-700">
+        {invoice.patientName} · balance <span className="font-semibold text-navy">{money(invoice.balance)}</span>
+      </p>
+
+      <div className="mb-5 flex gap-6 border-b border-slate-200">
+        {[
+          ["insurance", "Insurance"],
+          ["card", "Card"],
+          ["cash", "Cash or Check"],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`-mb-px border-b-2 pb-3 text-sm font-semibold ${
+              tab === key ? "border-navy text-navy" : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <ErrorText message={error} />
+      {loading ? (
+        <p className="text-sm text-slate-500">Loading...</p>
+      ) : tab === "insurance" ? (
+        <InsuranceTab
+          invoice={invoice}
+          insurance={insurance}
+          insuranceTypeId={typeId("Insurance")}
+          onChanged={() => setReloadCount(reloadCount + 1)}
+          onDone={onDone}
+        />
+      ) : tab === "card" ? (
+        <CardPaymentForm balance={invoice.balance} onPay={payByCard} />
+      ) : (
+        <CashForm invoice={invoice} paymentTypes={paymentTypes.filter((t) => t.name === "Cash" || t.name === "Check")} onDone={onDone} />
+      )}
+    </Modal>
+  );
+}
+
+function InsuranceTab({
+  invoice,
+  insurance,
+  insuranceTypeId,
+  onChanged,
+  onDone,
+}: {
+  invoice: InvoiceDetail;
+  insurance: Insurance | null;
+  insuranceTypeId: number | undefined;
+  onChanged: () => void;
+  onDone: (text: string) => void;
+}) {
+  const [provider, setProvider] = useState(insurance?.provider ?? "");
+  const [policyNumber, setPolicyNumber] = useState(insurance?.policyNumber ?? "");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // save the patient's insurance (it starts as Pending)
+  async function saveInsurance(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      await api.put(`/api/receptionist/patients/${invoice.patientId}/insurance`, { provider, policyNumber });
+      setMessage("Insurance saved. Verify it with the insurer before billing it.");
+      onChanged();
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // verify or deny the insurance (verifying bills the patient's unpaid invoices to it)
+  async function review(status: string) {
+    if (!insurance) return;
+    setError("");
+    setSaving(true);
+    try {
+      await api.patch(`/api/receptionist/patients/${invoice.patientId}/insurance/status`, {
+        status,
+        provider: insurance.provider,
+        policyNumber: insurance.policyNumber,
+      });
+      if (status === "Verified") {
+        onDone(`${insurance.provider} insurance verified. The patient's unpaid invoices are billed to it.`);
+      } else {
+        setMessage("Insurance denied. Take the payment by card, cash or check.");
+        onChanged();
+      }
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // bill what's left to the verified insurance
+  async function billInsurance() {
+    setError("");
+    setSaving(true);
+    try {
+      await api.post(`/api/receptionist/invoices/${invoice.invoiceId}/payments`, { paymentTypeId: insuranceTypeId, amount: invoice.balance });
+      onDone(`${money(invoice.balance)} billed to ${insurance?.provider} insurance.`);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4 text-sm">
+      {insurance ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <span>
+            <span className="font-semibold text-slate-900">{insurance.provider}</span>
+            <span className="text-slate-600"> · policy {insurance.policyNumber}</span>
+          </span>
+          <StatusBadge status={insurance.status} />
+        </div>
+      ) : (
+        <p className="text-slate-700">This patient has no insurance on file.</p>
+      )}
+
+      {insurance?.status === "Verified" && (
+        <>
+          <p className="text-slate-700">The insurance is verified and can pay this invoice.</p>
+          <PrimaryButton type="button" disabled={saving} onClick={billInsurance}>
+            {saving ? "Billing..." : `Bill ${money(invoice.balance)} to Insurance`}
+          </PrimaryButton>
+        </>
+      )}
+
+      {insurance?.status === "Pending" && (
+        <>
+          <p className="text-slate-700">The insurance isn&apos;t verified yet, so it can&apos;t be used. Check it with the insurer, then verify or deny it.</p>
+          <div className="flex gap-2">
+            <PrimaryButton type="button" disabled={saving} onClick={() => review("Verified")}>Verify</PrimaryButton>
+            <TextButton danger disabled={saving} onClick={() => review("Denied")}>Deny</TextButton>
+          </div>
+        </>
+      )}
+
+      {(!insurance || insurance.status === "Denied") && (
+        <form onSubmit={saveInsurance} className="space-y-3">
+          {insurance?.status === "Denied" && <p className="text-slate-700">The insurance was denied. Update it below, or pay by card, cash or check.</p>}
+          <Field label="Insurance Provider" required value={provider} onChange={(e) => setProvider(e.target.value)} />
+          <Field label="Policy Number" required value={policyNumber} onChange={(e) => setPolicyNumber(e.target.value)} />
+          <PrimaryButton disabled={saving}>{saving ? "Saving..." : "Save Insurance"}</PrimaryButton>
+        </form>
+      )}
+
+      <ErrorText message={error} />
+      <SuccessText message={message} />
+    </div>
+  );
+}
+
+function CashForm({ invoice, paymentTypes, onDone }: { invoice: InvoiceDetail; paymentTypes: PaymentType[]; onDone: (text: string) => void }) {
+  const [paymentTypeId, setPaymentTypeId] = useState(paymentTypes[0] ? String(paymentTypes[0].paymentTypeId) : "");
+  const [amount, setAmount] = useState(Number(invoice.balance).toFixed(2));
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // record a cash or check payment
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      await api.post(`/api/receptionist/invoices/${invoice.invoiceId}/payments`, { paymentTypeId: Number(paymentTypeId), amount });
+      onDone(`Payment of ${money(amount)} recorded.`);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <SelectField label="Paid With" required value={paymentTypeId} onChange={(e) => setPaymentTypeId(e.target.value)}>
+          {paymentTypes.map((t) => (
+            <option key={t.paymentTypeId} value={t.paymentTypeId}>{t.name}</option>
+          ))}
+        </SelectField>
+        <Field label="Amount ($)" required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      </div>
+      <ErrorText message={error} />
+      <PrimaryButton disabled={saving}>{saving ? "Saving..." : `Record ${money(amount || 0)}`}</PrimaryButton>
+    </form>
   );
 }

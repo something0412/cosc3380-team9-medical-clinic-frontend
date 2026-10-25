@@ -1,65 +1,61 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
+import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
+import { InvoiceLines } from "../../components/InvoiceLines";
+import type { InvoiceItem } from "../../components/InvoiceLines";
 import { Modal } from "../../components/Modal";
-import { FormActions, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { PageError, PortalPage } from "../../components/PortalPage";
+import { FormActions, PrimaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { formatId } from "../../utils/id";
 
 interface Invoice {
   invoiceId: number;
   patientId: number;
   patientName: string;
-  visitDate: string;
+  appointmentDate: string;
   doctorName: string;
   issueDate: string;
-  amount: number;
-  paid: number;
-  balance: number;
+  amount: string;
+  paid: string;
+  balance: string;
   status: string;
 }
 
-interface BillableVisit {
-  appointmentId: number;
-  patientId: number;
-  patientName: string;
-  date: string;
-  doctorName: string;
-  specialty: string;
-  labCost: number;
+interface Payment {
+  paymentId: number;
+  paymentDate: string;
+  amountPaid: string;
+  paymentType: string;
+  status: string;
+  handledBy: string | null;
 }
 
-interface PaymentType {
-  paymentTypeId: number;
-  name: string;
+interface InvoiceDetail extends Invoice {
+  items: InvoiceItem[];
+  payments: Payment[];
 }
 
-const FILTERS = [
-  { key: "unpaid", label: "Unpaid" },
-  { key: "Pending", label: "Pending" },
-  { key: "Overdue", label: "Overdue" },
-  { key: "Paid", label: "Paid" },
-  { key: "all", label: "All" },
-];
+const money = (value: string | number) => `$${Number(value).toFixed(2)}`;
 
 export function ReceptionistBilling() {
   const [status, setStatus] = useState("unpaid");
   const [searchText, setSearchText] = useState("");
   const [search, setSearch] = useState("");
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [visits, setVisits] = useState<BillableVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [openInvoiceId, setOpenInvoiceId] = useState<number | null>(null);
   const [reloadCount, setReloadCount] = useState(0);
-  const [billVisit, setBillVisit] = useState<BillableVisit | null>(null);
-  const [payInvoice, setPayInvoice] = useState<Invoice | null>(null);
 
-  // load invoices for the chosen filter
+  // load the invoices at my office
   useEffect(() => {
     async function loadInvoices() {
+      setLoading(true);
+      setError("");
       try {
-        const res = await api.get<Invoice[]>("/api/receptionist/invoices", { params: { status, search } });
+        const res = await api.get<Invoice[]>("/api/receptionist/invoices", { params: { status: status || undefined, search } });
         setInvoices(res.data);
       } catch (err) {
         setError(apiErrorMessage(err));
@@ -70,205 +66,226 @@ export function ReceptionistBilling() {
     loadInvoices();
   }, [status, search, reloadCount]);
 
-  // load visits that still need an invoice
-  useEffect(() => {
-    async function loadVisits() {
-      try {
-        const res = await api.get<BillableVisit[]>("/api/receptionist/billable-appointments");
-        setVisits(res.data);
-      } catch (err) {
-        setError(apiErrorMessage(err));
-      }
-    }
-    loadVisits();
-  }, [reloadCount]);
-
   // search by patient name
   function handleSearch(e: FormEvent) {
     e.preventDefault();
     setSearch(searchText);
   }
 
-  // reload after a change and show what happened
-  function handleSaved(text: string) {
+  return (
+    <PortalPage
+      eyebrow="Front Desk"
+      title="Billing"
+      description="Take payments on invoices for your office, and ask the admin to refund a payment made by mistake."
+    >
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
+        <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+        <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="unpaid">Has a balance</option>
+          <option value="">All invoices</option>
+          <option value="Pending">Pending</option>
+          <option value="Overdue">Overdue</option>
+          <option value="Paid">Paid</option>
+        </SelectField>
+        <button type="submit" className={ADMIN_PRIMARY_BUTTON}>Search</button>
+      </form>
+
+      <PageError message={error} />
+
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Invoice</th>
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Visit</th>
+                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Balance</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">Loading invoices...</td></tr>
+              ) : invoices.length === 0 ? (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">No invoices found.</td></tr>
+              ) : (
+                invoices.map((i) => (
+                  <tr key={i.invoiceId} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-slate-500">#{i.invoiceId}</td>
+                    <td className="whitespace-nowrap px-4 py-3 font-medium text-navy">{i.patientName}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{i.appointmentDate} · Dr. {i.doctorName}</td>
+                    <td className="px-4 py-3 text-slate-700">{money(i.amount)}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900">{money(i.balance)}</td>
+                    <td className="px-4 py-3"><StatusBadge status={i.status} /></td>
+                    <td className="px-4 py-3 text-right">
+                      <TextButton onClick={() => setOpenInvoiceId(i.invoiceId)}>Open</TextButton>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {openInvoiceId && (
+        <InvoiceModal invoiceId={openInvoiceId} onClose={() => setOpenInvoiceId(null)} onChanged={() => setReloadCount(reloadCount + 1)} />
+      )}
+    </PortalPage>
+  );
+}
+
+function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; onClose: () => void; onChanged: () => void }) {
+  const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
+  const [paymentTypes, setPaymentTypes] = useState<{ paymentTypeId: number; name: string }[]>([]);
+  const [paymentTypeId, setPaymentTypeId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [refundPayment, setRefundPayment] = useState<Payment | null>(null);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [reloadCount, setReloadCount] = useState(0);
+
+  // load the invoice and payment types
+  useEffect(() => {
+    async function loadInvoice() {
+      try {
+        const invoiceRes = await api.get<InvoiceDetail>(`/api/receptionist/invoices/${invoiceId}`);
+        setInvoice(invoiceRes.data);
+        const typesRes = await api.get("/api/receptionist/payment-types");
+        setPaymentTypes(typesRes.data);
+      } catch (err) {
+        setError(apiErrorMessage(err));
+      }
+    }
+    loadInvoice();
+  }, [invoiceId, reloadCount]);
+
+  // reload after a change
+  function handleChanged(text: string) {
     setMessage(text);
-    setError("");
     setReloadCount(reloadCount + 1);
+    onChanged();
   }
 
-  // mark an invoice overdue
-  async function markOverdue(invoiceId: number) {
-    if (!window.confirm(`Mark invoice #${invoiceId} as overdue?`)) return;
+  // take a payment
+  async function takePayment(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    setSaving(true);
+    try {
+      await api.post(`/api/receptionist/invoices/${invoiceId}/payments`, { paymentTypeId: Number(paymentTypeId), amount });
+      setAmount("");
+      handleChanged("Payment recorded.");
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // cancel a refund request made by mistake
+  async function cancelRequest(payment: Payment) {
+    if (!window.confirm(`Cancel the refund request for the ${money(payment.amountPaid)} payment?`)) return;
     setError("");
     setMessage("");
     try {
-      await api.patch(`/api/receptionist/invoices/${invoiceId}/overdue`);
-      handleSaved(`Invoice #${invoiceId} marked overdue.`);
+      await api.patch(`/api/receptionist/payments/${payment.paymentId}/cancel-request`);
+      handleChanged("Refund request cancelled.");
     } catch (err) {
       setError(apiErrorMessage(err));
     }
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
-        <p className="mt-1 text-gray-600">Invoices and payments for your office.</p>
-      </div>
-
-      {error && <p className="text-red-600">{error}</p>}
-      <SuccessText message={message} />
-
-      <Section title={`Visits to Bill (${visits.length})`}>
-        {visits.length === 0 ? (
-          <p className="text-gray-500">Every completed visit has an invoice.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full whitespace-nowrap text-left text-sm">
-              <thead>
-                <tr className="border-b text-gray-500">
-                  <th className="py-2 pr-4 font-medium">Visit Date</th>
-                  <th className="py-2 pr-4 font-medium">Patient</th>
-                  <th className="py-2 pr-4 font-medium">Doctor</th>
-                  <th className="py-2 pr-4 font-medium">Specialty</th>
-                  <th className="py-2 pr-4 font-medium">Lab Costs</th>
-                  <th className="py-2 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {visits.map((v) => (
-                  <tr key={v.appointmentId} className="border-b last:border-0">
-                    <td className="py-2 pr-4">{v.date}</td>
-                    <td className="py-2 pr-4">
-                      <Link to={`/staff/reception/patients/${v.patientId}`} className="font-medium text-blue-600 hover:underline">
-                        {v.patientName}
-                      </Link>
-                    </td>
-                    <td className="py-2 pr-4">{v.doctorName}</td>
-                    <td className="py-2 pr-4">{v.specialty}</td>
-                    <td className="py-2 pr-4">${v.labCost.toFixed(2)}</td>
-                    <td className="py-2">
-                      <TextButton onClick={() => setBillVisit(v)}>Create Invoice</TextButton>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <Modal title={`Invoice #${invoiceId}`} onClose={onClose}>
+      {!invoice ? (
+        error ? <ErrorText message={error} /> : <p className="text-sm text-slate-500">Loading invoice...</p>
+      ) : (
+        <div className="space-y-5 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={invoice.status} />
+            <span className="text-slate-700">
+              {invoice.patientName} (ID {formatId(invoice.patientId)}) · visit {invoice.appointmentDate} with Dr. {invoice.doctorName}
+            </span>
           </div>
-        )}
-      </Section>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Amount</p><p className="font-semibold text-navy">{money(invoice.amount)}</p></div>
+            <div className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Paid</p><p className="font-semibold text-navy">{money(invoice.paid)}</p></div>
+            <div className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Balance</p><p className="font-semibold text-navy">{money(invoice.balance)}</p></div>
+          </div>
 
-      <div className="flex gap-6 border-b border-gray-200">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            onClick={() => setStatus(f.key)}
-            className={`-mb-px border-b-2 pb-3 text-sm font-medium ${
-              status === f.key ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+          <Section title="Charges">
+            <InvoiceLines items={invoice.items} />
+          </Section>
 
-      <form onSubmit={handleSearch} className="flex max-w-md gap-2">
-        <input
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          placeholder="Search by patient name"
-          className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-        />
-        <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-          Search
-        </button>
-        {search && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchText("");
-              setSearch("");
-            }}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Clear
-          </button>
-        )}
-      </form>
-
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="w-full whitespace-nowrap text-left text-sm">
-          <thead className="bg-gray-50">
-            <tr className="border-b text-gray-500">
-              <th className="p-3 font-medium">Invoice #</th>
-              <th className="p-3 font-medium">Patient</th>
-              <th className="p-3 font-medium">Visit</th>
-              <th className="p-3 font-medium">Issued</th>
-              <th className="p-3 font-medium">Amount</th>
-              <th className="p-3 font-medium">Paid</th>
-              <th className="p-3 font-medium">Balance</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={9} className="p-3 text-gray-500">Loading invoices...</td></tr>
-            ) : invoices.length === 0 ? (
-              <tr><td colSpan={9} className="p-3 text-gray-500">{search ? `No invoices for "${search}".` : "No invoices."}</td></tr>
+          <Section title="Payments">
+            {invoice.payments.length === 0 ? (
+              <p className="text-slate-500">No payments yet.</p>
             ) : (
-              invoices.map((i) => (
-                <tr key={i.invoiceId} className="border-b last:border-0">
-                  <td className="p-3">{i.invoiceId}</td>
-                  <td className="p-3">
-                    <Link to={`/staff/reception/patients/${i.patientId}`} className="font-medium text-blue-600 hover:underline">
-                      {i.patientName}
-                    </Link>
-                  </td>
-                  <td className="p-3">{i.visitDate} · {i.doctorName}</td>
-                  <td className="p-3">{i.issueDate}</td>
-                  <td className="p-3">${i.amount.toFixed(2)}</td>
-                  <td className="p-3">${i.paid.toFixed(2)}</td>
-                  <td className={`p-3 ${i.balance > 0 ? "font-medium text-red-600" : ""}`}>${i.balance.toFixed(2)}</td>
-                  <td className="p-3"><StatusBadge status={i.status} /></td>
-                  <td className="space-x-3 p-3">
-                    {i.status !== "Paid" && <TextButton onClick={() => setPayInvoice(i)}>Take Payment</TextButton>}
-                    {i.status === "Pending" && <TextButton danger onClick={() => markOverdue(i.invoiceId)}>Mark Overdue</TextButton>}
-                  </td>
-                </tr>
-              ))
+              <ul className="divide-y divide-slate-100">
+                {invoice.payments.map((p) => (
+                  <li key={p.paymentId} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <span className="text-slate-700">
+                      {money(p.amountPaid)} · {p.paymentType} · {p.paymentDate}
+                      {p.handledBy && ` · taken by ${p.handledBy}`}
+                    </span>
+                    <span className="flex items-center gap-3">
+                      <StatusBadge status={p.status === "Requested" ? "Refund Requested" : p.status} />
+                      {p.status === "Completed" && <TextButton danger onClick={() => setRefundPayment(p)}>Request Refund</TextButton>}
+                      {p.status === "Requested" && <TextButton onClick={() => cancelRequest(p)}>Cancel Request</TextButton>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
-          </tbody>
-        </table>
-      </div>
+          </Section>
 
-      {billVisit && (
-        <InvoiceModal visit={billVisit} onClose={() => setBillVisit(null)} onSaved={() => handleSaved(`Invoice created for ${billVisit.patientName}.`)} />
+          {Number(invoice.balance) > 0 && (
+            <form onSubmit={takePayment} className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+              <SelectField label="Payment type" required value={paymentTypeId} onChange={(e) => setPaymentTypeId(e.target.value)}>
+                <option value="">Choose one</option>
+                {paymentTypes.map((t) => (
+                  <option key={t.paymentTypeId} value={t.paymentTypeId}>{t.name}</option>
+                ))}
+              </SelectField>
+              <Field label="Amount" required inputMode="decimal" placeholder={invoice.balance} value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <PrimaryButton disabled={saving}>{saving ? "Saving..." : "Take Payment"}</PrimaryButton>
+            </form>
+          )}
+
+          <ErrorText message={error} />
+          <SuccessText message={message} />
+        </div>
       )}
-      {payInvoice && (
-        <PaymentModal
-          invoice={payInvoice}
-          onClose={() => setPayInvoice(null)}
-          onSaved={(paidOff) => handleSaved(paidOff ? `Invoice #${payInvoice.invoiceId} is paid in full.` : `Payment saved for invoice #${payInvoice.invoiceId}.`)}
+
+      {refundPayment && (
+        <RefundRequestModal
+          payment={refundPayment}
+          onClose={() => setRefundPayment(null)}
+          onSaved={() => handleChanged("Refund requested. The admin will approve or deny it.")}
         />
       )}
-    </div>
+    </Modal>
   );
 }
 
-function InvoiceModal({ visit, onClose, onSaved }: { visit: BillableVisit; onClose: () => void; onSaved: () => void }) {
-  const [amount, setAmount] = useState("");
+function RefundRequestModal({ payment, onClose, onSaved }: { payment: Payment; onClose: () => void; onSaved: () => void }) {
+  const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // create the invoice
+  // send the refund request to the admin
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setSaving(true);
     try {
-      await api.post("/api/receptionist/invoices", { appointmentId: visit.appointmentId, amount: Number(amount) });
+      await api.patch(`/api/receptionist/payments/${payment.paymentId}/request-refund`, { reason });
       onSaved();
       onClose();
     } catch (err) {
@@ -279,74 +296,14 @@ function InvoiceModal({ visit, onClose, onSaved }: { visit: BillableVisit; onClo
   }
 
   return (
-    <Modal title="Create Invoice" onClose={onClose}>
+    <Modal title="Request Refund" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-700">
-          {visit.patientName} · {visit.date} · Dr. {visit.doctorName} ({visit.specialty})
+        <p className="text-sm text-slate-700">
+          {money(payment.amountPaid)} {payment.paymentType} payment from {payment.paymentDate}. The admin has to approve the refund.
         </p>
-        {visit.labCost > 0 && <p className="text-sm text-gray-500">Lab tests on this visit cost ${visit.labCost.toFixed(2)}.</p>}
-        <Field label="Amount ($)" type="number" min="0" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <Field label="Reason" required placeholder="e.g. Charged twice by mistake" value={reason} onChange={(e) => setReason(e.target.value)} />
         <ErrorText message={error} />
-        <FormActions saving={saving} onCancel={onClose} saveLabel="Create Invoice" />
-      </form>
-    </Modal>
-  );
-}
-
-function PaymentModal({ invoice, onClose, onSaved }: { invoice: Invoice; onClose: () => void; onSaved: (paidOff: boolean) => void }) {
-  const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
-  const [paymentTypeId, setPaymentTypeId] = useState("");
-  const [amount, setAmount] = useState(invoice.balance.toFixed(2));
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  // load payment types
-  useEffect(() => {
-    async function loadPaymentTypes() {
-      try {
-        const res = await api.get<PaymentType[]>("/api/receptionist/payment-types");
-        setPaymentTypes(res.data);
-      } catch (err) {
-        setError(apiErrorMessage(err));
-      }
-    }
-    loadPaymentTypes();
-  }, []);
-
-  // save the payment
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    setSaving(true);
-    try {
-      const res = await api.post<{ paymentId: number; paidOff: boolean }>(`/api/receptionist/invoices/${invoice.invoiceId}/payments`, {
-        paymentTypeId: Number(paymentTypeId),
-        amount: Number(amount),
-      });
-      onSaved(res.data.paidOff);
-      onClose();
-    } catch (err) {
-      setError(apiErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Modal title={`Take Payment · Invoice #${invoice.invoiceId}`} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-700">
-          {invoice.patientName} owes <span className="font-semibold">${invoice.balance.toFixed(2)}</span> of ${invoice.amount.toFixed(2)}.
-        </p>
-        <SelectField label="Payment Type" required value={paymentTypeId} onChange={(e) => setPaymentTypeId(e.target.value)}>
-          <option value="">Select a payment type</option>
-          {paymentTypes.map((t) => (
-            <option key={t.paymentTypeId} value={t.paymentTypeId}>{t.name}</option>
-          ))}
-        </SelectField>
-        <Field label="Amount ($)" type="number" min="0.01" max={invoice.balance} step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} />
-        <ErrorText message={error} />
-        <FormActions saving={saving} onCancel={onClose} saveLabel="Save Payment" />
+        <FormActions saving={saving} onCancel={onClose} saveLabel="Send Request" />
       </form>
     </Modal>
   );

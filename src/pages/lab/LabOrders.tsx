@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import { ErrorText } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
 import { FormActions, SecondaryButton, PrimaryButton, StatusBadge } from "../../components/ProfileUI";
@@ -69,20 +70,16 @@ export function LabOrders() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Lab Orders</h1>
-        <p className="mt-1 text-gray-600">Start lab orders and enter their results.</p>
-      </div>
+    <PortalPage eyebrow="Laboratory" title="Lab Orders" description="Start an order when the sample is collected, then enter its result.">
 
-      <div className="flex gap-6 border-b border-gray-200">
+      <div className="flex gap-6 border-b border-slate-200">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setStatus(t.key)}
             className={`-mb-px border-b-2 pb-3 text-sm font-medium ${
-              status === t.key ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
+              status === t.key ? "border-navy text-navy" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}
           >
             {t.label}
@@ -95,9 +92,9 @@ export function LabOrders() {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           placeholder="Search by patient name"
-          className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
         />
-        <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <button type="submit" className="rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy-dark">
           Search
         </button>
         {search && (
@@ -107,30 +104,30 @@ export function LabOrders() {
               setSearchText("");
               setSearch("");
             }}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >
             Clear
           </button>
         )}
       </form>
 
-      {error && <p className="text-red-600">{error}</p>}
+      <PageError message={error} />
 
-      <div className="rounded-lg border border-gray-200 bg-white">
+      <div className="rounded-lg border border-slate-200 bg-white">
         {loading ? (
-          <p className="p-4 text-gray-500">Loading lab orders...</p>
+          <p className="p-4 text-slate-500">Loading lab orders...</p>
         ) : orders.length === 0 ? (
-          <p className="p-4 text-gray-500">{search ? `No lab orders for "${search}".` : "No lab orders here."}</p>
+          <p className="p-4 text-slate-500">{search ? `No lab orders for "${search}".` : "No lab orders here."}</p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-slate-100">
             {orders.map((o) => (
               <li key={o.labOrderId} className="p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-gray-900">{o.testName}</span>
+                    <span className="font-semibold text-slate-900">{o.testName}</span>
                     <StatusBadge status={o.status} />
-                    <span className="text-gray-900">{o.patientName}</span>
-                    <span className="text-gray-500">born {o.dob}</span>
+                    <span className="text-slate-900">{o.patientName}</span>
+                    <span className="text-slate-500">born {o.dob}</span>
                   </div>
                   <div className="flex gap-2">
                     {o.status === "Ordered" && (
@@ -138,21 +135,21 @@ export function LabOrders() {
                         Start
                       </SecondaryButton>
                     )}
-                    {(o.status === "Ordered" || o.status === "InProgress") && (
+                    {o.status === "InProgress" && (
                       <PrimaryButton type="button" onClick={() => setResultOrder(o)}>
                         Enter Result
                       </PrimaryButton>
                     )}
                   </div>
                 </div>
-                <p className="mt-1 text-gray-500">
+                <p className="mt-1 text-slate-500">
                   Ordered {o.orderDate} by Dr. {o.orderedBy}
                 </p>
                 {o.resultNotes && (
-                  <div className="mt-2 rounded-lg bg-gray-50 p-3">
-                    <p className="text-gray-800">{o.resultNotes}</p>
+                  <div className="mt-2 rounded-lg bg-slate-50 p-3">
+                    <p className="text-slate-800">{o.resultNotes}</p>
                     {o.performedBy && (
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-slate-500">
                         Entered by {o.performedBy} on {o.resultDate}
                       </p>
                     )}
@@ -171,7 +168,7 @@ export function LabOrders() {
           onSaved={() => setReloadCount(reloadCount + 1)}
         />
       )}
-    </div>
+    </PortalPage>
   );
 }
 
@@ -200,8 +197,8 @@ function ResultModal({ order, onClose, onSaved }: { order: LabOrder; onClose: ()
   return (
     <Modal title="Enter Result" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-          <p className="font-semibold text-gray-900">{order.testName}</p>
+        <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+          <p className="font-semibold text-slate-900">{order.testName}</p>
           <p>
             {order.patientName} · born {order.dob}
           </p>
@@ -209,7 +206,7 @@ function ResultModal({ order, onClose, onSaved }: { order: LabOrder; onClose: ()
             Ordered {order.orderDate} by Dr. {order.orderedBy}
           </p>
         </div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-slate-700">
           Result
           <textarea
             required
@@ -217,7 +214,7 @@ function ResultModal({ order, onClose, onSaved }: { order: LabOrder; onClose: ()
             value={resultNotes}
             onChange={(e) => setResultNotes(e.target.value)}
             placeholder="e.g. Total cholesterol 210 mg/dL (slightly high), LDL 135 mg/dL"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
         </label>
         <ErrorText message={error} />

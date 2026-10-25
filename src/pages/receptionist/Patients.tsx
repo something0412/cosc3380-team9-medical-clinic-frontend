@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
 import { api, apiErrorMessage } from "../../api";
+import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
-import { FormActions, PrimaryButton } from "../../components/ProfileUI";
+import { PageError, PortalPage } from "../../components/PortalPage";
+import { FormActions, StatusBadge } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface Patient {
@@ -12,8 +15,6 @@ interface Patient {
   firstName: string;
   lastName: string;
   dob: string;
-  phone: string;
-  email: string | null;
   isActive: boolean;
 }
 
@@ -39,78 +40,84 @@ export function ReceptionistPatients() {
     loadPatients();
   }, []);
 
-  // filter by name, phone or patient number
+  // filter by name, date of birth or patient number
   const searchText = search.trim().toLowerCase();
   const shown = patients.filter(
     (p) =>
       `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchText) ||
-      p.phone.includes(searchText) ||
+      p.dob.includes(searchText) ||
       formatId(p.patientId).includes(searchText)
   );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Patients</h1>
-          <p className="mt-1 text-gray-600">Find or register patients.</p>
-        </div>
-        <PrimaryButton type="button" onClick={() => setShowForm(true)}>+ Register Patient</PrimaryButton>
+    <PortalPage
+      eyebrow="Front Desk"
+      title="Patients"
+      description="Find a patient or register a new one."
+      actions={
+        <button type="button" onClick={() => setShowForm(true)} className={ADMIN_PRIMARY_BUTTON}>
+          Register Patient
+        </button>
+      }
+    >
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <Field
+          label="Search"
+          type="search"
+          placeholder="Name, date of birth or patient number"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by name, phone or patient number"
-        className="w-full max-w-md rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-      />
+      <PageError message={error} />
 
-      {error && <p className="text-red-600">{error}</p>}
-
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="w-full whitespace-nowrap text-left text-sm">
-          <thead className="bg-gray-50">
-            <tr className="border-b text-gray-500">
-              <th className="p-3 font-medium">Patient #</th>
-              <th className="p-3 font-medium">Name</th>
-              <th className="p-3 font-medium">Date of Birth</th>
-              <th className="p-3 font-medium">Phone</th>
-              <th className="p-3 font-medium">Email</th>
-              <th className="p-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="p-3 text-gray-500">Loading patients...</td></tr>
-            ) : shown.length === 0 ? (
-              <tr><td colSpan={6} className="p-3 text-gray-500">{search ? `No patients match "${search}".` : "No patients yet."}</td></tr>
-            ) : (
-              shown.map((p) => (
-                <tr key={p.patientId} className="border-b last:border-0">
-                  <td className="p-3">{formatId(p.patientId)}</td>
-                  <td className="p-3">
-                    <Link to={`/staff/reception/patients/${p.patientId}`} className="font-medium text-blue-600 hover:underline">
-                      {p.lastName}, {p.firstName}
-                    </Link>
-                    {!p.isActive && <span className="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700">Inactive</span>}
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
+          {loading ? "Loading patients..." : `Showing ${shown.length} of ${patients.length} patients`}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Patient ID</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Date of Birth</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {!loading && shown.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
+                    {search ? `No patients match "${search}".` : "No patients yet."}
                   </td>
-                  <td className="p-3">{p.dob.slice(0, 10)}</td>
-                  <td className="p-3">{p.phone}</td>
-                  <td className="p-3">{p.email ?? "—"}</td>
-                  <td className="p-3">
-                    <Link to={`/staff/reception/patients/${p.patientId}`} className="text-blue-600 hover:underline">
-                      Open
+                </tr>
+              )}
+              {shown.map((p) => (
+                <tr key={p.patientId} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 font-mono text-slate-500">{formatId(p.patientId)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 font-medium text-navy">{p.lastName}, {p.firstName}</td>
+                  <td className="px-4 py-3 text-slate-700">{p.dob}</td>
+                  <td className="px-4 py-3"><StatusBadge status={p.isActive ? "Active" : "Inactive"} /></td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      to={`/staff/reception/patients/${p.patientId}`}
+                      className="whitespace-nowrap font-medium text-navy hover:text-teal-700 hover:underline"
+                    >
+                      View details
                     </Link>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {showForm && <RegisterModal onClose={() => setShowForm(false)} />}
-    </div>
+    </PortalPage>
   );
 }
 
@@ -123,26 +130,32 @@ function RegisterModal({ onClose }: { onClose: () => void }) {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  const [matches, setMatches] = useState<Patient[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   // register the patient and open their page
+  // a 409 means someone with this name and birthday exists, so the receptionist checks before confirming
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setSaving(true);
     try {
       const res = await api.post<{ patientId: number }>("/api/patients", {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        firstName,
+        lastName,
         dob,
         gender,
-        phone: phone.trim(),
-        email: email.trim(),
-        address: address.trim(),
+        phone,
+        email,
+        address,
+        confirmedNewPatient: matches.length > 0,
       });
       navigate(`/staff/reception/patients/${res.data.patientId}`);
     } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 409 && err.response.data?.matches) {
+        setMatches(err.response.data.matches);
+      }
       setError(apiErrorMessage(err));
     } finally {
       setSaving(false);
@@ -166,8 +179,26 @@ function RegisterModal({ onClose }: { onClose: () => void }) {
           <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <Field label="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
-        <ErrorText message={error} />
-        <FormActions saving={saving} onCancel={onClose} saveLabel="Register" />
+
+        {matches.length > 0 && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-medium">Possible existing patient:</p>
+            <ul className="mt-2 space-y-1">
+              {matches.map((m) => (
+                <li key={m.patientId}>
+                  <Link to={`/staff/reception/patients/${m.patientId}`} className="font-medium text-navy hover:underline">
+                    {m.firstName} {m.lastName}
+                  </Link>{" "}
+                  · born {m.dob} · ID {formatId(m.patientId)}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2">If this is a different person, press Register again to add them.</p>
+          </div>
+        )}
+
+        <ErrorText message={matches.length > 0 ? "" : error} />
+        <FormActions saving={saving} onCancel={onClose} saveLabel={matches.length > 0 ? "Register Anyway" : "Register"} />
       </form>
     </Modal>
   );

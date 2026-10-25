@@ -4,7 +4,8 @@ import { Link, useParams } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
-import { FormActions, InfoGrid, InfoItem, SecondaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { PageError, PortalPage } from "../../components/PortalPage";
+import { DangerButton, FormActions, InfoGrid, InfoItem, SecondaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface PatientInfo {
@@ -17,13 +18,15 @@ interface PatientInfo {
   email: string | null;
   address: string | null;
   isActive: boolean;
-  hasAccount: boolean;
-  insurance: { insuranceId: number; provider: string; policyNumber: string; status: string } | null;
-  emergencyContacts: { emergencyContactId: number; name: string; relationship: string; phoneNumber: string; isPrimary: boolean }[];
-  forms: { formTypeId: number; name: string; isRequired: boolean; completedDate: string | null }[];
-  appointments: { appointmentId: number; date: string; time: string; doctorName: string; specialty: string; officeName: string; status: string }[];
-  balance: number;
+  hasLogin: boolean;
+  insurance: { provider: string; policyNumber: string; status: string } | null;
+  emergencyContacts: { emergencyContactId: number; firstName: string; lastName: string; relationship: string; phoneNumber: string; isPrimary: boolean }[];
+  forms: { formTypeId: number; name: string; isRequired: boolean; completed: boolean; completedDate: string | null }[];
+  appointments: { appointmentId: number; date: string; startTime: string; doctorName: string; specialty: string; officeName: string; status: string }[];
+  balance: string;
 }
+
+const BACK = { to: "/staff/reception/patients", label: "Back to patients" };
 
 export function ReceptionistPatientDetail() {
   const { patientId } = useParams();
@@ -54,13 +57,18 @@ export function ReceptionistPatientDetail() {
     setReloadCount(reloadCount + 1);
   }
 
-  // verify or deny the insurance
+  // verify or deny the insurance (sends back the policy that was checked)
   async function setInsuranceStatus(status: string) {
+    if (!patient?.insurance) return;
     setError("");
     setMessage("");
     setSaving(true);
     try {
-      await api.patch(`/api/receptionist/patients/${patientId}/insurance/status`, { status });
+      await api.patch(`/api/receptionist/patients/${patientId}/insurance/status`, {
+        status,
+        provider: patient.insurance.provider,
+        policyNumber: patient.insurance.policyNumber,
+      });
       handleSaved(`Insurance marked ${status}.`);
     } catch (err) {
       setError(apiErrorMessage(err));
@@ -86,40 +94,34 @@ export function ReceptionistPatientDetail() {
 
   if (!patient) {
     return (
-      <div className="mx-auto max-w-6xl space-y-4">
-        <Link to="/staff/reception/patients" className="text-sm text-blue-600 hover:underline">← Back to patients</Link>
-        {error ? <p className="text-red-600">{error}</p> : <p>Loading patient...</p>}
-      </div>
+      <PortalPage eyebrow="Front Desk" title="Patient" back={BACK}>
+        {error ? <PageError message={error} /> : <p className="text-slate-500">Loading patient...</p>}
+      </PortalPage>
     );
   }
 
-  const missingForms = patient.forms.filter((f) => f.isRequired && !f.completedDate);
+  const missingForms = patient.forms.filter((f) => f.isRequired && !f.completed);
+  const balance = Number(patient.balance);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <Link to="/staff/reception/patients" className="text-sm text-blue-600 hover:underline">← Back to patients</Link>
-
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {patient.firstName} {patient.lastName}
-            {!patient.isActive && <span className="ml-3 rounded-full bg-gray-200 px-2.5 py-0.5 align-middle text-xs text-gray-700">Inactive</span>}
-          </h1>
-          <p className="mt-1 text-gray-600">
-            Patient #{formatId(patient.patientId)} · Born {patient.dob} · {patient.hasAccount ? "Has an online account" : "No online account"}
-          </p>
+    <PortalPage
+      eyebrow="Front Desk"
+      title={`${patient.firstName} ${patient.lastName}`}
+      description={`Patient ID ${formatId(patient.patientId)} · Born ${patient.dob} · ${patient.hasLogin ? "Has a portal login" : "No portal login"}`}
+      back={BACK}
+      actions={
+        <div className="rounded-lg border border-slate-200 bg-white px-5 py-3 text-right">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Balance Owed</p>
+          <p className={`text-2xl font-bold ${balance > 0 ? "text-red-600" : "text-navy"}`}>${balance.toFixed(2)}</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-5 py-3 text-right">
-          <p className="text-sm text-gray-500">Balance Owed</p>
-          <p className={`text-2xl font-bold ${patient.balance > 0 ? "text-red-600" : "text-gray-900"}`}>${patient.balance.toFixed(2)}</p>
-        </div>
-      </div>
-
-      {error && <p className="text-red-600">{error}</p>}
+      }
+    >
+      {!patient.isActive && <StatusBadge status="Inactive" />}
+      <PageError message={error} />
       <SuccessText message={message} />
 
       {missingForms.length > 0 && (
-        <p className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Missing required forms: {missingForms.map((f) => f.name).join(", ")}
         </p>
       )}
@@ -132,6 +134,11 @@ export function ReceptionistPatientDetail() {
             <InfoItem label="Gender" value={patient.gender} />
             <InfoItem label="Address" value={patient.address} />
           </InfoGrid>
+          {!patient.hasLogin && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <SecondaryButton onClick={() => setOpenForm("login")}>Set Up Portal Login</SecondaryButton>
+            </div>
+          )}
         </Section>
 
         <Section
@@ -149,28 +156,28 @@ export function ReceptionistPatientDetail() {
                 <div className="flex gap-2">
                   <SecondaryButton disabled={saving} onClick={() => setInsuranceStatus("Verified")}>Verify</SecondaryButton>
                   {patient.insurance.status !== "Denied" && (
-                    <SecondaryButton disabled={saving} onClick={() => setInsuranceStatus("Denied")} className="text-red-600">Deny</SecondaryButton>
+                    <DangerButton disabled={saving} onClick={() => setInsuranceStatus("Denied")}>Deny</DangerButton>
                   )}
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-gray-500">No insurance on file.</p>
+            <p className="text-slate-500">No insurance on file.</p>
           )}
         </Section>
 
-        <Section title="Emergency Contacts" action={<TextButton onClick={() => setOpenForm("contactPerson")}>+ Add</TextButton>}>
+        <Section title="Emergency Contacts" action={<TextButton onClick={() => setOpenForm("contactPerson")}>Add</TextButton>}>
           {patient.emergencyContacts.length === 0 ? (
-            <p className="text-gray-500">No emergency contacts.</p>
+            <p className="text-slate-500">No emergency contacts.</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-slate-100">
               {patient.emergencyContacts.map((c) => (
                 <li key={c.emergencyContactId} className="flex justify-between py-2 text-sm">
                   <span>
-                    <span className="font-medium text-gray-900">{c.name}</span> · {c.relationship}
-                    {c.isPrimary && <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800">Primary</span>}
+                    <span className="font-medium text-slate-900">{c.firstName} {c.lastName}</span> · {c.relationship}
+                    {c.isPrimary && <span className="ml-2"><StatusBadge status="Primary" /></span>}
                   </span>
-                  <span className="text-gray-600">{c.phoneNumber}</span>
+                  <span className="text-slate-600">{c.phoneNumber}</span>
                 </li>
               ))}
             </ul>
@@ -178,15 +185,15 @@ export function ReceptionistPatientDetail() {
         </Section>
 
         <Section title="Forms">
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-slate-100">
             {patient.forms.map((f) => (
               <li key={f.formTypeId} className="flex items-center justify-between py-2 text-sm">
                 <span>
-                  <span className="font-medium text-gray-900">{f.name}</span>
-                  {f.isRequired && <span className="ml-2 text-xs text-gray-500">Required</span>}
+                  <span className="font-medium text-slate-900">{f.name}</span>
+                  {f.isRequired && <span className="ml-2 text-xs text-slate-500">Required</span>}
                 </span>
-                {f.completedDate ? (
-                  <span className="text-green-700">✓ Completed {f.completedDate}</span>
+                {f.completed ? (
+                  <span className="text-green-700">Completed {f.completedDate}</span>
                 ) : (
                   <TextButton disabled={saving} onClick={() => completeForm(f.formTypeId, f.name)}>Mark Completed</TextButton>
                 )}
@@ -196,31 +203,34 @@ export function ReceptionistPatientDetail() {
         </Section>
       </div>
 
-      <Section title="Recent Appointments" action={<Link to="/staff/reception/appointments" className="text-sm text-blue-600 hover:underline">Book appointment</Link>}>
+      <Section
+        title="Recent Appointments"
+        action={<Link to="/staff/reception/appointments" className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">Book appointment</Link>}
+      >
         {patient.appointments.length === 0 ? (
-          <p className="text-gray-500">No appointments yet.</p>
+          <p className="text-slate-500">No appointments yet.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full whitespace-nowrap text-left text-sm">
-              <thead>
-                <tr className="border-b text-gray-500">
-                  <th className="py-2 pr-4 font-medium">Date</th>
-                  <th className="py-2 pr-4 font-medium">Time</th>
-                  <th className="py-2 pr-4 font-medium">Doctor</th>
-                  <th className="py-2 pr-4 font-medium">Specialty</th>
-                  <th className="py-2 pr-4 font-medium">Office</th>
-                  <th className="py-2 font-medium">Status</th>
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Time</th>
+                  <th className="px-4 py-3">Doctor</th>
+                  <th className="px-4 py-3">Specialty</th>
+                  <th className="px-4 py-3">Office</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {patient.appointments.map((a) => (
-                  <tr key={a.appointmentId} className="border-b last:border-0">
-                    <td className="py-2 pr-4">{a.date}</td>
-                    <td className="py-2 pr-4">{a.time}</td>
-                    <td className="py-2 pr-4">{a.doctorName}</td>
-                    <td className="py-2 pr-4">{a.specialty}</td>
-                    <td className="py-2 pr-4">{a.officeName}</td>
-                    <td className="py-2"><StatusBadge status={a.status} /></td>
+                  <tr key={a.appointmentId} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-700">{a.date}</td>
+                    <td className="px-4 py-3 text-slate-700">{a.startTime}</td>
+                    <td className="px-4 py-3 text-slate-700">Dr. {a.doctorName}</td>
+                    <td className="px-4 py-3 text-slate-700">{a.specialty}</td>
+                    <td className="px-4 py-3 text-slate-700">{a.officeName}</td>
+                    <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -238,7 +248,10 @@ export function ReceptionistPatientDetail() {
       {openForm === "contactPerson" && (
         <EmergencyContactModal patientId={patient.patientId} onClose={() => setOpenForm("")} onSaved={() => handleSaved("Emergency contact added.")} />
       )}
-    </div>
+      {openForm === "login" && (
+        <PortalLoginModal patient={patient} onClose={() => setOpenForm("")} onSaved={() => handleSaved("Portal login created.")} />
+      )}
+    </PortalPage>
   );
 }
 
@@ -276,7 +289,7 @@ function ContactModal({ patient, onClose, onSaved }: { patient: PatientInfo; onC
           <option value="Male">Male</option>
           <option value="Other">Other</option>
         </SelectField>
-        <p className="text-sm text-gray-500">Email is the patient's login, so only the patient can change it.</p>
+        <p className="text-sm text-slate-500">Email is the patient's login, so only the patient can change it.</p>
         <ErrorText message={error} />
         <FormActions saving={saving} onCancel={onClose} />
       </form>
@@ -311,7 +324,7 @@ function InsuranceModal({ patient, onClose, onSaved }: { patient: PatientInfo; o
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="Provider" required value={provider} onChange={(e) => setProvider(e.target.value)} />
         <Field label="Policy Number" required value={policyNumber} onChange={(e) => setPolicyNumber(e.target.value)} />
-        <p className="text-sm text-gray-500">Saving sets the insurance back to Pending until it is verified.</p>
+        <p className="text-sm text-slate-500">Saving sets the insurance back to Pending until it is verified.</p>
         <ErrorText message={error} />
         <FormActions saving={saving} onCancel={onClose} />
       </form>
@@ -353,12 +366,47 @@ function EmergencyContactModal({ patientId, onClose, onSaved }: { patientId: num
           <Field label="Relationship" required value={relationship} onChange={(e) => setRelationship(e.target.value)} />
           <Field label="Phone" required value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
         </div>
-        <label className="flex items-center gap-2 text-sm text-gray-700">
+        <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={isPrimary} onChange={(e) => setIsPrimary(e.target.checked)} />
           Primary contact
         </label>
         <ErrorText message={error} />
         <FormActions saving={saving} onCancel={onClose} saveLabel="Add Contact" />
+      </form>
+    </Modal>
+  );
+}
+
+function PortalLoginModal({ patient, onClose, onSaved }: { patient: PatientInfo; onClose: () => void; onSaved: () => void }) {
+  const [email, setEmail] = useState(patient.email ?? "");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // create the login after checking the patient's photo ID
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      await api.post(`/api/receptionist/patients/${patient.patientId}/login`, { email, password });
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title="Set Up Portal Login" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-sm text-slate-600">Check the patient's photo ID first. The patient signs in with this email and password.</p>
+        <Field label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Field label="Temporary Password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+        <ErrorText message={error} />
+        <FormActions saving={saving} onCancel={onClose} saveLabel="Create Login" />
       </form>
     </Modal>
   );

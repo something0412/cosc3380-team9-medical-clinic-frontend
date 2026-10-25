@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import { Section, StatusBadge } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
@@ -9,18 +10,17 @@ interface DashboardData {
   officeName: string;
   todayAppointments: number;
   unpaidInvoices: number;
-  unpaidTotal: number;
+  unpaidTotal: string;
   pendingInsurance: number;
   todayList: {
     appointmentId: number;
     patientId: number;
     patientName: string;
-    phone: string;
-    time: string;
+    startTime: string;
     doctorName: string;
     status: string;
     checkedIn: boolean;
-    checkedOut: boolean;
+    checkedOutAt: string | null;
   }[];
 }
 
@@ -43,55 +43,52 @@ export function ReceptionistDashboard() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hello, {user?.firstName}</h1>
-        <p className="mt-1 text-gray-600">Today at the front desk{data?.officeName ? ` of ${data.officeName}` : ""}.</p>
-      </div>
-
-      {error && <p className="text-red-600">{error}</p>}
-      {!data && !error && <p>Loading dashboard...</p>}
+    <PortalPage
+      eyebrow="Front Desk"
+      title={`Hello, ${user?.firstName ?? ""}`}
+      description={`Today at the front desk${data?.officeName ? ` of ${data.officeName}` : ""}.`}
+    >
+      <PageError message={error} />
+      {!data && !error && <p className="text-slate-500">Loading dashboard...</p>}
 
       {data && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StatCard label="Appointments Today" value={String(data.todayAppointments)} note="Still scheduled" />
-            <StatCard label="Unpaid Invoices" value={String(data.unpaidInvoices)} note={`$${data.unpaidTotal.toFixed(2)} left to collect`} />
+            <StatCard label="Unpaid Invoices" value={String(data.unpaidInvoices)} note={`$${Number(data.unpaidTotal).toFixed(2)} left to collect`} />
             <StatCard label="Insurance to Verify" value={String(data.pendingInsurance)} note="Pending" />
           </div>
 
           <Section
             title="Today's Appointments"
-            action={<Link to="/staff/reception/appointments" className="text-sm text-blue-600 hover:underline">Open appointments</Link>}
+            action={<Link to="/staff/reception/appointments" className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">Open appointments</Link>}
           >
             {data.todayList.length === 0 ? (
-              <p className="text-gray-500">No appointments today.</p>
+              <p className="text-slate-500">No appointments today.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full whitespace-nowrap text-left text-sm">
-                  <thead>
-                    <tr className="border-b text-gray-500">
-                      <th className="py-2 pr-4 font-medium">Time</th>
-                      <th className="py-2 pr-4 font-medium">Patient</th>
-                      <th className="py-2 pr-4 font-medium">Phone</th>
-                      <th className="py-2 pr-4 font-medium">Doctor</th>
-                      <th className="py-2 pr-4 font-medium">Status</th>
-                      <th className="py-2 font-medium">Desk</th>
+                <table className="w-full min-w-[560px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3">Time</th>
+                      <th className="px-4 py-3">Patient</th>
+                      <th className="px-4 py-3">Doctor</th>
+                      <th className="px-4 py-3">Status</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {data.todayList.map((a) => (
-                      <tr key={a.appointmentId} className="border-b last:border-0">
-                        <td className="py-2 pr-4">{a.time}</td>
-                        <td className="py-2 pr-4">
-                          <Link to={`/staff/reception/patients/${a.patientId}`} className="font-medium text-blue-600 hover:underline">
+                      <tr key={a.appointmentId} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 text-slate-700">{a.startTime}</td>
+                        <td className="px-4 py-3">
+                          <Link to={`/staff/reception/patients/${a.patientId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
                             {a.patientName}
                           </Link>
                         </td>
-                        <td className="py-2 pr-4">{a.phone}</td>
-                        <td className="py-2 pr-4">{a.doctorName}</td>
-                        <td className="py-2 pr-4"><StatusBadge status={a.status} /></td>
-                        <td className="py-2">{a.checkedOut ? "Checked out" : a.checkedIn ? "Checked in" : "—"}</td>
+                        <td className="px-4 py-3 text-slate-700">Dr. {a.doctorName}</td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -101,13 +98,13 @@ export function ReceptionistDashboard() {
           </Section>
 
           {data.unpaidInvoices > 0 && (
-            <p className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               {data.unpaidInvoices} invoice(s) still have a balance.{" "}
               <Link to="/staff/reception/billing" className="font-medium underline">Go to billing</Link>
             </p>
           )}
         </>
       )}
-    </div>
+    </PortalPage>
   );
 }

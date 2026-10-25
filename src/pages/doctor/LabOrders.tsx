@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
-import { ErrorText, SelectField } from "../../components/FormControls";
+import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
+import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
-import { FormActions, PrimaryButton, StatusBadge, TextButton } from "../../components/ProfileUI";
+import { PageError, PortalPage } from "../../components/PortalPage";
+import { FormActions, StatusBadge, TextButton } from "../../components/ProfileUI";
 
 interface LabOrder {
   labOrderId: number;
@@ -14,6 +16,8 @@ interface LabOrder {
   status: string;
   orderDate: string;
   resultNotes: string | null;
+  resultDate: string | null;
+  performedBy: string | null;
 }
 
 interface PatientOption {
@@ -25,7 +29,7 @@ interface PatientOption {
 interface LabTest {
   labTestTypeId: number;
   name: string;
-  cost: number;
+  cost: string;
 }
 
 export function DoctorLabOrders() {
@@ -41,6 +45,7 @@ export function DoctorLabOrders() {
   // load my lab orders
   useEffect(() => {
     async function loadOrders() {
+      setLoading(true);
       try {
         const res = await api.get<LabOrder[]>("/api/doctor/lab-orders", { params: { status, search } });
         setOrders(res.data);
@@ -59,9 +64,10 @@ export function DoctorLabOrders() {
     setSearch(searchText);
   }
 
-  // cancel an order
+  // cancel an order the lab hasn't started
   async function cancelOrder(order: LabOrder) {
     if (!window.confirm(`Cancel the ${order.testName} order for ${order.patientName}?`)) return;
+    setError("");
     try {
       await api.patch(`/api/doctor/lab-orders/${order.labOrderId}/cancel`);
       setReloadCount(reloadCount + 1);
@@ -70,98 +76,66 @@ export function DoctorLabOrders() {
     }
   }
 
-  const waiting = orders.filter((o) => o.status === "Ordered" || o.status === "InProgress").length;
-  const completed = orders.filter((o) => o.status === "Completed").length;
-
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lab Orders</h1>
-          <p className="mt-1 text-gray-600">Lab tests you ordered and their results.</p>
-        </div>
-        <PrimaryButton type="button" onClick={() => setShowForm(true)}>
+    <PortalPage
+      eyebrow="Doctor"
+      title="Lab Orders"
+      description="Lab tests you ordered and their results."
+      actions={
+        <button type="button" onClick={() => setShowForm(true)} className={ADMIN_PRIMARY_BUTTON}>
           Create Order
-        </PrimaryButton>
-      </div>
-
-      <form onSubmit={handleSearch} className="flex max-w-md gap-2">
-        <input
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          placeholder="Search by patient name"
-          className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-        />
-        <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-          Search
         </button>
-        {search && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchText("");
-              setSearch("");
-            }}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Clear
-          </button>
-        )}
+      }
+    >
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
+        <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+        <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="all">All</option>
+          <option value="open">Waiting for a result</option>
+          <option value="Ordered">Ordered</option>
+          <option value="InProgress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </SelectField>
+        <button type="submit" className={ADMIN_PRIMARY_BUTTON}>Search</button>
       </form>
 
-      <div className="flex flex-wrap items-end gap-6">
-        <div className="w-48">
-          <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="all">All</option>
-            <option value="Ordered">Ordered</option>
-            <option value="InProgress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </SelectField>
-        </div>
-        <p className="pb-2 text-sm text-gray-600">
-          {completed} with results · {waiting} waiting
-        </p>
-      </div>
+      <PageError message={error} />
 
-      {error && <p className="text-red-600">{error}</p>}
-
-      <div className="rounded-lg border border-gray-200 bg-white">
+      <section className="rounded-lg border border-slate-200 bg-white">
         {loading ? (
-          <p className="p-4 text-gray-500">Loading lab orders...</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500">Loading lab orders...</p>
         ) : orders.length === 0 ? (
-          <p className="p-4 text-gray-500">{search ? `No lab orders for "${search}".` : "No lab orders."}</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500">{search ? `No lab orders for "${search}".` : "No lab orders."}</p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-slate-100">
             {orders.map((o) => (
               <li key={o.labOrderId} className="p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-gray-900">{o.testName}</span>
+                    <span className="font-semibold text-navy">{o.testName}</span>
                     <StatusBadge status={o.status} />
-                    <Link to={`/doctor/patients/${o.patientId}`} className="text-blue-600 hover:underline">
+                    <Link to={`/doctor/patients/${o.patientId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
                       {o.patientName}
                     </Link>
-                    <span className="text-gray-500">ordered {o.orderDate}</span>
+                    <span className="text-slate-500">ordered {o.orderDate}</span>
                   </div>
-                  {(o.status === "Ordered" || o.status === "InProgress") && (
-                    <TextButton danger onClick={() => cancelOrder(o)}>Cancel</TextButton>
-                  )}
+                  {o.status === "Ordered" && <TextButton danger onClick={() => cancelOrder(o)}>Cancel</TextButton>}
                 </div>
-                {o.resultNotes && <p className="mt-2 text-gray-700">{o.resultNotes}</p>}
+                {o.resultNotes && (
+                  <div className="mt-2 rounded-lg bg-slate-50 p-3">
+                    <p className="text-slate-800">{o.resultNotes}</p>
+                    {o.performedBy && <p className="mt-1 text-xs text-slate-500">Entered by {o.performedBy} on {o.resultDate}</p>}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </section>
 
-      {showForm && (
-        <CreateOrderModal
-          onClose={() => setShowForm(false)}
-          onSaved={() => setReloadCount(reloadCount + 1)}
-        />
-      )}
-    </div>
+      {showForm && <CreateOrderModal onClose={() => setShowForm(false)} onSaved={() => setReloadCount(reloadCount + 1)} />}
+    </PortalPage>
   );
 }
 
@@ -216,7 +190,7 @@ function CreateOrderModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
         <SelectField label="Lab Test" required value={labTestTypeId} onChange={(e) => setLabTestTypeId(e.target.value)}>
           <option value="">Select a test</option>
           {tests.map((t) => (
-            <option key={t.labTestTypeId} value={t.labTestTypeId}>{t.name} (${t.cost.toFixed(2)})</option>
+            <option key={t.labTestTypeId} value={t.labTestTypeId}>{t.name} (${Number(t.cost).toFixed(2)})</option>
           ))}
         </SelectField>
         <ErrorText message={error} />

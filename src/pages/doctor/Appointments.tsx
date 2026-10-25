@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
+import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
+import { Field } from "../../components/FormControls";
+import { PageError, PortalPage } from "../../components/PortalPage";
 import { StatusBadge } from "../../components/ProfileUI";
 
 interface Appointment {
@@ -9,12 +12,12 @@ interface Appointment {
   patientId: number;
   patientName: string;
   date: string;
-  time: string;
+  startTime: string;
   specialty: string;
   officeName: string;
   status: string;
-  fromReferral: boolean;
-  hasSummary: boolean;
+  referralId: number | null;
+  checkedIn: boolean;
 }
 
 const VIEWS = [
@@ -35,6 +38,7 @@ export function DoctorAppointments() {
   // load my appointments
   useEffect(() => {
     async function loadAppointments() {
+      setLoading(true);
       try {
         const res = await api.get<Appointment[]>("/api/doctor/appointments", { params: { view, search } });
         setAppointments(res.data);
@@ -54,20 +58,19 @@ export function DoctorAppointments() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
-        <p className="mt-1 text-gray-600">Open a visit to write notes and prescriptions.</p>
-      </div>
-
-      <div className="flex gap-6 border-b border-gray-200">
+    <PortalPage
+      eyebrow="Doctor"
+      title="Appointments"
+      description="Open a visit to write notes, diagnoses and prescriptions once the front desk checks the patient in."
+    >
+      <div className="flex gap-6 border-b border-slate-200">
         {VIEWS.map((v) => (
           <button
             key={v.key}
             type="button"
             onClick={() => setView(v.key)}
-            className={`-mb-px border-b-2 pb-3 text-sm font-medium ${
-              view === v.key ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
+            className={`-mb-px border-b-2 pb-3 text-sm font-semibold ${
+              view === v.key ? "border-navy text-navy" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}
           >
             {v.label}
@@ -75,79 +78,63 @@ export function DoctorAppointments() {
         ))}
       </div>
 
-      <form onSubmit={handleSearch} className="flex max-w-md gap-2">
-        <input
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          placeholder="Search by patient name"
-          className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-        />
-        <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-          Search
-        </button>
-        {search && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchText("");
-              setSearch("");
-            }}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Clear
-          </button>
-        )}
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_auto] sm:items-end">
+        <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+        <button type="submit" className={ADMIN_PRIMARY_BUTTON}>Search</button>
       </form>
 
-      {error && <p className="text-red-600">{error}</p>}
+      <PageError message={error} />
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="w-full whitespace-nowrap text-left text-sm">
-          <thead className="bg-gray-50">
-            <tr className="border-b text-gray-500">
-              <th className="p-3 font-medium">Date</th>
-              <th className="p-3 font-medium">Time</th>
-              <th className="p-3 font-medium">Patient</th>
-              <th className="p-3 font-medium">Specialty</th>
-              <th className="p-3 font-medium">Office</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium">Notes</th>
-              <th className="p-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={8} className="p-3 text-gray-500">Loading appointments...</td></tr>
-            ) : appointments.length === 0 ? (
-              <tr><td colSpan={8} className="p-3 text-gray-500">{search ? `No appointments for "${search}".` : "No appointments."}</td></tr>
-            ) : (
-              appointments.map((a) => (
-                <tr key={a.appointmentId} className="border-b last:border-0">
-                  <td className="p-3">{a.date}</td>
-                  <td className="p-3">{a.time}</td>
-                  <td className="p-3">
-                    <Link to={`/doctor/patients/${a.patientId}`} className="font-medium text-blue-600 hover:underline">
-                      {a.patientName}
-                    </Link>
-                    {a.fromReferral && (
-                      <span className="ml-2 rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-800">Referral</span>
-                    )}
-                  </td>
-                  <td className="p-3">{a.specialty}</td>
-                  <td className="p-3">{a.officeName}</td>
-                  <td className="p-3"><StatusBadge status={a.status} /></td>
-                  <td className="p-3">{a.hasSummary ? "✓ Written" : "—"}</td>
-                  <td className="p-3">
-                    <Link to={`/doctor/appointments/${a.appointmentId}`} className="text-blue-600 hover:underline">
-                      Open visit
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Time</th>
+                <th className="px-4 py-3">Patient</th>
+                <th className="px-4 py-3">Specialty</th>
+                <th className="px-4 py-3">Office</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">Loading appointments...</td></tr>
+              ) : appointments.length === 0 ? (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">{search ? `No appointments for "${search}".` : "No appointments."}</td></tr>
+              ) : (
+                appointments.map((a) => (
+                  <tr key={a.appointmentId} className="hover:bg-slate-50">
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.date}</td>
+                    <td className="px-4 py-3 text-slate-700">{a.startTime}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <Link to={`/doctor/patients/${a.patientId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
+                        {a.patientName}
+                      </Link>
+                      {a.referralId && <span className="ml-2 text-xs text-slate-500">referral</span>}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{a.specialty}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.officeName}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        to={`/doctor/appointments/${a.appointmentId}`}
+                        className="whitespace-nowrap font-medium text-navy hover:text-teal-700 hover:underline"
+                      >
+                        Open visit
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </PortalPage>
   );
 }

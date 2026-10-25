@@ -1,425 +1,340 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import axios from "axios";
-import { api } from "../../api";
+import { api, apiErrorMessage } from "../../api";
+import { ErrorText, Field, SelectField } from "../../components/FormControls";
+import { PageError, PortalPage } from "../../components/PortalPage";
+import { PrimaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
 import { useAuth } from "../../context/AuthContext";
 
 interface Appointment {
-    appointmentId: number;
-    appointmentDate: string;
-    appointmentTime: string | null;
-    doctorName: string;
-    specialty: string | null;
-    status: string;
+  appointmentId: number;
+  appointmentDate: string;
+  appointmentTime: string | null;
+  doctorName: string;
+  officeName: string;
+  specialty: string | null;
+  status: string;
+  checkedIn: boolean;
 }
 
 interface Doctor {
-    doctorId: number;
-    firstName: string;
-    lastName: string;
-    specialties: { specialtyId: number; name: string }[];
+  doctorId: number;
+  firstName: string;
+  lastName: string;
+  specialties: { specialtyId: number; name: string }[];
 }
 
 interface TimeSlot {
-    timeSlotId: number;
-    startTime: string;
-    officeName: string;
-    specialtyId: number;
-    requiresReferral: boolean;
-    referralId: number | null;
+  timeSlotId: number;
+  startTime: string;
+  officeName: string;
+  specialtyId: number;
+  requiresReferral: boolean;
+  referralId: number | null;
+  available?: boolean;
+  unavailableReason?: string | null;
 }
 
-function today() {
-    const d = new Date();
-
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+interface Referral {
+  referralId: number;
+  referringDoctorName: string;
+  specialistName: string;
+  specialty: string;
+  dateIssued: string;
+  expirationDate: string;
+  status: string;
+  expired: boolean;
 }
 
+// today's date at the clinic as YYYY-MM-DD
+const clinicToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+
+// 14:30 -> 2:30 PM
 function showTime(value: string | null) {
-    if (!value) return "N/A";
-
-    const [hour, minute = "00"] = value.split(":");
-    const h = Number(hour);
-
-    if (!Number.isInteger(h) || h < 0 || h > 23) return value;
-
-    return `${h % 12 || 12}:${minute} ${h >= 12 ? "PM" : "AM"}`;
+  if (!value) return "—";
+  const [hour, minute = "00"] = value.split(":");
+  const h = Number(hour);
+  return `${h % 12 || 12}:${minute} ${h >= 12 ? "PM" : "AM"}`;
 }
-
 
 export function PatientAppointments() {
-    const { user } = useAuth();
-    const patientId = user?.role === "patient" ? user.id : null;
+  const { user } = useAuth();
+  const patientId = user?.role === "patient" ? user.id : null;
 
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [doctors, setDoctors] = useState<Doctor[]>([]);
-    const [loadingDoctors, setLoadingDoctors] = useState(true);
-    const [times, setTimes] = useState<TimeSlot[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [times, setTimes] = useState<TimeSlot[]>([]);
+  const [doctorId, setDoctorId] = useState("");
+  const [date, setDate] = useState("");
+  const [timeSlotId, setTimeSlotId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [bookingError, setBookingError] = useState("");
+  const [message, setMessage] = useState("");
+  const [reloadCount, setReloadCount] = useState(0);
 
-    const [doctorId, setDoctorId] = useState("");
-    const [date, setDate] = useState("");
-    const [timeSlotId, setTimeSlotId] = useState("");
-
-    const [loading, setLoading] = useState(true);
-    const [checking, setChecking] = useState(false);
-    const [saving, setSaving] = useState(false);
-
-    const [historyError, setHistoryError] = useState("");
-    const [bookingError, setBookingError] = useState("");
-    const [message, setMessage] = useState("");
-    const [refresh, setRefresh] = useState(0);
-
-
-    //load this patients appointment history
-    useEffect(() => {
-        let active = true;
-
-        if (!patientId) {
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        setHistoryError("");
-
-        api.get<Appointment[]>(`/api/patient/${patientId}/appointments`)
-            .then(response => {
-                if (active) setAppointments(response.data);
-            })
-            .catch(() => {
-                if (active) setHistoryError("Could not load your appointments");
-            })
-            .finally(() => {
-                if (active) setLoading(false);
-            });
-
-        return () => { active = false; };
-
-    }, [patientId, refresh]);
-
-
-    //get the doctors when the page opens
-    useEffect(() => {
-        async function loadDoctors() {
-            if (!patientId) return;
-            try {
-                const response = await api.get<Doctor[]>("/api/public/doctors");
-                setDoctors(response.data);
-            } catch {
-                setBookingError("Could not load doctors");
-            } finally {
-                setLoadingDoctors(false);
-            }
-        }
-
-        loadDoctors();
-    }, [patientId]);
-
-
-    //check the open times when the doctor or date changes
-    useEffect(() => {
-        let active = true;
-
-        async function loadTimes() {
-            setChecking(true);
-            try {
-                const response = await api.get<TimeSlot[]>("/api/availability", {
-                    params: { doctorId, date }
-                });
-                if (active) setTimes(response.data);
-            } catch {
-                if (active) setBookingError("Could not check available times");
-            } finally {
-                if (active) setChecking(false);
-            }
-        }
-
-        if (!patientId || !doctorId || !date) return;
-        loadTimes();
-
-        return () => { active = false; };
-
-    }, [patientId, doctorId, date, refresh]);
-
-    // specialists need an approved referral before any time can be booked
-    const needsReferral = times.length > 0 && times.every(t => t.requiresReferral && !t.referralId);
-    const openTimes = needsReferral ? [] : times;
-    const selectedDoctor = doctors.find(d => String(d.doctorId) === doctorId);
-    const selectedSlot = times.find(t => String(t.timeSlotId) === timeSlotId);
-
-
-    //book the selected time and refresh the history
-    async function bookAppointment(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        const slot = selectedSlot;
-        if (!patientId || !doctorId || !date || !slot) return;
-
-        setSaving(true);
-        setBookingError("");
-        setMessage("");
-
-        try {
-            await api.post("/api/appointments", {
-                doctorId: Number(doctorId),
-                specialtyId: slot.specialtyId,
-                date,
-                timeSlotId: slot.timeSlotId,
-                referralId: slot.referralId
-            });
-
-            setMessage("Your appointment was booked!");
-            setTimeSlotId("");
-
-            setRefresh(n => n + 1);
-
-        } catch (err) {
-            const detail = axios.isAxiosError(err)
-                ? err.response?.data?.error
-                : null;
-
-            setBookingError(
-                typeof detail === "string"
-                    ? detail
-                    : "Booking failed. Please try again."
-            );
-
-            setRefresh(n => n + 1);
-
-        } finally {
-            setSaving(false);
-        }
+  // load my appointments and referrals
+  useEffect(() => {
+    async function loadAppointments() {
+      if (!patientId) return;
+      try {
+        const appointmentsRes = await api.get<Appointment[]>(`/api/patient/${patientId}/appointments`);
+        setAppointments(appointmentsRes.data);
+        const referralsRes = await api.get<Referral[]>(`/api/patient/${patientId}/referrals`);
+        setReferrals(referralsRes.data);
+      } catch (err) {
+        setError(apiErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
     }
+    loadAppointments();
+  }, [patientId, reloadCount]);
 
+  // load doctors for the booking form
+  useEffect(() => {
+    async function loadDoctors() {
+      try {
+        const res = await api.get<Doctor[]>("/api/public/doctors");
+        setDoctors(res.data);
+      } catch (err) {
+        setBookingError(apiErrorMessage(err));
+      }
+    }
+    loadDoctors();
+  }, []);
 
-    return (
-        <div className="max-w-5xl mx-auto p-6 space-y-6">
+  // check open times when the doctor or date changes
+  useEffect(() => {
+    async function loadTimes() {
+      setChecking(true);
+      setBookingError("");
+      try {
+        const res = await api.get<TimeSlot[]>("/api/availability", { params: { doctorId, date, includeTaken: true } });
+        setTimes(res.data);
+      } catch (err) {
+        setTimes([]);
+        setBookingError(apiErrorMessage(err));
+      } finally {
+        setChecking(false);
+      }
+    }
+    if (!doctorId || !date) return;
+    loadTimes();
+  }, [doctorId, date, reloadCount]);
 
-            <div className="rounded-xl bg-gradient-to-r from-blue-700 to-teal-500 p-6 text-white">
-                <p className="text-sm text-blue-100">PATIENT PORTAL</p>
+  // specialists need an approved referral before any time can be booked
+  const needsReferral = times.length > 0 && times.every((t) => t.requiresReferral && !t.referralId);
+  const openTimes = times.filter((t) => !t.requiresReferral || t.referralId);
+  const selectedSlot = openTimes.find((t) => String(t.timeSlotId) === timeSlotId && t.available !== false);
+  const anyOpen = openTimes.some((t) => t.available !== false);
+  const selectedDoctor = doctors.find((d) => String(d.doctorId) === doctorId);
+  const today = clinicToday();
 
-                <h2 className="text-2xl font-bold mt-2">
-                    My Appointments
-                </h2>
+  // book the selected time
+  async function bookAppointment(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedSlot) return;
+    setSaving(true);
+    setBookingError("");
+    setMessage("");
+    try {
+      await api.post("/api/appointments", {
+        doctorId: Number(doctorId),
+        specialtyId: selectedSlot.specialtyId,
+        date,
+        timeSlotId: selectedSlot.timeSlotId,
+        referralId: selectedSlot.referralId,
+      });
+      setMessage("Your appointment was booked.");
+      setTimeSlotId("");
+      setReloadCount(reloadCount + 1);
+    } catch (err) {
+      setBookingError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
 
-                <p className="mt-1">
-                    Hi {user?.firstName || "there"}, schedule your next visit here.
-                </p>
-            </div>
+  // cancel an upcoming appointment
+  async function cancelAppointment(appointment: Appointment) {
+    if (!window.confirm(`Cancel your appointment on ${appointment.appointmentDate}?`)) return;
+    setError("");
+    setMessage("");
+    try {
+      await api.patch(`/api/appointments/${appointment.appointmentId}/cancel`);
+      setMessage("Your appointment was cancelled.");
+      setReloadCount(reloadCount + 1);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    }
+  }
 
+  return (
+    <PortalPage eyebrow="Patient Portal" title="My Appointments" description={`Hi ${user?.firstName ?? "there"}, book and manage your visits here.`}>
+      <PageError message={error} />
+      <SuccessText message={message} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Section title="Book an Appointment">
+            <form onSubmit={bookAppointment} className="space-y-4">
+              <SelectField
+                label="Doctor"
+                required
+                value={doctorId}
+                onChange={(e) => {
+                  setDoctorId(e.target.value);
+                  setTimes([]);
+                  setTimeSlotId("");
+                }}
+              >
+                <option value="">Choose a doctor</option>
+                {doctors.map((d) => (
+                  <option key={d.doctorId} value={d.doctorId}>
+                    Dr. {d.firstName} {d.lastName}
+                    {d.specialties.length > 0 && ` (${d.specialties.map((s) => s.name).join(", ")})`}
+                  </option>
+                ))}
+              </SelectField>
 
-                <form
-                    onSubmit={bookAppointment}
-                    className="lg:col-span-2 bg-white border rounded-xl p-6 space-y-5"
-                >
-                    <h3 className="text-xl font-semibold text-slate-800">
-                        Book an Appointment
-                    </h3>
+              <Field
+                label="Date"
+                type="date"
+                required
+                min={today}
+                value={date}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  setTimes([]);
+                  setTimeSlotId("");
+                }}
+              />
 
-                    <label className="block text-sm font-medium text-slate-700">
-                        Doctor
-
-                        <select
-                            className="mt-2 w-full rounded-lg border p-3"
-                            value={doctorId}
-                            required
-                            onChange={e => {
-                                setDoctorId(e.target.value);
-                                setTimes([]);
-                                setTimeSlotId("");
-                                setMessage("");
-                                setBookingError("");
-                            }}
+              {doctorId && date && (
+                <div>
+                  <span className="mb-1 block text-sm font-medium text-slate-700">Open Times</span>
+                  {checking ? (
+                    <p className="text-sm text-slate-500">Checking open times...</p>
+                  ) : needsReferral ? (
+                    <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                      This specialist needs an approved referral from your doctor before you can book.
+                    </p>
+                  ) : openTimes.length === 0 ? (
+                    <p className="text-sm text-slate-500">This doctor isn't working this date. Try another date.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {openTimes.map((t) =>
+                        t.available === false ? (
+                          // taken times stay in place, grayed out, so it's clear why they can't be picked
+                          <button
+                            key={t.timeSlotId}
+                            type="button"
+                            disabled
+                            className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-sm text-slate-400"
+                          >
+                            {showTime(t.startTime)}
+                          </button>
+                        ) : (
+                        <button
+                          key={t.timeSlotId}
+                          type="button"
+                          onClick={() => setTimeSlotId(String(t.timeSlotId))}
+                          className={`rounded-lg border px-3 py-1.5 text-sm ${
+                            String(t.timeSlotId) === timeSlotId ? "border-navy bg-navy text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
                         >
-                            <option value="">Choose a doctor</option>
-
-                            {doctors.map(d => (
-                                <option key={d.doctorId} value={d.doctorId}>
-                                    Dr. {d.firstName} {d.lastName}
-                                    {d.specialties.length > 0 && ` (${d.specialties.map(s => s.name).join(", ")})`}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-
-                    {loadingDoctors && (
-                        <p className="text-sm text-slate-500">
-                            Loading doctors...
-                        </p>
-                    )}
-
-                    {!loadingDoctors && doctors.length === 0 && !bookingError && (
-                        <p className="text-sm text-slate-500">
-                            No doctors with a schedule yet.
-                        </p>
-                    )}
-
-
-                    <label className="block text-sm font-medium text-slate-700">
-                        Appointment Date
-
-                        <input
-                            type="date"
-                            required
-                            min={today()}
-                            value={date}
-                            onChange={e => {
-                                setDate(e.target.value);
-                                setTimes([]);
-                                setTimeSlotId("");
-                                setMessage("");
-                                setBookingError("");
-                            }}
-                            className="mt-2 w-full rounded-lg border p-3"
-                        />
-                    </label>
-
-
-                    <div>
-                        <p className="text-sm font-medium text-slate-700 mb-2">
-                            Available Times
-                        </p>
-
-                        {checking && (
-                            <p className="text-sm text-blue-600">
-                                Checking times...
-                            </p>
-                        )}
-
-                        {!checking && doctorId && date && times.length === 0 && (
-                            <p className="text-sm text-slate-500">
-                                No open times found for this date.
-                            </p>
-                        )}
-
-                        {!checking && needsReferral && (
-                            <p className="text-sm text-amber-700">
-                                This specialist needs an approved referral from your doctor before you can book.
-                            </p>
-                        )}
-
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {openTimes.map(t => (
-                                <button
-                                    key={t.timeSlotId}
-                                    type="button"
-                                    onClick={() => setTimeSlotId(String(t.timeSlotId))}
-                                    className={`rounded-lg border p-3 text-sm ${
-                                        String(t.timeSlotId) === timeSlotId
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                                    }`}
-                                >
-                                    {showTime(t.startTime)}
-                                </button>
-                            ))}
-                        </div>
+                          {showTime(t.startTime)}
+                        </button>
+                        )
+                      )}
                     </div>
-
-
-                    {bookingError && (
-                        <p className="text-red-600 text-sm">
-                            {bookingError}
-                        </p>
-                    )}
-
-                    {message && (
-                        <p className="text-green-700 text-sm">
-                            {message}
-                        </p>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={!timeSlotId || saving || checking}
-                        className="rounded-lg bg-blue-600 px-5 py-3 text-white font-medium disabled:opacity-50"
-                    >
-                        {saving ? "Booking..." : "Confirm Appointment"}
-                    </button>
-                </form>
-
-
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 h-fit">
-                    <h3 className="font-semibold text-lg text-slate-800">
-                        Your Selection
-                    </h3>
-
-                    <p className="mt-4 text-sm text-slate-600">Doctor</p>
-                    <p className="font-medium">
-                        {selectedDoctor ? `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}` : "Not selected"}
-                    </p>
-
-                    <p className="mt-4 text-sm text-slate-600">Date</p>
-                    <p className="font-medium">
-                        {date || "Not selected"}
-                    </p>
-
-                    <p className="mt-4 text-sm text-slate-600">Time</p>
-                    <p className="font-medium">
-                        {showTime(selectedSlot?.startTime ?? null)}
-                    </p>
-
-                    <p className="mt-4 text-sm text-slate-600">Office</p>
-                    <p className="font-medium">
-                        {selectedSlot?.officeName || "Not selected"}
-                    </p>
+                  )}
+                  {!checking && openTimes.length > 0 && !anyOpen && (
+                    <p className="mt-2 text-sm text-slate-500">Every time on this date is taken. Try another date.</p>
+                  )}
                 </div>
-            </div>
+              )}
 
-
-            <div className="bg-white border rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-slate-800 mb-4">
-                    Appointment History
-                </h3>
-
-                {loading && <p>Loading appointments...</p>}
-
-                {historyError && (
-                    <p className="text-red-600 text-sm">
-                        {historyError}
-                    </p>
-                )}
-
-                {!loading && !historyError && appointments.length === 0 && (
-                    <p>No appointments found.</p>
-                )}
-
-                {!loading && !historyError && appointments.length > 0 && (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-100">
-                                <tr>
-                                    <th className="p-3">Date</th>
-                                    <th className="p-3">Time</th>
-                                    <th className="p-3">Doctor</th>
-                                    <th className="p-3">Specialty</th>
-                                    <th className="p-3">Status</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {appointments.map(a => (
-                                    <tr key={a.appointmentId} className="border-b">
-                                        <td className="p-3">
-                                            {a.appointmentDate?.slice(0, 10)}
-                                        </td>
-
-                                        <td className="p-3">
-                                            {showTime(a.appointmentTime)}
-                                        </td>
-
-                                        <td className="p-3">{a.doctorName}</td>
-                                        <td className="p-3">{a.specialty || "N/A"}</td>
-                                        <td className="p-3">{a.status}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+              <ErrorText message={bookingError} />
+              <PrimaryButton disabled={!selectedSlot || saving || checking}>{saving ? "Booking..." : "Confirm Appointment"}</PrimaryButton>
+            </form>
+          </Section>
         </div>
-    );
+
+        <Section title="Your Selection">
+          <dl className="space-y-3 text-sm">
+            <div><dt className="text-slate-500">Doctor</dt><dd className="font-medium text-slate-900">{selectedDoctor ? `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}` : "Not selected"}</dd></div>
+            <div><dt className="text-slate-500">Date</dt><dd className="font-medium text-slate-900">{date || "Not selected"}</dd></div>
+            <div><dt className="text-slate-500">Time</dt><dd className="font-medium text-slate-900">{showTime(selectedSlot?.startTime ?? null)}</dd></div>
+            <div><dt className="text-slate-500">Office</dt><dd className="font-medium text-slate-900">{selectedSlot?.officeName ?? "Not selected"}</dd></div>
+            {selectedSlot?.referralId && <p className="text-slate-600">Uses your approved referral.</p>}
+          </dl>
+        </Section>
+      </div>
+
+      <Section title="Appointment History">
+        {loading ? (
+          <p className="text-slate-500">Loading appointments...</p>
+        ) : appointments.length === 0 ? (
+          <p className="text-slate-500">No appointments yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Time</th>
+                  <th className="px-4 py-3">Doctor</th>
+                  <th className="px-4 py-3">Specialty</th>
+                  <th className="px-4 py-3">Office</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {appointments.map((a) => (
+                  <tr key={a.appointmentId} className="hover:bg-slate-50">
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.appointmentDate}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{showTime(a.appointmentTime)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">Dr. {a.doctorName}</td>
+                    <td className="px-4 py-3 text-slate-700">{a.specialty ?? "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.officeName}</td>
+                    <td className="px-4 py-3"><StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} /></td>
+                    <td className="px-4 py-3 text-right">
+                      {a.status === "Scheduled" && !a.checkedIn && a.appointmentDate >= today && (
+                        <TextButton danger onClick={() => cancelAppointment(a)}>Cancel</TextButton>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+
+      <Section title="My Referrals">
+        {referrals.length === 0 ? (
+          <p className="text-slate-500">No referrals.</p>
+        ) : (
+          <ul className="divide-y divide-slate-100 text-sm">
+            {referrals.map((r) => (
+              <li key={r.referralId} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <span>
+                  <span className="font-medium text-slate-900">{r.specialty}</span> with Dr. {r.specialistName}
+                  <span className="text-slate-500"> · from Dr. {r.referringDoctorName} · valid until {r.expirationDate}</span>
+                </span>
+                <StatusBadge status={r.status === "Pending" && r.expired ? "Expired" : r.status} />
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-3 text-xs text-slate-500">An approved referral lets you book that specialist above.</p>
+      </Section>
+    </PortalPage>
+  );
 }

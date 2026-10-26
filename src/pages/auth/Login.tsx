@@ -100,8 +100,8 @@ function toPatientUser(p: PatientAuthResponse): AuthUser {
 
 function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthUser) => void; initialMode: PatientMode; booking: boolean }) {
   const [mode, setMode] = useState<PatientMode>(initialMode);
-  const [patientId, setPatientId] = useState("");
-  const [email, setEmail] = useState("");
+  // the patient number or the email, whichever the patient types
+  const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [signup, setSignup] = useState(EMPTY_SIGNUP);
   const [created, setCreated] = useState<PatientAuthResponse | null>(null);
@@ -113,18 +113,20 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
     setError("");
   }
 
-  // patient login
+  // patient login with the patient number or email
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
     setError("");
-    const id = parseId(patientId);
-    if (!id) {
-      setError("Invalid patient number. It must be 8 digits, e.g. 00000123.");
+    const typed = account.trim();
+    const isEmail = typed.includes("@");
+    const id = isEmail ? null : parseId(typed);
+    if (!isEmail && !id) {
+      setError("Enter your email, or your 8-digit patient number, e.g. 00000123.");
       return;
     }
     setSubmitting(true);
     try {
-      const res = await api.post<PatientAuthResponse>("/api/auth/patient/login", { patientId: id, email, password });
+      const res = await api.post<PatientAuthResponse>("/api/auth/patient/login", isEmail ? { email: typed, password } : { patientId: id, password });
       onLogin(toPatientUser(res.data));
     } catch (err) {
       setError(apiErrorMessage(err));
@@ -165,7 +167,7 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
         <h1 className={HEADING}>Account created</h1>
         <p className="text-sm text-slate-600">Your patient number is</p>
         <p className="text-4xl font-bold tracking-wider text-navy">{formatId(created.patientId)}</p>
-        <p className="text-sm text-slate-600">Save this number. You'll need it with your email and password to sign in.</p>
+        <p className="text-sm text-slate-600">Save this number. You can sign in with it or your email, plus your password.</p>
         <button type="button" onClick={() => onLogin(toPatientUser(created))} className={`${PRIMARY_BUTTON} w-full`}>
           {booking ? "Continue to your appointment" : "Continue to Patient Portal"}
         </button>
@@ -181,10 +183,9 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
       <h1 className={`${HEADING} ${booking ? "mb-2" : "mb-6"}`}>Patient Sign In</h1>
       {booking && <p className="mb-6 text-center text-sm leading-relaxed text-slate-600">Sign in to finish booking your appointment.</p>}
       <div>
-        <IdField label="Patient number" value={patientId} onChange={setPatientId} />
-        <p className="mt-1 text-xs text-slate-500">Use the patient number you received when you created your account.</p>
+        <Field label="Patient number or email" required autoComplete="username" value={account} onChange={(e) => setAccount(e.target.value)} />
+        <p className="mt-1 text-xs text-slate-500">Use the email or the patient number from when you created your account.</p>
       </div>
-      <Field label="Email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       <Field label="Password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <ErrorText message={error} />
       <div className="pt-1">

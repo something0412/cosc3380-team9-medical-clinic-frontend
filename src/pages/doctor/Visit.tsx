@@ -6,7 +6,9 @@ import { AllergiesSection, HomeMedicationsSection, NursingNotesList, SevereAller
 import type { Allergy, HomeMedication, NursingNote } from "../../components/ClinicalRecords";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { PageError, PortalPage } from "../../components/PortalPage";
+import { printReport } from "../../utils/printReport";
 import { PrimaryButton, SecondaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { VisitSummaryReport } from "../../components/VisitSummaryReport";
 import { CriticalVitalsBanner, VitalsTable } from "../../components/VitalsTable";
 import type { Vitals } from "../../components/VitalsTable";
 
@@ -16,6 +18,7 @@ interface VisitData {
   startTime: string;
   status: string;
   checkedIn: boolean;
+  doctorName: string;
   specialty: string;
   officeName: string;
   patientId: number;
@@ -129,6 +132,18 @@ export function DoctorVisit() {
     }
   }
 
+  // remove a diagnosis added by mistake
+  async function removeDiagnosis(diagnosisId: number, name: string) {
+    if (!window.confirm(`Remove the diagnosis "${name}" from this visit?`)) return;
+    setDiagnosisError("");
+    try {
+      await api.patch(`/api/doctor/diagnoses/${diagnosisId}/remove`);
+      setReloadCount(reloadCount + 1);
+    } catch (err) {
+      setDiagnosisError(apiErrorMessage(err));
+    }
+  }
+
   // write a prescription with one medication
   async function addPrescription(e: FormEvent) {
     e.preventDefault();
@@ -184,9 +199,12 @@ export function DoctorVisit() {
       description={`${visit.date} at ${visit.startTime} · ${visit.specialty} · ${visit.officeName}`}
       back={BACK}
       actions={
-        <Link to={`/doctor/patients/${visit.patientId}`} className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">
-          Open full chart
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to={`/doctor/patients/${visit.patientId}`} className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">
+            Open full chart
+          </Link>
+          <SecondaryButton onClick={() => printReport(`Visit Summary ${visit.patientName} ${visit.date}`)}>Download PDF</SecondaryButton>
+        </div>
       }
     >
       <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -266,7 +284,10 @@ export function DoctorVisit() {
           <ul className="space-y-3 text-sm">
             {visit.diagnoses.map((d) => (
               <li key={d.visitDiagnosisId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <p className="font-medium text-slate-900">{d.name}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-slate-900">{d.name}</p>
+                  {canWrite && <TextButton danger onClick={() => removeDiagnosis(d.visitDiagnosisId, d.name)}>Remove</TextButton>}
+                </div>
                 {d.reasoning && <p className="mt-1 text-slate-700">{d.reasoning}</p>}
                 <p className="mt-1 text-xs text-slate-500">{d.recordedBy} · {d.createdAt}</p>
               </li>
@@ -346,6 +367,8 @@ export function DoctorVisit() {
           </form>
         )}
       </Section>
+
+      <VisitSummaryReport visit={visit} />
     </PortalPage>
   );
 }

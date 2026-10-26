@@ -1,19 +1,27 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { flushSync } from "react-dom";
 import { api, apiErrorMessage } from "../../api";
 import { CardPaymentForm } from "../../components/CardPaymentForm";
 import type { CardPayment } from "../../components/CardPaymentForm";
 import { ErrorText, Field } from "../../components/FormControls";
 import { InvoiceLines } from "../../components/InvoiceLines";
 import type { InvoiceItem } from "../../components/InvoiceLines";
+import { InvoiceReport } from "../../components/InvoiceReport";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
+import { printReport } from "../../utils/printReport";
 import { PrimaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 
 interface Invoice {
   invoiceId: number;
+  patientId: number;
+  patientName: string;
+  appointmentDate: string;
+  doctorName: string;
+  officeName: string;
   issueDate: string;
   amount: string;
   paid: string;
@@ -51,6 +59,7 @@ export function PatientBilling() {
   const [billing, setBilling] = useState<BillingData | null>(null);
   const [insurance, setInsurance] = useState<Insurance | null>(null);
   const [paying, setPaying] = useState<Invoice | null>(null);
+  const [printing, setPrinting] = useState<Invoice | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
@@ -75,6 +84,12 @@ export function PatientBilling() {
   function handleDone(text: string) {
     setMessage(text);
     setReloadCount(reloadCount + 1);
+  }
+
+  // show one invoice as a report, then open the print window
+  function downloadInvoice(invoice: Invoice) {
+    flushSync(() => setPrinting(invoice));
+    printReport(`Invoice ${invoice.invoiceId}`);
   }
 
   return (
@@ -127,8 +142,9 @@ export function PatientBilling() {
                         <td className="px-4 py-3 text-slate-700">{money(i.paid)}</td>
                         <td className="px-4 py-3 font-medium text-slate-900">{money(i.balance)}</td>
                         <td className="px-4 py-3"><StatusBadge status={i.status} /></td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="whitespace-nowrap px-4 py-3 text-right">
                           {Number(i.balance) > 0 && <TextButton onClick={() => setPaying(i)}>Pay</TextButton>}
+                          <TextButton className="ml-4" onClick={() => downloadInvoice(i)}>Download PDF</TextButton>
                         </td>
                       </tr>
                     ))}
@@ -196,6 +212,10 @@ export function PatientBilling() {
           onClose={() => setPaying(null)}
           onDone={handleDone}
         />
+      )}
+
+      {printing && billing && (
+        <InvoiceReport invoice={{ ...printing, payments: billing.payments.filter((p) => p.invoiceId === printing.invoiceId) }} />
       )}
     </PortalPage>
   );

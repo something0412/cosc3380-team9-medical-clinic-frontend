@@ -6,8 +6,10 @@ import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { InvoiceLines } from "../../components/InvoiceLines";
 import type { InvoiceItem } from "../../components/InvoiceLines";
+import { InvoiceReport } from "../../components/InvoiceReport";
 import { Modal } from "../../components/Modal";
 import { PageError } from "../../components/PortalPage";
+import { printReport } from "../../utils/printReport";
 import { DangerButton, PrimaryButton, SecondaryButton, Section, StatusBadge, TextButton } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
@@ -568,6 +570,7 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
             <span className="text-slate-700">
               {invoice.patientName} (ID {formatId(invoice.patientId)}) · visit {invoice.appointmentDate} with Dr. {invoice.doctorName} · {invoice.officeName}
             </span>
+            <SecondaryButton className="ml-auto" onClick={() => printReport(`Invoice ${invoice.invoiceId}`)}>Download PDF</SecondaryButton>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Amount</p><p className="font-semibold text-navy">{money(invoice.amount)}</p></div>
@@ -649,6 +652,8 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
               </ul>
             )}
           </Section>
+
+          <InvoiceReport invoice={invoice} />
         </div>
       )}
     </Modal>

@@ -16,7 +16,6 @@ import { BookReviewPage } from "./pages/public/BookReview";
 import { BookConfirmationPage } from "./pages/public/BookConfirmation";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
-import { AdminAnalytics } from "./pages/admin/Analytics";
 import { AdminEmployees } from "./pages/admin/Employees";
 import { AdminEmployeeDetails } from "./pages/admin/EmployeeDetails";
 import {
@@ -161,7 +160,6 @@ function App() {
                     path="schedules/:doctorId/:dayOfWeek/edit"
                     element={<AdminScheduleEdit />}
                 />
-                <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="patients" element={<AdminPatients />} />
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="profile" element={<StaffProfile />} />

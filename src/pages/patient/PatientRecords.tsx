@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { api, apiErrorMessage } from "../../api";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { Section, StatusBadge } from "../../components/ProfileUI";
+import { printReport } from "../../utils/printReport";
+import { Section, StatusBadge, TextButton } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
+import { VisitSummaryReport } from "../../components/VisitSummaryReport";
+import type { VisitSummaryData } from "../../components/VisitSummaryReport";
 import { useAuth } from "../../context/AuthContext";
 
 interface MedicalRecords {
@@ -15,6 +19,7 @@ export function PatientRecords() {
   const { user } = useAuth();
   const patientId = user?.role === "patient" ? user.id : null;
   const [records, setRecords] = useState<MedicalRecords | null>(null);
+  const [printing, setPrinting] = useState<VisitSummaryData | null>(null);
   const [error, setError] = useState("");
 
   // load my records
@@ -30,6 +35,18 @@ export function PatientRecords() {
     }
     loadRecords();
   }, [patientId]);
+
+  // load one visit's full record, show it as a report, then open the print window
+  async function downloadVisit(appointmentId: number) {
+    setError("");
+    try {
+      const res = await api.get<VisitSummaryData>(`/api/patient/${patientId}/visits/${appointmentId}`);
+      flushSync(() => setPrinting(res.data));
+      printReport(`Visit Summary ${res.data.date}`);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    }
+  }
 
   return (
     <PortalPage eyebrow="Patient Portal" title="My Medical Records" description="Your visit history, prescriptions and lab results.">
@@ -51,7 +68,10 @@ export function PatientRecords() {
               <ul className="divide-y divide-slate-100 text-sm">
                 {records.visits.map((v) => (
                   <li key={v.appointmentId} className="py-3">
-                    <p className="font-medium text-slate-900">{v.visitDate}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-slate-900">{v.visitDate}</p>
+                      <TextButton onClick={() => downloadVisit(v.appointmentId)}>Download PDF</TextButton>
+                    </div>
                     {v.visitReason && <p className="mt-1 text-slate-700">Reason for visit: {v.visitReason}</p>}
                     {v.diagnosis && <p className="mt-1 text-slate-700">Diagnosis: {v.diagnosis}</p>}
                     {v.notes && <p className="mt-1 whitespace-pre-wrap text-slate-600">{v.notes}</p>}
@@ -98,6 +118,8 @@ export function PatientRecords() {
           </Section>
         </>
       )}
+
+      {printing && <VisitSummaryReport visit={printing} />}
     </PortalPage>
   );
 }

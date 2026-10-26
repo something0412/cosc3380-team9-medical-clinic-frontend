@@ -7,9 +7,11 @@ import type { CardPayment } from "../../components/CardPaymentForm";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { InvoiceLines } from "../../components/InvoiceLines";
 import type { InvoiceItem } from "../../components/InvoiceLines";
+import { InvoiceReport } from "../../components/InvoiceReport";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { FormActions, PrimaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { printReport } from "../../utils/printReport";
+import { FormActions, PrimaryButton, SecondaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface Invoice {
@@ -18,6 +20,7 @@ interface Invoice {
   patientName: string;
   appointmentDate: string;
   doctorName: string;
+  officeName: string;
   issueDate: string;
   amount: string;
   paid: string;
@@ -225,10 +228,14 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
             )}
           </Section>
 
-          {Number(invoice.balance) > 0 && <PrimaryButton type="button" onClick={() => setShowPay(true)}>Take Payment</PrimaryButton>}
+          <div className="flex flex-wrap gap-2">
+            {Number(invoice.balance) > 0 && <PrimaryButton type="button" onClick={() => setShowPay(true)}>Take Payment</PrimaryButton>}
+            <SecondaryButton onClick={() => printReport(`Invoice ${invoice.invoiceId}`)}>Download PDF</SecondaryButton>
+          </div>
 
           <ErrorText message={error} />
           <SuccessText message={message} />
+          <InvoiceReport invoice={invoice} />
         </div>
       )}
 

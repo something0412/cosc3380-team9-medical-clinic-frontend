@@ -16,3 +16,20 @@ body {
   margin: 0;
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
 }
+
+/* reports (components/PrintReport.tsx): hidden on screen, and the only thing printed when there is one */
+@media screen {
+  #print-root {
+    display: none;
+  }
+}
+
+@media print {
+  html {
+    font-size: 100%;
+  }
+
+  body:has(> #print-root) > :not(#print-root) {
+    display: none !important;
+  }
+}

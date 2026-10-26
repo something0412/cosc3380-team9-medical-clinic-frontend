@@ -1,8 +1,12 @@
+import { useAuth } from "../../context/AuthContext";
+import { NurseDashboard } from "../nurse/Dashboard";
+import { ReceptionistDashboard } from "../receptionist/Dashboard";
+
+// nurses and receptionists share /staff/dashboard, so show the one for this employee type
 export function StaffDashboard() {
-  return (
-    <div>
-      <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-      <p className="mt-1 text-sm text-gray-500">Overview for staff.</p>
-    </div>
-  );
+  const { user } = useAuth();
+
+  if (user?.employeeType === "Nurse") return <NurseDashboard />;
+  if (user?.employeeType === "Receptionist") return <ReceptionistDashboard />;
+  return <p className="text-gray-600">No dashboard for this staff type.</p>;
 }

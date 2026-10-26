@@ -1,13 +1,35 @@
 @import "tailwindcss";
 
+/* public site colors and heading font */
+@theme {
+  --color-navy: #123456;
+  --color-navy-dark: #0b2238;
+  --font-heading: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+
 html {
-  /* Tailwind's text-* utilities are rem-based, so bumping the root size
-     scales all text across the app by the same factor instead of editing
-     every text-* class individually. */
+  /* scale all text */
   font-size: 120%;
 }
 
 body {
   margin: 0;
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* reports (components/PrintReport.tsx): hidden on screen, and the only thing printed when there is one */
+@media screen {
+  #print-root {
+    display: none;
+  }
+}
+
+@media print {
+  html {
+    font-size: 100%;
+  }
+
+  body:has(> #print-root) > :not(#print-root) {
+    display: none !important;
+  }
 }

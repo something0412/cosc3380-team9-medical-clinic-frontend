@@ -2,41 +2,88 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { Role } from "../context/AuthContext";
 
-// Each role only sees its own links here — this is what keeps patients
-// from seeing doctor tabs, etc. Add a new page's link to its role's array
-// as pages get built out.
+// sidebar links for each role
 const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
-    patient: [{ to: "/patient/dashboard", label: "Dashboard" }],
-    doctor: [{ to: "/doctor/dashboard", label: "Dashboard" }],
+    patient: [
+        { to: "/patient/dashboard", label: "Dashboard" },
+        { to: "/patient/appointments", label: "Appointments" },
+        { to: "/patient/records", label: "Medical Records" },
+        { to: "/patient/forms", label: "Forms" },
+        { to: "/patient/billing", label: "Billing" },
+        { to: "/patient/profile", label: "My Profile" },
+    ],
+    doctor: [
+        { to: "/doctor/dashboard", label: "Dashboard" },
+        { to: "/doctor/appointments", label: "Appointments" },
+        { to: "/doctor/patients", label: "Patients" },
+        { to: "/doctor/lab-orders", label: "Lab Orders" },
+        { to: "/doctor/referrals", label: "Referrals" },
+        { to: "/doctor/schedule", label: "My Schedule" },
+        { to: "/doctor/profile", label: "My Profile" },
+    ],
     admin: [
         { to: "/admin/dashboard", label: "Dashboard" },
-        { to: "/admin/analytics", label: "Analytics" },
+        { to: "/admin/employees", label: "Employees" },
+        { to: "/admin/offices", label: "Offices" },
+        { to: "/admin/specialties", label: "Specialties" },
+        { to: "/admin/schedules", label: "Schedules" },
+        { to: "/admin/billing", label: "Billing" },
+        { to: "/admin/patients", label: "Patients" },
+        { to: "/admin/profile", label: "My Profile" },
     ],
-    staff: [{ to: "/staff/dashboard", label: "Dashboard" }],
+    // nurses and receptionists both log in as staff; their links are below
+    staff: [],
+    lab: [
+        { to: "/lab/dashboard", label: "Dashboard" },
+        { to: "/lab/orders", label: "Lab Orders" },
+        { to: "/lab/profile", label: "My Profile" },
+    ],
+};
+
+// staff sidebar links for each employee type
+const STAFF_LINKS: Record<string, { to: string; label: string }[]> = {
+    Nurse: [
+        { to: "/staff/dashboard", label: "Dashboard" },
+        { to: "/staff/nurse/today", label: "Today's Patients" },
+        { to: "/staff/nurse/patients", label: "Patients" },
+        { to: "/staff/nurse/supplies", label: "Supplies" },
+        { to: "/staff/profile", label: "My Profile" },
+    ],
+    Receptionist: [
+        { to: "/staff/dashboard", label: "Dashboard" },
+        { to: "/staff/reception/appointments", label: "Appointments" },
+        { to: "/staff/reception/patients", label: "Patients" },
+        { to: "/staff/reception/billing", label: "Billing" },
+        { to: "/staff/profile", label: "My Profile" },
+    ],
 };
 
 export function Sidebar({ role }: { role: Role }) {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const links = role === "staff" ? (STAFF_LINKS[user?.employeeType ?? ""] ?? []) : ROLE_LINKS[role];
+    const roleLabel = role === "staff" && user?.employeeType ? user.employeeType : role;
 
     function handleLogout() {
         logout();
-        navigate("/login", { replace: true });
+        navigate(role === "patient" ? "/login" : "/employee/login", { replace: true });
     }
 
     return (
-        <nav className="flex w-48 shrink-0 flex-col border-r border-gray-200 bg-white">
+        <nav className="sticky top-0 flex h-screen w-48 shrink-0 flex-col border-r border-gray-200 bg-white">
             <div className="border-b border-gray-200 px-4 py-4">
                 <span className="text-sm font-semibold text-gray-900">
                     Medical Clinic
                 </span>
                 <p className="mt-0.5 text-xs text-gray-500 capitalize">
-                    {role}
+                    {user
+                        ? `${user.firstName} ${user.lastName} · ${roleLabel}`
+                        : roleLabel}
                 </p>
             </div>
 
-            <ul className="flex-1 space-y-1 px-3 py-4">
-                {ROLE_LINKS[role].map((link) => (
+            <ul className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+                {links.map((link) => (
                     <li key={link.to}>
                         <NavLink
                             to={link.to}

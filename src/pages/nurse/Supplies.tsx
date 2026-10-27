@@ -100,49 +100,51 @@ export function NurseSupplies() {
         ) : supplies.length === 0 ? (
           <p className="text-slate-500">Your office has no supplies on file.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full whitespace-nowrap text-left text-sm">
-              <thead>
-                <tr className="border-b text-slate-500">
-                  <th className="p-2 font-medium">Supply</th>
-                  <th className="p-2 font-medium">Type</th>
-                  <th className="p-2 font-medium">On Hand</th>
-                  <th className="p-2 font-medium">Reorder At</th>
-                  <th className="p-2 font-medium">On Order</th>
-                  <th className="p-2 font-medium">Expires</th>
-                  <th className="p-2 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {supplies.map((s) => (
-                  <tr key={s.officeSupplyId} className="border-b last:border-0">
-                    <td className="p-2 font-medium text-slate-900">{s.name}</td>
-                    <td className="p-2">{s.supplyType}</td>
-                    <td className={`p-2 ${s.lowStock ? "bg-red-50 font-bold text-red-800" : ""}`}>
-                      {s.quantityOnHand}
-                      {s.lowStock && " (low)"}
-                    </td>
-                    <td className="p-2">{s.reorderThreshold}</td>
-                    <td className="p-2">{s.onOrder > 0 ? s.onOrder : "—"}</td>
-                    <td className={`p-2 ${s.expiringSoon ? "bg-amber-50 font-medium text-amber-800" : ""}`}>
-                      {s.expirationDate ?? "—"}
-                      {s.expiringSoon && " (soon)"}
-                    </td>
-                    <td className="p-2">
-                      <div className="flex gap-3">
-                        <TextButton onClick={() => setUseSupply(s)} disabled={s.quantityOnHand === 0}>Use</TextButton>
-                        <TextButton onClick={() => openOrderForm(s.supplyId)}>Order</TextButton>
-                      </div>
-                    </td>
+          <>
+            <div className="-mx-5 overflow-x-auto border-y border-slate-200">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Supply</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">On Hand</th>
+                    <th className="px-4 py-3">Reorder At</th>
+                    <th className="px-4 py-3">On Order</th>
+                    <th className="px-4 py-3">Expires</th>
+                    <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {supplies.map((s) => (
+                    <tr key={s.officeSupplyId} className="hover:bg-slate-50">
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-navy">{s.name}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">{s.supplyType}</td>
+                      <td className={`whitespace-nowrap px-4 py-3 ${s.lowStock ? "bg-red-50 font-bold text-red-800" : "text-slate-700"}`}>
+                        {s.quantityOnHand}
+                        {s.lowStock && " (low)"}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">{s.reorderThreshold}</td>
+                      <td className="px-4 py-3 text-slate-700">{s.onOrder > 0 ? s.onOrder : "—"}</td>
+                      <td className={`whitespace-nowrap px-4 py-3 ${s.expiringSoon ? "bg-amber-50 font-medium text-amber-800" : "text-slate-700"}`}>
+                        {s.expirationDate ?? "—"}
+                        {s.expiringSoon && " (soon)"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-3">
+                          <TextButton onClick={() => setUseSupply(s)} disabled={s.quantityOnHand === 0}>Use</TextButton>
+                          <TextButton onClick={() => openOrderForm(s.supplyId)}>Order</TextButton>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <p className="mt-3 text-xs text-slate-500">
-              <span className="rounded bg-red-100 px-1.5 font-bold text-red-800">Red</span> = at or below reorder level,{" "}
-              <span className="rounded bg-orange-50 px-1.5 font-medium text-orange-800">amber</span> = expires within 30 days
+              <span className="rounded bg-red-50 px-1.5 font-bold text-red-800">Red</span> = at or below reorder level,{" "}
+              <span className="rounded bg-amber-50 px-1.5 font-medium text-amber-800">amber</span> = expires within 30 days
             </p>
-          </div>
+          </>
         )}
       </Section>
 

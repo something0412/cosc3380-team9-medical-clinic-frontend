@@ -1,7 +1,7 @@
 import axios, { isAxiosError } from "axios";
 
-// backend URL
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+// backend URL: the same site in production (vercel.json forwards /api to the backend), the local backend in development
+const BASE_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http://localhost:4000");
 
 // shared axios instance
 export const api = axios.create({ baseURL: BASE_URL, withCredentials: true });

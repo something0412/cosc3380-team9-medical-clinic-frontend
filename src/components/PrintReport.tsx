@@ -11,7 +11,9 @@ export function PrintReport({ title, subtitle, children }: { title: string; subt
     <div id="print-root" className="bg-white p-6 text-sm text-slate-900">
       <header className="mb-6 flex items-end justify-between gap-4 border-b-2 border-navy pb-3">
         <div>
-          <p className="font-heading text-2xl text-navy">Medical Clinic</p>
+          <p className="font-heading text-2xl text-navy">
+            Lambda <span className="font-sans text-base text-slate-400">Medical Clinic</span>
+          </p>
           <h1 className="mt-1 text-lg font-semibold">{title}</h1>
           {subtitle && <p className="text-slate-600">{subtitle}</p>}
         </div>

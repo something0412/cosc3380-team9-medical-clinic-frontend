@@ -12,7 +12,9 @@ export function PublicFooter() {
         <div className="col-span-2 sm:col-span-3 lg:col-span-1">
           <Link to="/" className="inline-flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
             <LogoMark className="h-10 w-10 bg-white text-navy" />
-            <span className="text-lg font-bold tracking-tight">Medical Clinic</span>
+            <span className="text-lg font-bold tracking-tight">
+              Lambda <span className="text-sm font-medium tracking-normal text-white/60">Medical Clinic</span>
+            </span>
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/70">
             Primary and specialty care across our clinic locations.
@@ -40,7 +42,7 @@ export function PublicFooter() {
 
       <div className="border-t border-white/10">
         <div className={`${CONTAINER} flex flex-col gap-3 py-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between`}>
-          <p>© {new Date().getFullYear()} Medical Clinic. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Lambda Medical Clinic. All rights reserved.</p>
           <Link to="/employee/login" className="self-start rounded py-1 hover:text-white focus-visible:outline-2 focus-visible:outline-white">
             Employee Access
           </Link>

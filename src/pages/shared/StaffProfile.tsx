@@ -105,25 +105,25 @@ export function StaffProfile() {
               {profile.doctor.schedule.length === 0 ? (
                 <p className="text-slate-500">No schedule assigned yet.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b text-slate-500">
-                        <th className="p-2 font-medium">Day</th>
-                        <th className="p-2 font-medium">Shift</th>
-                        <th className="p-2 font-medium">Hours</th>
-                        <th className="p-2 font-medium">Office</th>
-                        <th className="p-2 font-medium">Specialty</th>
+                <div className="-mx-5 -mb-5 overflow-x-auto rounded-b-lg border-t border-slate-200">
+                  <table className="w-full min-w-[560px] text-left text-sm">
+                    <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3">Day</th>
+                        <th className="px-4 py-3">Shift</th>
+                        <th className="px-4 py-3">Hours</th>
+                        <th className="px-4 py-3">Office</th>
+                        <th className="px-4 py-3">Specialty</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                       {profile.doctor.schedule.map((s) => (
-                        <tr key={s.dayOfWeek} className="border-b">
-                          <td className="p-2">{s.dayOfWeek}</td>
-                          <td className="p-2">{s.shift}</td>
-                          <td className="p-2">{s.startTime} – {s.endTime}</td>
-                          <td className="p-2">{s.officeName}</td>
-                          <td className="p-2">{s.specialty}</td>
+                        <tr key={s.dayOfWeek} className="hover:bg-slate-50">
+                          <td className="whitespace-nowrap px-4 py-3 font-medium text-navy">{s.dayOfWeek}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-700">{s.shift}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-700">{s.startTime} – {s.endTime}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-700">{s.officeName}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-700">{s.specialty}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -271,25 +271,25 @@ function CertificatesSection({ profile, onSaved }: SectionProps) {
         <p className="text-slate-500">No certificates on file.</p>
       ) : (
         profile.certificates.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b text-slate-500">
-                  <th className="p-2 font-medium">Certificate</th>
-                  <th className="p-2 font-medium">Issued</th>
-                  <th className="p-2 font-medium">Expires</th>
-                  <th className="p-2 font-medium">Status</th>
-                  <th className="p-2" />
+          <div className="-mx-5 overflow-x-auto border-y border-slate-200">
+            <table className="w-full min-w-[560px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Certificate</th>
+                  <th className="px-4 py-3">Issued</th>
+                  <th className="px-4 py-3">Expires</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {profile.certificates.map((c) => (
-                  <tr key={c.certificateId} className="border-b">
-                    <td className="p-2 font-medium text-slate-900">{c.name}</td>
-                    <td className="p-2">{c.issueDate}</td>
-                    <td className="p-2">{c.expirationDate}</td>
-                    <td className="p-2"><StatusBadge status={c.status} /></td>
-                    <td className="p-2 text-right">
+                  <tr key={c.certificateId} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-medium text-navy">{c.name}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{c.issueDate}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{c.expirationDate}</td>
+                    <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
+                    <td className="px-4 py-3 text-right">
                       {editingId === null && (
                         <div className="flex justify-end gap-4">
                           <TextButton onClick={() => openForm(c)}>Edit</TextButton>

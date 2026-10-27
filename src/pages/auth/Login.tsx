@@ -65,10 +65,12 @@ function AuthPage({ help, children, bookingPath = null }: { help: string; childr
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4 pt-8 pb-12 text-slate-700">
       <div className="w-full max-w-[22rem]">
         <header className="flex justify-center">
-          <Link to="/" aria-label="Medical Clinic home" className={`flex items-center gap-3 rounded-lg text-navy ${FOCUS}`}>
+          <Link to="/" aria-label="Lambda Medical Clinic home" className={`flex items-center gap-3 rounded-lg text-navy ${FOCUS}`}>
             <LogoMark />
             <span className="leading-tight">
-              <span className="block text-lg font-bold tracking-tight">Medical Clinic</span>
+              <span className="block text-lg font-bold tracking-tight">
+                Lambda <span className="text-sm font-medium tracking-normal text-slate-400">Medical Clinic</span>
+              </span>
               <span className="block text-[0.65rem] font-semibold tracking-[0.16em] text-teal-700 uppercase">Primary &amp; Specialty Care</span>
             </span>
           </Link>

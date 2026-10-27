@@ -10,11 +10,15 @@
 html {
   /* scale all text */
   font-size: 120%;
+  /* the app is designed light only, so a dark mode browser doesn't turn the page black */
+  color-scheme: light;
 }
 
 body {
   margin: 0;
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  background-color: #fff;
+  color: var(--color-slate-900);
 }
 
 /* reports (components/PrintReport.tsx): hidden on screen, and the only thing printed when there is one */

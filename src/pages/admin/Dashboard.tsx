@@ -230,38 +230,38 @@ function AppointmentActivity({ data }: { data: AppointmentData }) {
             </Section>
 
             <Section title="Visits by Specialty">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead>
-                            <tr className="border-b text-slate-500">
-                                <th className="p-2 font-medium">Specialty</th>
-                                <th className="p-2 text-right font-medium">Completed Visits</th>
-                                <th className="p-2 text-right font-medium">Scheduled</th>
-                                <th className="p-2 text-right font-medium">Cancelled</th>
-                                <th className="p-2 text-right font-medium">No Show</th>
-                                <th className="p-2 text-right font-medium">Total</th>
+                <div className="-mx-5 -mb-5 overflow-x-auto rounded-b-lg border-t border-slate-200">
+                    <table className="w-full min-w-[640px] text-left text-sm">
+                        <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <tr>
+                                <th className="px-4 py-3">Specialty</th>
+                                <th className="px-4 py-3 text-right">Completed Visits</th>
+                                <th className="px-4 py-3 text-right">Scheduled</th>
+                                <th className="px-4 py-3 text-right">Cancelled</th>
+                                <th className="px-4 py-3 text-right">No Show</th>
+                                <th className="px-4 py-3 text-right">Total</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-slate-100">
                             {data.bySpecialty.map((s) => (
-                                <tr key={s.specialty} className="border-b">
-                                    <td className="p-2 font-medium text-slate-900">{s.specialty}</td>
-                                    <td className="p-2 text-right">{s.completed}</td>
-                                    <td className="p-2 text-right">{s.scheduled}</td>
-                                    <td className="p-2 text-right">{s.cancelled}</td>
-                                    <td className="p-2 text-right">{s.noShows}</td>
-                                    <td className="p-2 text-right font-medium">{s.total}</td>
+                                <tr key={s.specialty} className="hover:bg-slate-50">
+                                    <td className="whitespace-nowrap px-4 py-3 font-medium text-navy">{s.specialty}</td>
+                                    <td className="px-4 py-3 text-right text-slate-700">{s.completed}</td>
+                                    <td className="px-4 py-3 text-right text-slate-700">{s.scheduled}</td>
+                                    <td className="px-4 py-3 text-right text-slate-700">{s.cancelled}</td>
+                                    <td className="px-4 py-3 text-right text-slate-700">{s.noShows}</td>
+                                    <td className="px-4 py-3 text-right font-medium text-slate-900">{s.total}</td>
                                 </tr>
                             ))}
                         </tbody>
-                        <tfoot>
-                            <tr className="font-semibold text-slate-900">
-                                <td className="p-2">Total</td>
-                                <td className="p-2 text-right">{data.completed}</td>
-                                <td className="p-2 text-right">{data.scheduled}</td>
-                                <td className="p-2 text-right">{data.cancelled}</td>
-                                <td className="p-2 text-right">{data.noShows}</td>
-                                <td className="p-2 text-right">{data.total}</td>
+                        <tfoot className="border-t border-slate-200 bg-slate-50 font-semibold text-slate-900">
+                            <tr>
+                                <td className="px-4 py-3">Total</td>
+                                <td className="px-4 py-3 text-right">{data.completed}</td>
+                                <td className="px-4 py-3 text-right">{data.scheduled}</td>
+                                <td className="px-4 py-3 text-right">{data.cancelled}</td>
+                                <td className="px-4 py-3 text-right">{data.noShows}</td>
+                                <td className="px-4 py-3 text-right">{data.total}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -335,27 +335,27 @@ function BillingCollections({ data }: { data: BillingData }) {
                 {data.unpaidInvoices.length === 0 ? (
                     <p className="text-slate-500">No unpaid invoices.</p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead>
-                                <tr className="border-b text-slate-500">
-                                    <th className="p-2 font-medium">Invoice</th>
-                                    <th className="p-2 font-medium">Patient</th>
-                                    <th className="p-2 font-medium">Issued</th>
-                                    <th className="p-2 text-right font-medium">Amount</th>
-                                    <th className="p-2 text-right font-medium">Balance</th>
-                                    <th className="p-2 font-medium">Status</th>
+                    <div className="-mx-5 -mb-5 overflow-x-auto rounded-b-lg border-t border-slate-200">
+                        <table className="w-full min-w-[640px] text-left text-sm">
+                            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                <tr>
+                                    <th className="px-4 py-3">Invoice</th>
+                                    <th className="px-4 py-3">Patient</th>
+                                    <th className="px-4 py-3">Issued</th>
+                                    <th className="px-4 py-3 text-right">Amount</th>
+                                    <th className="px-4 py-3 text-right">Balance</th>
+                                    <th className="px-4 py-3">Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-slate-100">
                                 {data.unpaidInvoices.map((i) => (
-                                    <tr key={i.invoiceId} className="border-b">
-                                        <td className="p-2">#{i.invoiceId}</td>
-                                        <td className="p-2 font-medium text-slate-900">{i.patientName}</td>
-                                        <td className="p-2">{i.issueDate}</td>
-                                        <td className="p-2 text-right">{money(i.amount)}</td>
-                                        <td className="p-2 text-right font-medium">{money(i.balance)}</td>
-                                        <td className="p-2"><StatusBadge status={i.status} /></td>
+                                    <tr key={i.invoiceId} className="hover:bg-slate-50">
+                                        <td className="px-4 py-3 font-mono text-slate-500">#{i.invoiceId}</td>
+                                        <td className="whitespace-nowrap px-4 py-3 font-medium text-navy">{i.patientName}</td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-slate-700">{i.issueDate}</td>
+                                        <td className="px-4 py-3 text-right text-slate-700">{money(i.amount)}</td>
+                                        <td className="px-4 py-3 text-right font-medium text-slate-900">{money(i.balance)}</td>
+                                        <td className="px-4 py-3"><StatusBadge status={i.status} /></td>
                                     </tr>
                                 ))}
                             </tbody>

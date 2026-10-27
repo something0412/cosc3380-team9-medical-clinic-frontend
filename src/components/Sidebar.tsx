@@ -1,6 +1,8 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { Role } from "../context/AuthContext";
+import { LogoMark } from "./public/icons";
+import { FOCUS } from "./public/shared";
 
 // sidebar links for each role
 const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
@@ -70,16 +72,24 @@ export function Sidebar({ role }: { role: Role }) {
     }
 
     return (
-        <nav className="sticky top-0 flex h-screen w-48 shrink-0 flex-col border-r border-gray-200 bg-white">
-            <div className="border-b border-gray-200 px-4 py-4">
-                <span className="text-sm font-semibold text-gray-900">
-                    Medical Clinic
-                </span>
-                <p className="mt-0.5 text-xs text-gray-500 capitalize">
-                    {user
-                        ? `${user.firstName} ${user.lastName} · ${roleLabel}`
-                        : roleLabel}
+        <nav className="sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-slate-200 bg-white">
+            {/* logo and name, back to my dashboard */}
+            <div className="border-b border-slate-200 px-4 py-4">
+                <Link to={`/${role}/dashboard`} className={`flex items-center gap-2.5 rounded-lg text-navy ${FOCUS}`}>
+                    <LogoMark className="h-9 w-9 bg-navy text-white" />
+                    <span className="leading-tight">
+                        <span className="block text-base font-bold tracking-tight">Lambda</span>
+                        <span className="block text-xs font-medium text-slate-400">Medical Clinic</span>
+                    </span>
+                </Link>
+            </div>
+
+            {/* who is signed in */}
+            <div className="border-b border-slate-200 px-4 py-3">
+                <p className="truncate text-sm font-medium text-slate-900">
+                    {user ? `${user.firstName} ${user.lastName}` : ""}
                 </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-600">{roleLabel}</p>
             </div>
 
             <ul className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
@@ -88,10 +98,10 @@ export function Sidebar({ role }: { role: Role }) {
                         <NavLink
                             to={link.to}
                             className={({ isActive }) =>
-                                `block rounded px-3 py-2 text-sm ${
+                                `block rounded-lg px-3 py-2 text-sm ${FOCUS} ${
                                     isActive
-                                        ? "bg-gray-100 font-medium text-gray-900"
-                                        : "text-gray-600 hover:bg-gray-50"
+                                        ? "bg-navy font-semibold text-white"
+                                        : "text-slate-600 hover:bg-slate-100 hover:text-navy"
                                 }`
                             }
                         >
@@ -101,11 +111,11 @@ export function Sidebar({ role }: { role: Role }) {
                 ))}
             </ul>
 
-            <div className="border-t border-gray-200 px-3 py-4">
+            <div className="border-t border-slate-200 px-3 py-4">
                 <button
                     type="button"
                     onClick={handleLogout}
-                    className="w-full rounded px-3 py-2 text-left text-sm text-gray-600 hover:bg-gray-50"
+                    className={`w-full rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-100 hover:text-navy ${FOCUS}`}
                 >
                     Log Out
                 </button>

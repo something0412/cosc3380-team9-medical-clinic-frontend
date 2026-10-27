@@ -23,12 +23,14 @@ export function PublicHeader() {
         <Link
           to="/"
           onClick={closeMenu}
-          aria-label="Medical Clinic home"
+          aria-label="Lambda Medical Clinic home"
           className="flex shrink-0 items-center gap-3 rounded-lg text-navy focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600"
         >
           <LogoMark />
           <span className="leading-tight">
-            <span className="block text-lg font-bold tracking-tight">Medical Clinic</span>
+            <span className="block text-lg font-bold tracking-tight">
+              Lambda <span className="text-sm font-medium tracking-normal text-slate-400">Medical Clinic</span>
+            </span>
             <span className="block text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-teal-700">Primary &amp; Specialty Care</span>
           </span>
         </Link>

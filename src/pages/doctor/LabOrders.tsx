@@ -87,7 +87,7 @@ export function DoctorLabOrders() {
         </button>
       }
     >
-      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
         <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
         <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="all">All</option>
@@ -102,7 +102,7 @@ export function DoctorLabOrders() {
 
       <PageError message={error} />
 
-      <section className="rounded-lg shadow-box bg-white">
+      <section className="rounded-lg border border-slate-200 bg-white">
         {loading ? (
           <p className="px-4 py-10 text-center text-sm text-slate-500">Loading lab orders...</p>
         ) : orders.length === 0 ? (

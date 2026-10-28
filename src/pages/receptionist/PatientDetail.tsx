@@ -110,7 +110,7 @@ export function ReceptionistPatientDetail() {
       description={`Patient ID ${formatId(patient.patientId)} · Born ${patient.dob} · ${patient.hasLogin ? "Has a portal login" : "No portal login"}`}
       back={BACK}
       actions={
-        <div className="rounded-lg shadow-box bg-white px-5 py-3 text-right">
+        <div className="rounded-lg border border-slate-200 bg-white px-5 py-3 text-right">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Balance Owed</p>
           <p className={`text-2xl font-bold ${balance > 0 ? "text-red-600" : "text-navy"}`}>${balance.toFixed(2)}</p>
         </div>

@@ -341,7 +341,7 @@ function EmployeeForm({ employee, cancelTo, submitLabel, onSubmit }: EmployeeFor
             <legend className="text-sm font-medium text-slate-700">Specialties</legend>
             <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {specialtyOptions.map((s) => (
-                <label key={s.specialtyId} className="flex items-center gap-2 rounded-lg shadow-box px-3 py-2 text-sm text-slate-700">
+                <label key={s.specialtyId} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
                   <input
                     type="checkbox"
                     checked={values.specialtyIds.includes(s.specialtyId)}

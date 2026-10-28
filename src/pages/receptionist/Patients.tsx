@@ -60,7 +60,7 @@ export function ReceptionistPatients() {
         </button>
       }
     >
-      <div className="rounded-lg shadow-box bg-slate-50 p-4">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <Field
           label="Search"
           type="search"
@@ -72,7 +72,7 @@ export function ReceptionistPatients() {
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg shadow-box bg-white">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
           {loading ? "Loading patients..." : `Showing ${shown.length} of ${patients.length} patients`}
         </div>

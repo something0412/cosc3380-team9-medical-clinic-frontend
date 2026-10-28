@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { AlertIcon, PrimaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton } from "../../components/ProfileUI";
+import { AlertIcon, NotAvailable, PrimaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton } from "../../components/ProfileUI";
 import { useAuth } from "../../context/AuthContext";
 
 interface Appointment {
@@ -51,7 +51,7 @@ const clinicToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "Am
 
 // 14:30 -> 2:30 PM
 function showTime(value: string | null) {
-  if (!value) return "—";
+  if (!value) return <NotAvailable />;
   const [hour, minute = "00"] = value.split(":");
   const h = Number(hour);
   return `${h % 12 || 12}:${minute} ${h >= 12 ? "PM" : "AM"}`;
@@ -311,7 +311,7 @@ export function PatientAppointments() {
                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.appointmentDate}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{showTime(a.appointmentTime)}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">Dr. {a.doctorName}</td>
-                    <td className="px-4 py-3 text-slate-700">{a.specialty ?? "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{a.specialty ?? <NotAvailable />}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.officeName}</td>
                     <td className="px-4 py-3"><StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} /></td>
                     <td className="px-4 py-3 text-right">

@@ -61,7 +61,7 @@ function HoursForm({ title, withName, values, saving, submitLabel, onChange, onS
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg shadow-box bg-slate-50 p-4">
+    <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <p className="text-sm font-medium text-slate-700">{title}</p>
       <div className={`mt-3 grid gap-4 ${withName ? "sm:grid-cols-3" : "sm:grid-cols-2 lg:max-w-md"}`}>
         {withName && (
@@ -187,7 +187,7 @@ export function AdminShiftSettings() {
       {shifts.map((shift) => {
         const id = shift.shiftTypeId;
         return (
-          <section key={id} className="space-y-4 rounded-lg shadow-box bg-white p-5">
+          <section key={id} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -276,7 +276,7 @@ export function AdminShiftSettings() {
               {shift.timeSlots.length === 0 ? (
                 <p className="mt-2 text-sm text-slate-500">No time slots yet.</p>
               ) : (
-                <ul className="mt-2 divide-y divide-slate-100 rounded-lg shadow-box">
+                <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200">
                   {shift.timeSlots.map((slot) =>
                     open === `slot-${slot.timeSlotId}` ? (
                       <li key={slot.timeSlotId} className="p-3">

@@ -113,7 +113,7 @@ export function LabOrders() {
 
       <PageError message={error} />
 
-      <div className="rounded-lg shadow-box bg-white">
+      <div className="rounded-lg border border-slate-200 bg-white">
         {loading ? (
           <p className="p-4 text-slate-500">Loading lab orders...</p>
         ) : orders.length === 0 ? (

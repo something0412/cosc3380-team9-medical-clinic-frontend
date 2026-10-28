@@ -1,3 +1,5 @@
+import { NotAvailable } from "./ProfileUI";
+
 export interface Vitals {
   vitalsId: number;
   appointmentId: number | null;
@@ -109,13 +111,13 @@ export function VitalsTable({ vitals, empty }: { vitals: Vitals[]; empty: string
           {vitals.map((v) => (
             <tr key={v.vitalsId}>
               <td className="whitespace-nowrap px-4 py-3 text-slate-700">{v.recordedAt}</td>
-              <td className={cell(temperatureFlag(v))}>{v.temperature ?? "—"}</td>
-              <td className={cell(heartRateFlag(v))}>{v.heartRate ?? "—"}</td>
-              <td className={cell(bloodPressureFlag(v))}>{v.systolic || v.diastolic ? `${v.systolic ?? "?"}/${v.diastolic ?? "?"}` : "—"}</td>
-              <td className={cell(breathingFlag(v))}>{v.respiratoryRate ?? "—"}</td>
-              <td className={cell(oxygenFlag(v))}>{v.oxygenSaturation ? `${v.oxygenSaturation}%` : "—"}</td>
-              <td className="px-4 py-3 text-slate-700">{v.weight ?? "—"}</td>
-              <td className="px-4 py-3 text-slate-700">{v.height ?? "—"}</td>
+              <td className={cell(temperatureFlag(v))}>{v.temperature ?? <NotAvailable />}</td>
+              <td className={cell(heartRateFlag(v))}>{v.heartRate ?? <NotAvailable />}</td>
+              <td className={cell(bloodPressureFlag(v))}>{v.systolic || v.diastolic ? `${v.systolic ?? "?"}/${v.diastolic ?? "?"}` : <NotAvailable />}</td>
+              <td className={cell(breathingFlag(v))}>{v.respiratoryRate ?? <NotAvailable />}</td>
+              <td className={cell(oxygenFlag(v))}>{v.oxygenSaturation ? `${v.oxygenSaturation}%` : <NotAvailable />}</td>
+              <td className="px-4 py-3 text-slate-700">{v.weight ?? <NotAvailable />}</td>
+              <td className="px-4 py-3 text-slate-700">{v.height ?? <NotAvailable />}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-700">{v.recordedBy}</td>
             </tr>
           ))}

@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 const TONES = {
-  green: "bg-green-50 text-green-700 ring-green-600/20",
-  amber: "bg-amber-50 text-amber-700 ring-amber-600/20",
-  gray: "bg-slate-100 text-slate-600 ring-slate-500/20",
-  teal: "bg-teal-50 text-teal-700 ring-teal-600/20",
+  green: "text-green-700",
+  amber: "text-amber-700",
+  gray: "text-slate-600",
+  teal: "text-teal-700",
 };
 
 // a pill inside tables, or plain colored text everywhere else
@@ -14,7 +14,7 @@ function Badge({ tone, plain = false, children }: { tone: keyof typeof TONES; pl
     return <span className={`font-medium ${color}`}>{children}</span>;
   }
   return (
-    <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${TONES[tone]}`}>
+    <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium shadow-pill ${TONES[tone]}`}>
       {children}
     </span>
   );

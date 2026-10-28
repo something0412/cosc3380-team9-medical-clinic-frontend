@@ -172,7 +172,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
           )}
 
           {(panel === "reset-password" || panel === "create-login") && (
-            <form onSubmit={submitPassword} className="mb-4 rounded-lg shadow-box bg-slate-50 p-4">
+            <form onSubmit={submitPassword} className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <p className="text-sm font-medium text-slate-700">{panel === "create-login" ? "Create Login" : "Reset Password"}</p>
               <p className="mt-1 text-sm text-slate-500">
                 {panel === "create-login"

@@ -251,7 +251,7 @@ function EmergencyContactsSection({ profile, onSaved }: SectionProps) {
 
             <ul className="space-y-3">
                 {profile.emergencyContacts.map((c) => (
-                    <li key={c.emergencyContactId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg shadow-box p-4">
+                    <li key={c.emergencyContactId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-4">
                         <div>
                             <p className="font-medium text-slate-900">
                                 {c.firstName} {c.lastName}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, apiErrorMessage } from "../../api";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { Section, StatusBadge } from "../../components/ProfileUI";
+import { NotAvailable, Section, StatusBadge } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 
@@ -70,7 +70,7 @@ export function PatientForms() {
                     <td className="px-4 py-3 font-medium text-slate-900">{f.name}</td>
                     <td className="px-4 py-3 text-slate-700">{f.isRequired ? "Yes" : "No"}</td>
                     <td className="px-4 py-3"><StatusBadge status={f.status ?? "Not started"} /></td>
-                    <td className="px-4 py-3 text-slate-700">{f.submittedDate ?? "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{f.submittedDate ?? <NotAvailable />}</td>
                   </tr>
                 ))}
               </tbody>

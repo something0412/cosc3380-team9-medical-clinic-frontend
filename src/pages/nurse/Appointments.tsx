@@ -103,7 +103,7 @@ export function NurseAppointments() {
       title="Patient Appointments"
       description="Search by patient name, day or office. Clear the day to see a patient's whole visit history. Intake can only be edited on the day of the appointment."
     >
-      <div className="flex flex-wrap items-end gap-4 rounded-lg shadow-box bg-slate-50 p-4">
+      <div className="flex flex-wrap items-end gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
         <div className="w-64">
           <Field label="Patient name" placeholder="Search by name" value={name} onChange={(e) => setFilter("name", e.target.value)} />
         </div>
@@ -134,7 +134,7 @@ export function NurseAppointments() {
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg shadow-box bg-white">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">

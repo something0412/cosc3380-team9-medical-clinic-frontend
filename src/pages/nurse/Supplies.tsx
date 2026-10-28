@@ -4,7 +4,7 @@ import { api, apiErrorMessage } from "../../api";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { FormActions, PrimaryButton, SecondaryButton, Section, StatusText, TextButton } from "../../components/ProfileUI";
+import { FormActions, NotAvailable, PrimaryButton, SecondaryButton, Section, StatusText, TextButton } from "../../components/ProfileUI";
 
 interface OfficeSupply {
   officeSupplyId: number;
@@ -124,9 +124,9 @@ export function NurseSupplies() {
                         {s.lowStock && " (low)"}
                       </td>
                       <td className="px-4 py-3 text-slate-700">{s.reorderThreshold}</td>
-                      <td className="px-4 py-3 text-slate-700">{s.onOrder > 0 ? s.onOrder : "—"}</td>
+                      <td className="px-4 py-3 text-slate-700">{s.onOrder > 0 ? s.onOrder : <NotAvailable />}</td>
                       <td className={`whitespace-nowrap px-4 py-3 ${s.expiringSoon ? "bg-amber-50 font-medium text-amber-800" : "text-slate-700"}`}>
-                        {s.expirationDate ?? "—"}
+                        {s.expirationDate ?? <NotAvailable />}
                         {s.expiringSoon && " (soon)"}
                       </td>
                       <td className="px-4 py-3 text-right">

@@ -100,7 +100,7 @@ export function AdminSchedules() {
     >
       <ScheduleTabs />
 
-      <div className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-[1.6fr_1.4fr_1.4fr_1.2fr_1.2fr]">
+      <div className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-[1.6fr_1.4fr_1.4fr_1.2fr_1.2fr]">
         <Field label="Search" type="search" placeholder="Doctor name or staff ID" value={search} onChange={(e) => setSearch(e.target.value)} />
         <SelectField label="Doctor" value={doctorId} onChange={(e) => setDoctorId(e.target.value)}>
           <option value={ALL}>All doctors</option>
@@ -143,7 +143,7 @@ export function AdminSchedules() {
           </p>
         </section>
       ) : (
-        <section className="overflow-hidden rounded-lg shadow-box bg-white">
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
             <span>{loading ? "Loading schedules..." : `Showing ${filtered.length} of ${schedules.length} schedules`}</span>
             {hasFilters && (

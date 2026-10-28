@@ -6,7 +6,7 @@ import { ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "../../components/a
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { FormActions, StatusBadge, SuccessText, TextButton, WarningBox } from "../../components/ProfileUI";
+import { FormActions, NotAvailable, StatusBadge, SuccessText, TextButton, WarningBox } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface Appointment {
@@ -130,7 +130,7 @@ export function ReceptionistAppointments() {
         </button>
       }
     >
-      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[1fr_2fr_auto_auto] sm:items-end">
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_2fr_auto_auto] sm:items-end">
         <Field label="Date" type="date" value={shownDate} onChange={(e) => setDate(e.target.value)} />
         <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
         <button type="submit" className={ADMIN_PRIMARY_BUTTON}>Search</button>
@@ -152,7 +152,7 @@ export function ReceptionistAppointments() {
       <PageError message={error} />
       <SuccessText message={message} />
 
-      <section className="overflow-hidden rounded-lg shadow-box bg-white">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -198,8 +198,8 @@ export function ReceptionistAppointments() {
                       <td className="px-4 py-3">
                         <StatusBadge status={isScheduled && a.checkedIn ? "Checked In" : a.status} />
                       </td>
-                      <td className="px-4 py-3 text-slate-700">{a.checkedInAt ?? "—"}</td>
-                      <td className="px-4 py-3 text-slate-700">{a.checkedOutAt ?? "—"}</td>
+                      <td className="px-4 py-3 text-slate-700">{a.checkedInAt ?? <NotAvailable />}</td>
+                      <td className="px-4 py-3 text-slate-700">{a.checkedOutAt ?? <NotAvailable />}</td>
                       <td className="space-x-3 whitespace-nowrap px-4 py-3 text-right">
                         {canCheckIn && (
                           <TextButton disabled={busy} onClick={() => updateAppointment(a.appointmentId, "check-in", `${a.patientName} is checked in.`)}>

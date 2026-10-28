@@ -10,7 +10,7 @@ import { InvoiceReport } from "../../components/InvoiceReport";
 import { Modal } from "../../components/Modal";
 import { PageError } from "../../components/PortalPage";
 import { printReport } from "../../utils/printReport";
-import { DangerButton, PrimaryButton, SecondaryButton, Section, StatusBadge, StatusText, TextButton, WarningBox } from "../../components/ProfileUI";
+import { DangerButton, NotAvailable, PrimaryButton, SecondaryButton, Section, StatusBadge, StatusText, TextButton, WarningBox } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface Invoice {
@@ -158,7 +158,7 @@ function InvoiceList({ reloadCount, onOpen }: { reloadCount: number; onOpen: (in
 
   return (
     <>
-      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
         <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
         <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
@@ -173,7 +173,7 @@ function InvoiceList({ reloadCount, onOpen }: { reloadCount: number; onOpen: (in
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg shadow-box bg-white">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -244,7 +244,7 @@ function RefundRequests({ reloadCount, onChanged, onOpen }: { reloadCount: numbe
     <>
       <PageError message={error} />
 
-      <section className="rounded-lg shadow-box bg-white">
+      <section className="rounded-lg border border-slate-200 bg-white">
         {loading ? (
           <p className="px-4 py-10 text-center text-sm text-slate-500">Loading refund requests...</p>
         ) : requests.length === 0 ? (
@@ -401,7 +401,7 @@ function FeesTab() {
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg shadow-box bg-white">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -421,12 +421,12 @@ function FeesTab() {
                 shown.map((f) => (
                   <tr key={`${f.category}-${f.linkId}`} className="hover:bg-slate-50">
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-navy">{f.name}</td>
-                    <td className="px-4 py-3 text-slate-700">{f.type ?? "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{f.type ?? <NotAvailable />}</td>
                     <td className="px-4 py-3 font-medium text-slate-900">{f.price === null ? "No price" : money(f.price)}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={f.feeId === null ? "Pending" : f.isActive ? "Active" : "Inactive"} />
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-500">{f.updatedAt ?? "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-500">{f.updatedAt ?? <NotAvailable />}</td>
                     <td className="px-4 py-3 text-right">
                       <TextButton onClick={() => setEditing(f)}>{f.feeId === null ? "Add Price" : "Edit"}</TextButton>
                     </td>
@@ -601,7 +601,7 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
           </Section>
 
           {invoice.status !== "Void" && Number(invoice.balance) > 0 && (
-            <form onSubmit={takePayment} className="grid gap-3 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <form onSubmit={takePayment} className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
               <SelectField label="Payment type" required value={paymentTypeId} onChange={(e) => setPaymentTypeId(e.target.value)}>
                 <option value="">Choose one</option>
                 {paymentTypes.map((t) => (

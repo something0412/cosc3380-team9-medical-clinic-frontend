@@ -6,7 +6,7 @@ import { ADMIN_DANGER_BUTTON, ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } fro
 
 export function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-lg shadow-box bg-white p-5">
+    <section className="rounded-lg border border-slate-200 bg-white p-5">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h3 className="text-lg font-semibold text-navy">{title}</h3>
         {action}
@@ -30,11 +30,11 @@ export function InfoItem({ label, value }: { label: string; value: ReactNode }) 
 }
 
 // same badge look as the admin pages
-const GREEN = "bg-green-50 text-green-700 ring-green-600/20";
-const AMBER = "bg-amber-50 text-amber-700 ring-amber-600/20";
-const RED = "bg-red-50 text-red-700 ring-red-600/20";
-const BLUE = "bg-sky-50 text-sky-700 ring-sky-600/20";
-const GRAY = "bg-slate-100 text-slate-600 ring-slate-500/20";
+const GREEN = "text-green-700";
+const AMBER = "text-amber-700";
+const RED = "text-red-700";
+const BLUE = "text-sky-700";
+const GRAY = "text-slate-600";
 
 const STATUS_COLORS: Record<string, string> = {
   Active: GREEN,
@@ -63,10 +63,15 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${STATUS_COLORS[status] ?? GRAY}`}>
+    <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium shadow-pill ${STATUS_COLORS[status] ?? GRAY}`}>
       {status}
     </span>
   );
+}
+
+// shown in place of an empty value
+export function NotAvailable() {
+  return <span className="font-normal italic text-slate-500/70">N/A</span>;
 }
 
 // exclamation mark in a circle

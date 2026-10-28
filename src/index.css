@@ -6,10 +6,10 @@
   --color-navy-dark: #0b2238;
   --font-heading: "Source Serif 4", Georgia, "Times New Roman", serif;
 
-  /* portal shadows used instead of borders: shadow-box, shadow-button, shadow-field */
-  --shadow-box: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+  /* portal shadows: shadow-button, shadow-field, and shadow-pill (its ring takes the text color) */
   --shadow-button: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
   --shadow-field: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px;
+  --shadow-pill: rgba(0, 0, 0, 0.16) 0px 1px 4px, currentColor 0px 0px 0px 1.5px;
 }
 
 html {

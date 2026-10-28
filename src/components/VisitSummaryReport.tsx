@@ -19,7 +19,7 @@ export interface VisitSummaryData {
 }
 
 // a reading, or a dash when it wasn't taken
-const reading = (value: number | null, unit = "") => (value == null ? "—" : `${value}${unit}`);
+const reading = (value: number | null, unit = "") => (value == null ? "N/A" : `${value}${unit}`);
 
 // the printable visit summary, used by the doctor's visit page and the patient's records page
 export function VisitSummaryReport({ visit }: { visit: VisitSummaryData }) {
@@ -35,7 +35,7 @@ export function VisitSummaryReport({ visit }: { visit: VisitSummaryData }) {
       <ReportSection title="Reason for Visit and Notes">
         {visit.summary ? (
           <>
-            <p><span className="font-medium">Reason for visit:</span> {visit.summary.visitReason ?? "—"}</p>
+            <p><span className="font-medium">Reason for visit:</span> {visit.summary.visitReason ?? "N/A"}</p>
             {visit.summary.notes && <p className="mt-2 whitespace-pre-wrap">{visit.summary.notes}</p>}
           </>
         ) : (
@@ -47,7 +47,7 @@ export function VisitSummaryReport({ visit }: { visit: VisitSummaryData }) {
         {visit.diagnoses.length === 0 ? (
           <p className="text-slate-500">No diagnoses.</p>
         ) : (
-          <ReportTable headers={["Diagnosis", "Reasoning"]} rows={visit.diagnoses.map((d) => [d.name, d.reasoning ?? "—"])} />
+          <ReportTable headers={["Diagnosis", "Reasoning"]} rows={visit.diagnoses.map((d) => [d.name, d.reasoning ?? "N/A"])} />
         )}
       </ReportSection>
 
@@ -61,7 +61,7 @@ export function VisitSummaryReport({ visit }: { visit: VisitSummaryData }) {
               v.recordedAt,
               reading(v.temperature, " °F"),
               reading(v.heartRate, " bpm"),
-              v.systolic == null && v.diastolic == null ? "—" : `${v.systolic ?? "—"}/${v.diastolic ?? "—"}`,
+              v.systolic == null && v.diastolic == null ? "N/A" : `${v.systolic ?? "N/A"}/${v.diastolic ?? "N/A"}`,
               reading(v.respiratoryRate, "/min"),
               reading(v.oxygenSaturation, "%"),
               reading(v.weight, " lb"),
@@ -80,8 +80,8 @@ export function VisitSummaryReport({ visit }: { visit: VisitSummaryData }) {
             rows={visit.prescriptions.map((p) => [
               p.medicationName,
               p.dosage,
-              p.instructions ?? "—",
-              p.durationDays ?? "—",
+              p.instructions ?? "N/A",
+              p.durationDays ?? "N/A",
               p.isActive ? "Active" : "Stopped",
             ])}
           />

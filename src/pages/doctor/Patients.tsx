@@ -5,7 +5,7 @@ import { api, apiErrorMessage } from "../../api";
 import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { Field } from "../../components/FormControls";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { StatusBadge } from "../../components/ProfileUI";
+import { NotAvailable, StatusBadge } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface MyPatient {
@@ -48,14 +48,14 @@ export function DoctorPatients() {
 
   return (
     <PortalPage eyebrow="Doctor" title="Patients" description="Patients assigned to you or with a booked or finished visit with you.">
-      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[1fr_auto] sm:items-end">
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_auto] sm:items-end">
         <Field label="Search" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
         <button type="submit" className={ADMIN_PRIMARY_BUTTON}>Search</button>
       </form>
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg shadow-box bg-white">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -82,8 +82,8 @@ export function DoctorPatients() {
                       {p.assignedToMe && <span className="ml-2"><StatusBadge status="Primary" /></span>}
                     </td>
                     <td className="px-4 py-3 text-slate-700">{p.dob}</td>
-                    <td className="px-4 py-3 text-slate-700">{p.lastVisit ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-700">{p.nextVisit ?? "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{p.lastVisit ?? <NotAvailable />}</td>
+                    <td className="px-4 py-3 text-slate-700">{p.nextVisit ?? <NotAvailable />}</td>
                     <td className="px-4 py-3 text-right">
                       <Link to={`/doctor/patients/${p.patientId}`} className="whitespace-nowrap font-medium text-navy hover:text-teal-700 hover:underline">
                         Open chart

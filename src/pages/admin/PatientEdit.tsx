@@ -91,7 +91,7 @@ export function AdminPatientEdit() {
       });
       setSuccess(
         newPassword
-          ? `Saved. The patient's new password is ${newPassword} — give it to them so they can sign in.`
+          ? `Saved. The patient's new password is ${newPassword}. Give it to them so they can sign in.`
           : "Saved."
       );
       setNewPassword("");

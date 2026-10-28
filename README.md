@@ -1,87 +1,91 @@
-# Medical Clinic — Frontend
+# Medical Clinic Frontend
 
-React + TypeScript app (Vite). Deliberately minimal: no router, no state
-management library, no UI component library. Plain `.tsx` files, `useState`,
-`useEffect`, and plain CSS. This is a teaching skeleton — read it top to
-bottom before adding a new feature, and copy its patterns rather than
-inventing new ones.
+The website and patient/staff portal for Medical Clinic Database System (COSC 3380, Team 9).
 
 ## Stack
 
-- **React 19 + TypeScript**, via Vite
-- **axios** for API calls (a shared instance, see `src/api.ts`) — not the
-  native `fetch`
-- Plain CSS (`src/index.css`, `src/App.css`) — no Tailwind/CSS framework
+- **React 19 + TypeScript**, built with **Vite**
+- **React Router 7** for pages
+- **Tailwind CSS 4** for styling (theme colors and shadows are in `src/index.css`)
+- **axios** for API calls, through the shared instance in `src/api.ts`
 
 ## Setup
 
 ```bash
 npm install
-npm run dev       # starts the Vite dev server, default http://localhost:5173
-npm run build     # tsc -b && vite build → dist/
-npm run lint       # eslint .
-npm run preview   # serve the production build locally
 ```
 
-The backend must be running separately (see `../medical-clinic-backend`) for
-any tab except the static placeholder content to work. By default the app
-calls `http://localhost:4000`. To point at a different backend, create a
-`.env` with:
-
-```sh
-VITE_API_URL=http://your-backend-host:port
+```bash
+npm run dev
 ```
 
-(Vite only exposes env vars prefixed with `VITE_` to browser code — see
-`src/api.ts`.)
+The dev server runs at http://localhost:5173. Other scripts:
+
+| Script | What it does |
+| --- | --- |
+| `npm run build` | Type-check (`tsc -b`) and build to `dist/` |
+| `npm run lint` | Run ESLint |
+| `npm run preview` | Serve the built app locally |
+
+### Backend connection
+
+Start the backend first (`npm run dev` in `medical-clinic-backend`, port 4000). The backend only allows requests from `http://localhost:5173`, so keep the frontend on that port.
+
+`src/api.ts` picks the backend URL:
+
+- **Local development**: `http://localhost:4000`, or `VITE_API_URL` if you set it in a `.env` file (git-ignored).
+- **Production (Vercel)**: the same site. `vercel.json` forwards `/api/*` to the deployed backend. Don't set `VITE_API_URL` in Vercel.
+
+All requests send the login cookie (`withCredentials: true`).
+
+## Roles and pages
+
+| Role | Sign-in | Main pages |
+| --- | --- | --- |
+| Patient | `/login` (patient number or email) | Dashboard, appointments (book with the primary doctor preselected), records, billing (pay by card), forms, profile (primary doctor, contacts, insurance) |
+| Doctor | `/employee/login` | Dashboard, appointments, patients and charts, visit documentation (summary, diagnoses, prescriptions, lab orders), referrals, lab orders, schedule |
+| Nurse | `/employee/login` | Dashboard, Patient Appointments (filter by name, day and office), intake (vitals, notes, allergies, home medications), supplies |
+| Receptionist | `/employee/login` | Dashboard, appointments (book, check in, check out, no-show), patients (register, insurance, forms, portal logins), billing |
+| Lab technician | `/employee/login` | Dashboard, lab orders and results |
+| Admin | `/employee/login` | Dashboard with yearly report, employees, offices, specialties, schedules and shifts, billing (invoices, refunds, fees), patients (primary doctor, password reset, activate or deactivate) |
+
+Every portal role also has a **My Profile** page with a password change.
+
+`src/context/AuthContext.tsx` keeps the signed-in user, and `src/layouts/RoleLayout.tsx` keeps each role inside its own pages.
 
 ## Project layout
 
 ```text
 src/
-  main.tsx              # React entry point
-  App.tsx               # the three tabs live here (Patients, Appointments, Template)
-  api.ts                # shared axios instance + base URL
-  types.ts              # shared TypeScript interfaces for API data shapes
-  components/
-    Tabs.tsx            # generic, reusable tab bar component
+  main.tsx             app entry point
+  App.tsx              every route
+  api.ts               shared axios instance and apiErrorMessage()
+  types.ts             shared data shapes
+  index.css            Tailwind import, theme colors, shadows
+  context/             signed-in user (AuthContext)
+  layouts/             public layout and the role layout with the sidebar
+  components/          shared UI: forms, sections, tables, sidebar, reports
+    admin/             admin page frame, status badges, button styles
+    public/            public site pieces (header, footer, booking)
+  pages/
+    public/            public site and booking flow
+    auth/              patient and employee sign-in
+    patient/ doctor/ nurse/ receptionist/ lab/ admin/
+    shared/            staff profile page
+    staff/             nurse and receptionist dashboard switch
+  services/            older shared API helpers (admin, booking, public)
+  utils/               IDs, clinic time, print reports, small helpers
 ```
 
-## What's actually working right now
+## PDF reports
 
-`App.tsx` renders three tabs via the reusable `Tabs` component
-(`src/components/Tabs.tsx`):
+Invoices, visit summaries and the admin yearly report print through the browser ("Save as PDF"):
 
-- **Patients** — fetches `GET /api/patients` on mount and renders a table.
-  Has `loading` and `error` state, handled with `useEffect` + an inner
-  `async` function + `try/catch/finally` (not `.then()`/`.catch()` chains —
-  that's a deliberate style choice, keep using try/catch for new async
-  effects). The `Patient` shape (`src/types.ts`) matches exactly what
-  `GET /api/patients` returns: `patientId`, `firstName`, `lastName`, `dob`,
-  `phone`, `email`, `isActive`.
-- **Appointments** — placeholder only. There's no backend route for this
-  yet.
-- **Template** — a button that calls `GET /api/template` and dumps the raw
-  JSON response on the page. Exists purely to prove the frontend can reach
-  the backend; it's not a model for a real feature.
+- `components/PrintReport.tsx` is the report layout.
+- `utils/printReport.ts` opens the print window and names the file.
 
-## How to add a new tab/feature (e.g. appointments)
+Only one report can be on a page at a time.
 
-1. Add the shape of the data to `src/types.ts` (match the backend's response
-   exactly — don't invent fields the backend doesn't send).
-2. Add a typed fetch function if you want one, or call `api.get(...)` from
-   `src/api.ts` directly (see how `PatientsTab` does it in `App.tsx`).
-3. Copy `PatientsTab` in `App.tsx`: a `useState` for the data, a `loading`
-   flag, an `error` message, a `useEffect` with an inner `async` function
-   wrapped in `try/catch/finally`, and render branches for loading/error/
-   success.
-4. Add it to the `tabs` array passed to `<Tabs />` in the `App` component.
-   Don't modify `Tabs.tsx` itself — it's generic and knows nothing about
-   patients/appointments/etc.
+## Deployment
 
-## Nursing pages (RN / CRNA / NA)
-
-Pages are in `src/pages/staff/nursing/`. All their backend calls are in
-`src/services/nursingApi.ts` — each function lists the route it needs.
-To use fake data until those routes exist, put `VITE_USE_MOCK_DATA=true`
-in `.env.local` and restart `npm run dev`.
+The frontend deploys to **Vercel** from the `main` branch. `vercel.json` sends `/api/*` to the backend and every other path to `index.html`, so page refreshes work.

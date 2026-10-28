@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { Section } from "../../components/ProfileUI";
+import { Section, WarningBox } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 
@@ -104,10 +104,10 @@ export function DoctorDashboard() {
           </div>
 
           {data.referralsToReview > 0 && (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <WarningBox>
               You have {data.referralsToReview} referral(s) waiting for your answer.{" "}
               <Link to="/doctor/referrals" className="font-medium underline">Review them</Link>
-            </p>
+            </WarningBox>
           )}
         </>
       )}

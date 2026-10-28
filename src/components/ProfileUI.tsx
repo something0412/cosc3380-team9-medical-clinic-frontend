@@ -1,12 +1,12 @@
 import { useState } from "react";
 import type { ButtonHTMLAttributes, FormEvent, ReactNode } from "react";
 import { apiErrorMessage } from "../api";
-import { ErrorText, Field } from "./FormControls";
+import { ErrorText, PasswordField } from "./FormControls";
 import { ADMIN_DANGER_BUTTON, ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "./admin/styles";
 
 export function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
+    <section className="rounded-lg shadow-box bg-white p-5">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h3 className="text-lg font-semibold text-navy">{title}</h3>
         {action}
@@ -67,6 +67,33 @@ export function StatusBadge({ status }: { status: string }) {
       {status}
     </span>
   );
+}
+
+// exclamation mark in a circle
+export function AlertIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 ${className}`} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+// a longer warning in a light slate box, with the exclamation mark first
+export function WarningBox({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`flex items-start gap-2 rounded-lg border border-slate-400/30 bg-slate-500/10 px-4 py-3 text-sm text-slate-700 ${className}`}>
+      <AlertIcon />
+      <div>{children}</div>
+    </div>
+  );
+}
+
+// status as plain colored text (badges are only for tables)
+export function StatusText({ status }: { status: string }) {
+  const color = (STATUS_COLORS[status] ?? GRAY).split(" ").find((c) => c.startsWith("text-"));
+  return <span className={`font-medium ${color}`}>{status}</span>;
 }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
@@ -149,9 +176,9 @@ export function ChangePasswordForm({ onSubmit }: { onSubmit: (body: { currentPas
   return (
     <Section title="Change Password">
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
-        <Field label="Current Password" type="password" required autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-        <Field label="New Password" type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-        <Field label="Confirm New Password" type="password" required autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+        <PasswordField label="Current Password" required autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+        <PasswordField label="New Password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+        <PasswordField label="Confirm New Password" required autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
         <ErrorText message={error} />
         <SuccessText message={success} />
         <PrimaryButton disabled={saving}>{saving ? "Saving..." : "Update Password"}</PrimaryButton>

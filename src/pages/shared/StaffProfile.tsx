@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
-import { ErrorText, Field } from "../../components/FormControls";
+import { ErrorText, Field, PhoneField } from "../../components/FormControls";
 import {
   ChangePasswordForm,
   FormActions,
@@ -193,7 +193,7 @@ function ContactSection({ profile, onSaved }: SectionProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Work Email" value={profile.email} disabled />
-            <Field label="Phone Number" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <PhoneField label="Phone Number" value={phone} onChange={setPhone} />
           </div>
           <p className="text-sm text-slate-500">Your work email is provided by the clinic and can't be changed.</p>
           <ErrorText message={error} />

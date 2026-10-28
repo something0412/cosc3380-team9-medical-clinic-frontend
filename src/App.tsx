@@ -38,6 +38,7 @@ import {
 } from "./pages/admin/ScheduleForm";
 import { AdminShiftSettings } from "./pages/admin/ShiftSettings";
 import { AdminPatients } from "./pages/admin/Patients";
+import { AdminPatientEdit } from "./pages/admin/PatientEdit";
 import { AdminBilling } from "./pages/admin/Billing";
 
 import { EmployeeLoginPage, PatientLoginPage } from "./pages/auth/Login";
@@ -53,10 +54,8 @@ import { DoctorVisit } from "./pages/doctor/Visit";
 import { LabDashboard } from "./pages/lab/Dashboard";
 import { LabOrders } from "./pages/lab/LabOrders";
 import { StaffDashboard } from "./pages/staff/Dashboard";
-import { NurseTodayPatients } from "./pages/nurse/TodayPatients";
+import { NurseAppointments } from "./pages/nurse/Appointments";
 import { NurseIntake } from "./pages/nurse/Intake";
-import { NursePatients } from "./pages/nurse/Patients";
-import { NursePatientChart } from "./pages/nurse/PatientChart";
 import { NurseSupplies } from "./pages/nurse/Supplies";
 import { ReceptionistAppointments } from "./pages/receptionist/Appointments";
 import { ReceptionistPatients } from "./pages/receptionist/Patients";
@@ -161,6 +160,7 @@ function App() {
                     element={<AdminScheduleEdit />}
                 />
                 <Route path="patients" element={<AdminPatients />} />
+                <Route path="patients/:id/edit" element={<AdminPatientEdit />} />
                 <Route path="billing" element={<AdminBilling />} />
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
@@ -172,10 +172,8 @@ function App() {
                 <Route path="profile" element={<StaffProfile />} />
 
                 {/* nurse pages */}
-                <Route path="nurse/today" element={<NurseTodayPatients />} />
-                <Route path="nurse/today/:appointmentId" element={<NurseIntake />} />
-                <Route path="nurse/patients" element={<NursePatients />} />
-                <Route path="nurse/patients/:patientId" element={<NursePatientChart />} />
+                <Route path="nurse/appointments" element={<NurseAppointments />} />
+                <Route path="nurse/appointments/:appointmentId" element={<NurseIntake />} />
                 <Route path="nurse/supplies" element={<NurseSupplies />} />
 
                 {/* receptionist pages */}

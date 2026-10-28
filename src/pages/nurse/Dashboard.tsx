@@ -59,7 +59,7 @@ export function NurseDashboard() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Section
               title="Waiting for Vitals"
-              action={<Link to="/staff/nurse/today" className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">View all</Link>}
+              action={<Link to="/staff/nurse/appointments" className="text-sm font-medium text-navy hover:text-teal-700 hover:underline">View all</Link>}
             >
               {data.waitingList.length === 0 ? (
                 <p className="text-slate-500">Nobody checked in is waiting for vitals.</p>
@@ -67,7 +67,7 @@ export function NurseDashboard() {
                 <ul className="divide-y divide-slate-100">
                   {data.waitingList.map((a) => (
                     <li key={a.appointmentId} className="flex justify-between py-2 text-sm">
-                      <Link to={`/staff/nurse/today/${a.appointmentId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
+                      <Link to={`/staff/nurse/appointments/${a.appointmentId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
                         {a.patientName}
                       </Link>
                       <span className="text-slate-600">

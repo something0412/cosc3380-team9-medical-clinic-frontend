@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
-import { ErrorText, Field, SelectField } from "../../components/FormControls";
+import { ErrorText, Field, PhoneField, SelectField } from "../../components/FormControls";
 import { PageError, PortalPage } from "../../components/PortalPage";
 import {
     ChangePasswordForm,
     FormActions,
     InfoGrid,
     InfoItem,
-    Section,
     SecondaryButton,
-    StatusBadge,
+    Section,
+    StatusText,
     SuccessText,
     TextButton,
 } from "../../components/ProfileUI";
@@ -78,6 +78,19 @@ export function PatientProfile() {
                         </p>
                     </Section>
 
+                    <Section title="Primary Doctor">
+                        {profile.primaryDoctor ? (
+                            <p className="text-sm text-slate-900">
+                                <span className="font-medium">Dr. {profile.primaryDoctor.name}</span>
+                            </p>
+                        ) : (
+                            <p className="text-sm text-slate-500">
+                                You'll be assigned a primary doctor after you finish your first Family Medicine appointment.
+                            </p>
+                        )}
+                        <p className="mt-2 text-sm text-slate-500">To change your primary doctor, please contact the clinic.</p>
+                    </Section>
+
                     <ContactInfoSection profile={profile} onSaved={reload} />
                     <EmergencyContactsSection profile={profile} onSaved={reload} />
                     <InsuranceSection profile={profile} onSaved={reload} />
@@ -141,7 +154,7 @@ function ContactInfoSection({ profile, onSaved }: SectionProps) {
             {editing ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <Field label="Phone Number" type="tel" required value={form.phone} onChange={set("phone")} />
+                        <PhoneField label="Phone Number" value={form.phone} onChange={(phone) => setForm({ ...form, phone })} />
                         <Field label="Email Address" type="email" required value={form.email} onChange={set("email")} />
                         <Field label="Address" value={form.address} onChange={set("address")} />
                         <SelectField label="Gender" value={form.gender} onChange={set("gender")}>
@@ -224,7 +237,7 @@ function EmergencyContactsSection({ profile, onSaved }: SectionProps) {
         }
     }
 
-    const set = (field: "firstName" | "lastName" | "relationship" | "phoneNumber") =>
+    const set = (field: "firstName" | "lastName" | "relationship") =>
         (e: { target: { value: string } }) => setForm({ ...form, [field]: e.target.value });
 
     return (
@@ -238,11 +251,11 @@ function EmergencyContactsSection({ profile, onSaved }: SectionProps) {
 
             <ul className="space-y-3">
                 {profile.emergencyContacts.map((c) => (
-                    <li key={c.emergencyContactId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-4">
+                    <li key={c.emergencyContactId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg shadow-box p-4">
                         <div>
                             <p className="font-medium text-slate-900">
                                 {c.firstName} {c.lastName}
-                                {c.isPrimary && <span className="ml-2"><StatusBadge status="Primary" /></span>}
+                                {c.isPrimary && <span className="ml-2"><StatusText status="Primary" /></span>}
                             </p>
                             <p className="text-sm text-slate-600">{c.relationship} · {c.phoneNumber}</p>
                         </div>
@@ -263,7 +276,7 @@ function EmergencyContactsSection({ profile, onSaved }: SectionProps) {
                         <Field label="First Name" required value={form.firstName} onChange={set("firstName")} />
                         <Field label="Last Name" required value={form.lastName} onChange={set("lastName")} />
                         <Field label="Relationship" required placeholder="e.g. Spouse, Parent" value={form.relationship} onChange={set("relationship")} />
-                        <Field label="Phone Number" type="tel" required value={form.phoneNumber} onChange={set("phoneNumber")} />
+                        <PhoneField label="Phone Number" value={form.phoneNumber} onChange={(phoneNumber) => setForm({ ...form, phoneNumber })} />
                     </div>
                     <label className="flex items-center gap-2 text-sm text-slate-700">
                         <input type="checkbox" checked={form.isPrimary} onChange={(e) => setForm({ ...form, isPrimary: e.target.checked })} />
@@ -328,7 +341,7 @@ function InsuranceSection({ profile, onSaved }: SectionProps) {
                 <InfoGrid>
                     <InfoItem label="Provider" value={insurance.provider} />
                     <InfoItem label="Policy Number" value={insurance.policyNumber} />
-                    <InfoItem label="Status" value={<StatusBadge status={insurance.status} />} />
+                    <InfoItem label="Status" value={<StatusText status={insurance.status} />} />
                 </InfoGrid>
             ) : (
                 <p className="text-slate-500">No insurance on file.</p>

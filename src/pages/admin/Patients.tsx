@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
 import { ActiveBadge } from "../../components/admin/StatusBadges";
@@ -81,8 +82,8 @@ export function AdminPatients() {
     }
 
     return (
-        <AdminPage title="Patients" description="View patient accounts and activate or deactivate them.">
-            <div className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[2fr_1fr]">
+        <AdminPage title="Patients" description="View patient accounts, edit their primary doctor or password, and activate or deactivate them.">
+            <div className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[2fr_1fr]">
                 <Field
                     label="Search"
                     type="search"
@@ -99,7 +100,7 @@ export function AdminPatients() {
 
             <PageError message={error} />
 
-            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <section className="overflow-hidden rounded-lg shadow-box bg-white">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
                     <span>{loading ? "Loading patients..." : `Showing ${filtered.length} of ${patients.length} patients`}</span>
                     {hasFilters && (
@@ -138,7 +139,10 @@ export function AdminPatients() {
                                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{p.phone}</td>
                                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{p.primaryDoctor ? `Dr. ${p.primaryDoctor}` : "—"}</td>
                                     <td className="px-4 py-3"><ActiveBadge isActive={p.isActive} /></td>
-                                    <td className="px-4 py-3 text-right">
+                                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                                        <Link to={`/admin/patients/${p.patientId}/edit`} className="mr-4 text-sm font-medium text-navy hover:text-teal-700">
+                                            Edit
+                                        </Link>
                                         <TextButton danger={p.isActive} className="whitespace-nowrap" onClick={() => toggleStatus(p)}>
                                             {p.isActive ? "Deactivate" : "Activate"}
                                         </TextButton>

@@ -4,7 +4,7 @@ import { AdminPage } from "../../components/admin/AdminPage";
 import { PageError } from "../../components/PortalPage";
 import { BarChart } from "../../components/BarChart";
 import { PrintReport, ReportSection, ReportTable } from "../../components/PrintReport";
-import { SecondaryButton, Section, StatusBadge } from "../../components/ProfileUI";
+import { SecondaryButton, Section, StatusBadge, StatusText } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { CHART_COLORS } from "../../utils/chartColors";
 import { printReport } from "../../utils/printReport";
@@ -119,7 +119,7 @@ export function AdminDashboard() {
                     <select
                         value={year}
                         onChange={(e) => setYear(Number(e.target.value))}
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                        className="rounded-lg bg-white px-3 py-2 text-sm shadow-field focus:outline-none"
                         aria-label="Year"
                     >
                         {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
@@ -321,7 +321,7 @@ function BillingCollections({ data }: { data: BillingData }) {
                             ["Overdue", data.overdueCount],
                         ].map(([status, count]) => (
                             <li key={status} className="flex items-center justify-between">
-                                <StatusBadge status={String(status)} />
+                                <StatusText status={String(status)} />
                                 <span className="text-sm text-slate-700">
                                     <span className="font-medium text-slate-900">{count}</span> ({percent(Number(count), data.invoiceCount)})
                                 </span>

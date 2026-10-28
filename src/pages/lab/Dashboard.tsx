@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { Section, StatusBadge } from "../../components/ProfileUI";
+import { Section, StatusText } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 
@@ -63,7 +63,7 @@ export function LabDashboard() {
                   <li key={o.labOrderId} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="font-medium text-slate-900">{o.testName}</span>
-                      <StatusBadge status={o.status} />
+                      <StatusText status={o.status} />
                       <span className="text-slate-700">{o.patientName}</span>
                       <span className="text-slate-500">ordered by Dr. {o.orderedBy}</span>
                     </span>

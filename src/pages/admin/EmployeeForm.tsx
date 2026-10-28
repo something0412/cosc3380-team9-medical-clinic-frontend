@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
 import { ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "../../components/admin/styles";
-import { Field, SelectField } from "../../components/FormControls";
+import { Field, PasswordField, PhoneField, SelectField } from "../../components/FormControls";
 import { Section } from "../../components/ProfileUI";
 import {
   NURSING_LEVELS,
@@ -244,7 +244,7 @@ function EmployeeForm({ employee, cancelTo, submitLabel, onSubmit }: EmployeeFor
           <Field label="First Name" required maxLength={50} value={values.firstName} onChange={update("firstName")} />
           <Field label="Last Name" required maxLength={50} value={values.lastName} onChange={update("lastName")} />
           <Field label="Date of Birth" type="date" required max={today} value={values.dob} onChange={update("dob")} />
-          <Field label="Phone" type="tel" required maxLength={20} value={values.phone} onChange={update("phone")} />
+          <PhoneField label="Phone" value={values.phone} onChange={(phone) => setValues((v) => ({ ...v, phone }))} />
           <Field label="Email" type="email" required maxLength={100} value={values.email} onChange={update("email")} />
           <SelectField label="Office" required value={values.officeId} onChange={update("officeId")}>
             <option value="">Select an office</option>
@@ -257,8 +257,8 @@ function EmployeeForm({ employee, cancelTo, submitLabel, onSubmit }: EmployeeFor
           </SelectField>
           {roleLocked ? (
             <div>
-              <span className="mb-1 block text-sm font-medium text-gray-700">Role</span>
-              <p className="rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-700">{employee.employeeType}</p>
+              <span className="mb-1 block text-sm font-medium text-slate-700">Role</span>
+              <p className="rounded-lg bg-slate-100 shadow-field px-3 py-2 text-sm text-slate-700">{employee.employeeType}</p>
             </div>
           ) : (
             <SelectField label="Role" required value={values.employeeTypeId} onChange={update("employeeTypeId")}>
@@ -282,7 +282,7 @@ function EmployeeForm({ employee, cancelTo, submitLabel, onSubmit }: EmployeeFor
 
       {isNew && (
         <Section title="Login Account">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
               checked={values.createLogin}
@@ -298,9 +298,8 @@ function EmployeeForm({ employee, cancelTo, submitLabel, onSubmit }: EmployeeFor
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Field label="Username" required maxLength={50} autoComplete="off" value={values.username} onChange={update("username")} />
-                <Field
+                <PasswordField
                   label="Initial Password"
-                  type="password"
                   required
                   minLength={8}
                   maxLength={128}
@@ -308,9 +307,8 @@ function EmployeeForm({ employee, cancelTo, submitLabel, onSubmit }: EmployeeFor
                   value={values.password}
                   onChange={update("password")}
                 />
-                <Field
+                <PasswordField
                   label="Confirm Password"
-                  type="password"
                   required
                   autoComplete="new-password"
                   value={values.confirmPassword}
@@ -340,10 +338,10 @@ function EmployeeForm({ employee, cancelTo, submitLabel, onSubmit }: EmployeeFor
           </div>
 
           <fieldset className="mt-6">
-            <legend className="text-sm font-medium text-gray-700">Specialties</legend>
+            <legend className="text-sm font-medium text-slate-700">Specialties</legend>
             <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {specialtyOptions.map((s) => (
-                <label key={s.specialtyId} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                <label key={s.specialtyId} className="flex items-center gap-2 rounded-lg shadow-box px-3 py-2 text-sm text-slate-700">
                   <input
                     type="checkbox"
                     checked={values.specialtyIds.includes(s.specialtyId)}

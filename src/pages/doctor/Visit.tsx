@@ -7,7 +7,7 @@ import type { Allergy, HomeMedication, NursingNote } from "../../components/Clin
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { PageError, PortalPage } from "../../components/PortalPage";
 import { printReport } from "../../utils/printReport";
-import { PrimaryButton, SecondaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { PrimaryButton, SecondaryButton, Section, StatusText, SuccessText, TextButton, WarningBox } from "../../components/ProfileUI";
 import { VisitSummaryReport } from "../../components/VisitSummaryReport";
 import { CriticalVitalsBanner, VitalsTable } from "../../components/VitalsTable";
 import type { Vitals } from "../../components/VitalsTable";
@@ -208,7 +208,7 @@ export function DoctorVisit() {
       }
     >
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <StatusBadge status={visit.status === "Scheduled" && visit.checkedIn ? "Checked In" : visit.status} />
+        <StatusText status={visit.status === "Scheduled" && visit.checkedIn ? "Checked In" : visit.status} />
         <span className="text-slate-600">
           Insurance: {visit.insurance ? `${visit.insurance.provider} (${visit.insurance.status})` : "None on file"}
         </span>
@@ -217,7 +217,7 @@ export function DoctorVisit() {
       <PageError message={error} />
 
       {!canWrite && visit.status === "Scheduled" && (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <p className="rounded-lg shadow-box bg-slate-50 px-4 py-3 text-sm text-slate-700">
           The patient hasn't checked in yet. Notes, diagnoses and prescriptions open once the front desk checks them in, and the front
           desk checks them out when the visit is done.
         </p>
@@ -226,9 +226,9 @@ export function DoctorVisit() {
       <CriticalVitalsBanner vitals={visit.vitals} note="at this visit" />
       <SevereAllergyBanner allergies={visit.allergies} />
       {visit.missingForms.length > 0 && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <WarningBox>
           Missing required forms: {visit.missingForms.join(", ")}
-        </p>
+        </WarningBox>
       )}
 
       <Section title="Vitals for This Visit">
@@ -260,7 +260,7 @@ export function DoctorVisit() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={5}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-lg bg-white px-3 py-2 text-sm shadow-field focus:outline-none"
               />
             </label>
             <ErrorText message={summaryError} />
@@ -283,7 +283,7 @@ export function DoctorVisit() {
         ) : (
           <ul className="space-y-3 text-sm">
             {visit.diagnoses.map((d) => (
-              <li key={d.visitDiagnosisId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <li key={d.visitDiagnosisId} className="rounded-lg shadow-box bg-slate-50 p-3">
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-medium text-slate-900">{d.name}</p>
                   {canWrite && <TextButton danger onClick={() => removeDiagnosis(d.visitDiagnosisId, d.name)}>Remove</TextButton>}
@@ -298,7 +298,7 @@ export function DoctorVisit() {
         {canWrite && (
           <form onSubmit={saveDiagnoses} className="mt-4 space-y-3">
             {newDiagnoses.map((d, index) => (
-              <div key={index} className="space-y-3 rounded-lg border border-slate-200 p-4">
+              <div key={index} className="space-y-3 rounded-lg shadow-box p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-900">New diagnosis {index + 1}</span>
                   <TextButton danger onClick={() => setNewDiagnoses(newDiagnoses.filter((_, i) => i !== index))}>Remove</TextButton>
@@ -311,7 +311,7 @@ export function DoctorVisit() {
                     onChange={(e) => updateDiagnosis(index, "reasoning", e.target.value)}
                     rows={3}
                     placeholder="Why you made this diagnosis"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg bg-white px-3 py-2 text-sm shadow-field focus:outline-none"
                   />
                 </label>
               </div>
@@ -341,7 +341,7 @@ export function DoctorVisit() {
                 {p.isActive ? (
                   <TextButton danger onClick={() => stopPrescription(p.prescriptionItemId)}>Stop</TextButton>
                 ) : (
-                  <StatusBadge status="Stopped" />
+                  <StatusText status="Stopped" />
                 )}
               </li>
             ))}
@@ -349,7 +349,7 @@ export function DoctorVisit() {
         )}
 
         {canWrite && (
-          <form onSubmit={addPrescription} className="mt-4 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <form onSubmit={addPrescription} className="mt-4 space-y-4 rounded-lg shadow-box bg-slate-50 p-4">
             <h4 className="font-semibold text-navy">New Prescription</h4>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <SelectField label="Medication" required value={medicationId} onChange={(e) => setMedicationId(e.target.value)}>

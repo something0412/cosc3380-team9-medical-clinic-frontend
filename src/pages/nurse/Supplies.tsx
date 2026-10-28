@@ -4,7 +4,7 @@ import { api, apiErrorMessage } from "../../api";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { FormActions, PrimaryButton, SecondaryButton, Section, StatusBadge, TextButton } from "../../components/ProfileUI";
+import { FormActions, PrimaryButton, SecondaryButton, Section, StatusText, TextButton } from "../../components/ProfileUI";
 
 interface OfficeSupply {
   officeSupplyId: number;
@@ -159,7 +159,7 @@ export function NurseSupplies() {
               <li key={o.supplyOrderId} className="flex flex-wrap items-center justify-between gap-2 py-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-slate-900">{o.quantityOrdered} × {o.supplyName}</span>
-                  <StatusBadge status={o.status} />
+                  <StatusText status={o.status} />
                   <span className="text-slate-500">{o.orderDate} · by {o.orderedBy}</span>
                 </div>
                 {(o.status === "Pending" || o.status === "Ordered") && (

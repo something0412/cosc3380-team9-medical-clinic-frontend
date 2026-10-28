@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
-import { ErrorText, Field, IdField } from "../../components/FormControls";
+import { ErrorText, Field, IdField, PasswordField, PhoneField } from "../../components/FormControls";
 import { LogoMark } from "../../components/public/icons";
 import { FOCUS, PRIMARY_BUTTON } from "../../components/public/shared";
 import { useAuth } from "../../context/AuthContext";
@@ -77,10 +77,7 @@ function AuthPage({ help, children, bookingPath = null }: { help: string; childr
         </header>
 
         <main className="mt-10">
-          {/* the shared form fields use blue focus styles, so switch them to teal here */}
-          <div className="[&_input:focus]:border-teal-600 [&_input:focus]:ring-teal-600">
-            {loading ? <p className="text-center text-sm text-slate-500">Checking your sign-in...</p> : children}
-          </div>
+          {loading ? <p className="text-center text-sm text-slate-500">Checking your sign-in...</p> : children}
           <p className="mt-6 text-center text-sm leading-relaxed text-slate-500">{help}</p>
         </main>
       </div>
@@ -90,7 +87,7 @@ function AuthPage({ help, children, bookingPath = null }: { help: string; childr
 
 function FormButton({ submitting, label }: { submitting: boolean; label: string }) {
   return (
-    <button type="submit" disabled={submitting} className={`${PRIMARY_BUTTON} w-full disabled:opacity-60`}>
+    <button type="submit" disabled={submitting} className={`${PRIMARY_BUTTON} w-full shadow-button disabled:opacity-60`}>
       {submitting ? "Please wait..." : label}
     </button>
   );
@@ -170,7 +167,7 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
         <p className="text-sm text-slate-600">Your patient number is</p>
         <p className="text-4xl font-bold tracking-wider text-navy">{formatId(created.patientId)}</p>
         <p className="text-sm text-slate-600">Save this number. You can sign in with it or your email, plus your password.</p>
-        <button type="button" onClick={() => onLogin(toPatientUser(created))} className={`${PRIMARY_BUTTON} w-full`}>
+        <button type="button" onClick={() => onLogin(toPatientUser(created))} className={`${PRIMARY_BUTTON} w-full shadow-button`}>
           {booking ? "Continue to your appointment" : "Continue to Patient Portal"}
         </button>
       </div>
@@ -188,7 +185,7 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
         <Field label="Patient number or email" required autoComplete="username" value={account} onChange={(e) => setAccount(e.target.value)} />
         <p className="mt-1 text-xs text-slate-500">Use the email or the patient number from when you created your account.</p>
       </div>
-      <Field label="Password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <PasswordField label="Password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <ErrorText message={error} />
       <div className="pt-1">
         <FormButton submitting={submitting} label="Sign In" />
@@ -210,11 +207,11 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
       </div>
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
         <Field label="Date of birth" type="date" required value={signup.dob} onChange={set("dob")} />
-        <Field label="Phone" type="tel" required value={signup.phone} onChange={set("phone")} />
+        <PhoneField label="Phone" value={signup.phone} onChange={(phone) => setSignup({ ...signup, phone })} />
       </div>
       <Field label="Email" type="email" required autoComplete="email" value={signup.email} onChange={set("email")} />
-      <Field label="Password" type="password" required minLength={8} autoComplete="new-password" value={signup.password} onChange={set("password")} />
-      <Field label="Confirm password" type="password" required autoComplete="new-password" value={signup.confirmPassword} onChange={set("confirmPassword")} />
+      <PasswordField label="Password" required minLength={8} autoComplete="new-password" value={signup.password} onChange={set("password")} />
+      <PasswordField label="Confirm password" required autoComplete="new-password" value={signup.confirmPassword} onChange={set("confirmPassword")} />
       <ErrorText message={error} />
       <div className="pt-1">
         <FormButton submitting={submitting} label="Create Account" />
@@ -260,7 +257,7 @@ function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
     <form onSubmit={handleLogin} className="space-y-4">
       <h1 className={`${HEADING} mb-6`}>Employee Sign In</h1>
       <IdField label="Employee ID" value={employeeId} onChange={setEmployeeId} />
-      <Field label="Password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <PasswordField label="Password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <ErrorText message={error} />
       <div className="pt-1">
         <FormButton submitting={submitting} label="Sign In" />

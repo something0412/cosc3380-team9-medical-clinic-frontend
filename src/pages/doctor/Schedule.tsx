@@ -51,7 +51,7 @@ export function DoctorSchedule() {
                 return (
                   <div
                     key={day}
-                    className={`rounded-lg border p-3 text-sm ${shift ? "border-teal-200 bg-teal-50" : "border-slate-200 bg-slate-50"}`}
+                    className={`rounded-lg p-3 text-sm shadow-box ${shift ? "bg-teal-50" : "bg-slate-50"}`}
                   >
                     <p className="font-semibold text-navy">{day}</p>
                     {shift ? (

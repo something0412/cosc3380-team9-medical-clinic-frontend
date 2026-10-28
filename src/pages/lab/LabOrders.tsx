@@ -4,7 +4,7 @@ import { api, apiErrorMessage } from "../../api";
 import { PageError, PortalPage } from "../../components/PortalPage";
 import { ErrorText } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
-import { FormActions, SecondaryButton, PrimaryButton, StatusBadge } from "../../components/ProfileUI";
+import { FormActions, PrimaryButton, SecondaryButton, StatusText } from "../../components/ProfileUI";
 
 interface LabOrder {
   labOrderId: number;
@@ -92,9 +92,9 @@ export function LabOrders() {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           placeholder="Search by patient name"
-          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+          className="flex-1 rounded-lg bg-white px-3 py-2 text-sm shadow-field focus:outline-none"
         />
-        <button type="submit" className="rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy-dark">
+        <button type="submit" className="rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white shadow-button hover:bg-navy-dark">
           Search
         </button>
         {search && (
@@ -104,7 +104,7 @@ export function LabOrders() {
               setSearchText("");
               setSearch("");
             }}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            className="rounded-lg bg-white px-4 py-2 text-sm text-slate-700 shadow-button hover:bg-slate-50"
           >
             Clear
           </button>
@@ -113,7 +113,7 @@ export function LabOrders() {
 
       <PageError message={error} />
 
-      <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="rounded-lg shadow-box bg-white">
         {loading ? (
           <p className="p-4 text-slate-500">Loading lab orders...</p>
         ) : orders.length === 0 ? (
@@ -125,7 +125,7 @@ export function LabOrders() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-slate-900">{o.testName}</span>
-                    <StatusBadge status={o.status} />
+                    <StatusText status={o.status} />
                     <span className="text-slate-900">{o.patientName}</span>
                     <span className="text-slate-500">born {o.dob}</span>
                   </div>
@@ -214,7 +214,7 @@ function ResultModal({ order, onClose, onSaved }: { order: LabOrder; onClose: ()
             value={resultNotes}
             onChange={(e) => setResultNotes(e.target.value)}
             placeholder="e.g. Total cholesterol 210 mg/dL (slightly high), LDL 135 mg/dL"
-            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-lg px-3 py-2 text-sm shadow-field focus:outline-none"
           />
         </label>
         <ErrorText message={error} />

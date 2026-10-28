@@ -8,5 +8,5 @@ export function StaffDashboard() {
 
   if (user?.employeeType === "Nurse") return <NurseDashboard />;
   if (user?.employeeType === "Receptionist") return <ReceptionistDashboard />;
-  return <p className="text-gray-600">No dashboard for this staff type.</p>;
+  return <p className="text-slate-600">No dashboard for this staff type.</p>;
 }

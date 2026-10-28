@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { api, apiErrorMessage } from "../../api";
 import { PageError, PortalPage } from "../../components/PortalPage";
 import { printReport } from "../../utils/printReport";
-import { Section, StatusBadge, TextButton } from "../../components/ProfileUI";
+import { Section, StatusText, TextButton } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { VisitSummaryReport } from "../../components/VisitSummaryReport";
 import type { VisitSummaryData } from "../../components/VisitSummaryReport";
@@ -92,7 +92,7 @@ export function PatientRecords() {
                       <span className="font-medium text-slate-900">{p.medicationName}</span> · {p.dosage}
                       {p.instructions && <span className="text-slate-600"> · {p.instructions}</span>}
                     </span>
-                    <StatusBadge status={p.isActive ? "Active" : "Inactive"} />
+                    <StatusText status={p.isActive ? "Active" : "Inactive"} />
                   </li>
                 ))}
               </ul>

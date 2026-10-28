@@ -4,7 +4,7 @@ import { api, apiErrorMessage } from "../../api";
 import { AllergiesSection, HomeMedicationsSection, NursingNotesList, SevereAllergyBanner } from "../../components/ClinicalRecords";
 import type { Allergy, HomeMedication, NursingNote } from "../../components/ClinicalRecords";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { InfoGrid, InfoItem, Section, StatusBadge } from "../../components/ProfileUI";
+import { InfoGrid, InfoItem, Section, StatusText, WarningBox } from "../../components/ProfileUI";
 import { CriticalVitalsBanner, VitalsTable } from "../../components/VitalsTable";
 import type { Vitals } from "../../components/VitalsTable";
 import { formatId } from "../../utils/id";
@@ -85,15 +85,15 @@ export function DoctorPatientChart() {
     <PortalPage
       eyebrow="Doctor"
       title={`${chart.firstName} ${chart.lastName}`}
-      description={`Patient ID ${formatId(chart.patientId)}${chart.assignedToMe ? " · your assigned patient" : ""}`}
+      description={`Patient ID ${formatId(chart.patientId)}${chart.assignedToMe ? " · you are their primary doctor" : ""}`}
       back={BACK}
     >
       <CriticalVitalsBanner vitals={chart.vitals} />
       <SevereAllergyBanner allergies={chart.allergies} />
       {chart.missingForms.length > 0 && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <WarningBox>
           Missing required forms: {chart.missingForms.join(", ")}
-        </p>
+        </WarningBox>
       )}
 
       <Section title="Patient Information">
@@ -106,7 +106,7 @@ export function DoctorPatientChart() {
             value={chart.insurance ? (
               <span className="flex items-center gap-2">
                 {chart.insurance.provider}
-                <StatusBadge status={chart.insurance.status} />
+                <StatusText status={chart.insurance.status} />
               </span>
             ) : "None on file"}
           />
@@ -151,7 +151,7 @@ export function DoctorPatientChart() {
               <li key={l.labOrderId} className="py-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-slate-900">{l.testName}</span>
-                  <StatusBadge status={l.status} />
+                  <StatusText status={l.status} />
                   <span className="text-slate-500">{l.orderDate} · Dr. {l.orderedBy}</span>
                 </div>
                 {l.resultNotes && <p className="mt-1 text-slate-700">{l.resultNotes}</p>}
@@ -170,7 +170,7 @@ export function DoctorPatientChart() {
               <li key={v.appointmentId} className="py-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-slate-900">{v.date}</span>
-                  <StatusBadge status={v.status} />
+                  <StatusText status={v.status} />
                   <span className="text-slate-500">Dr. {v.doctorName} · {v.specialty}</span>
                 </div>
                 {v.visitReason && <p className="mt-1 text-slate-700">Reason for visit: {v.visitReason}</p>}

@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
-import { ErrorText, Field, SelectField } from "../../components/FormControls";
+import { ErrorText, Field, PasswordField, PhoneField, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { DangerButton, FormActions, InfoGrid, InfoItem, SecondaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { DangerButton, FormActions, InfoGrid, InfoItem, SecondaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton, WarningBox } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface PatientInfo {
@@ -110,20 +110,20 @@ export function ReceptionistPatientDetail() {
       description={`Patient ID ${formatId(patient.patientId)} · Born ${patient.dob} · ${patient.hasLogin ? "Has a portal login" : "No portal login"}`}
       back={BACK}
       actions={
-        <div className="rounded-lg border border-slate-200 bg-white px-5 py-3 text-right">
+        <div className="rounded-lg shadow-box bg-white px-5 py-3 text-right">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Balance Owed</p>
           <p className={`text-2xl font-bold ${balance > 0 ? "text-red-600" : "text-navy"}`}>${balance.toFixed(2)}</p>
         </div>
       }
     >
-      {!patient.isActive && <StatusBadge status="Inactive" />}
+      {!patient.isActive && <StatusText status="Inactive" />}
       <PageError message={error} />
       <SuccessText message={message} />
 
       {missingForms.length > 0 && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <WarningBox>
           Missing required forms: {missingForms.map((f) => f.name).join(", ")}
-        </p>
+        </WarningBox>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -150,7 +150,7 @@ export function ReceptionistPatientDetail() {
               <InfoGrid>
                 <InfoItem label="Provider" value={patient.insurance.provider} />
                 <InfoItem label="Policy Number" value={patient.insurance.policyNumber} />
-                <InfoItem label="Status" value={<StatusBadge status={patient.insurance.status} />} />
+                <InfoItem label="Status" value={<StatusText status={patient.insurance.status} />} />
               </InfoGrid>
               {patient.insurance.status !== "Verified" && (
                 <div className="flex gap-2">
@@ -175,7 +175,7 @@ export function ReceptionistPatientDetail() {
                 <li key={c.emergencyContactId} className="flex justify-between py-2 text-sm">
                   <span>
                     <span className="font-medium text-slate-900">{c.firstName} {c.lastName}</span> · {c.relationship}
-                    {c.isPrimary && <span className="ml-2"><StatusBadge status="Primary" /></span>}
+                    {c.isPrimary && <span className="ml-2"><StatusText status="Primary" /></span>}
                   </span>
                   <span className="text-slate-600">{c.phoneNumber}</span>
                 </li>
@@ -281,7 +281,7 @@ function ContactModal({ patient, onClose, onSaved }: { patient: PatientInfo; onC
   return (
     <Modal title="Edit Contact Info" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="Phone" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <PhoneField label="Phone" value={phone} onChange={setPhone} />
         <Field label="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
         <SelectField label="Gender" value={gender} onChange={(e) => setGender(e.target.value)}>
           <option value="">Not given</option>
@@ -364,7 +364,7 @@ function EmergencyContactModal({ patientId, onClose, onSaved }: { patientId: num
           <Field label="First Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
           <Field label="Last Name" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
           <Field label="Relationship" required value={relationship} onChange={(e) => setRelationship(e.target.value)} />
-          <Field label="Phone" required value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+          <PhoneField label="Phone" value={phoneNumber} onChange={setPhoneNumber} />
         </div>
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={isPrimary} onChange={(e) => setIsPrimary(e.target.checked)} />
@@ -404,7 +404,7 @@ function PortalLoginModal({ patient, onClose, onSaved }: { patient: PatientInfo;
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-slate-600">Check the patient's photo ID first. The patient signs in with this email and password.</p>
         <Field label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Field label="Temporary Password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordField label="Temporary Password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
         <ErrorText message={error} />
         <FormActions saving={saving} onCancel={onClose} saveLabel="Create Login" />
       </form>

@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
 import { ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "../../components/admin/styles";
-import { Field, SelectField } from "../../components/FormControls";
+import { Field, PhoneField, SelectField } from "../../components/FormControls";
 import { Section } from "../../components/ProfileUI";
 import { US_STATES, createOffice, getOffice, parseRouteId, updateOffice } from "../../services/adminApi";
 import type { OfficeDetails, OfficeInput } from "../../services/adminApi";
@@ -14,9 +14,6 @@ const EMPTY_VALUES: OfficeInput = { name: "", street: "", apt: "", city: "", sta
 // checks that the browser's required fields can't cover
 function formProblem(values: OfficeInput) {
   if (!/^\d{5}(-\d{4})?$/.test(values.zip.trim())) return "ZIP code must be 5 digits or ZIP+4 (12345-6789).";
-  if (!/^[\d\s()+.-]+$/.test(values.phone.trim()) || !/^1?\d{10}$/.test(values.phone.replace(/\D/g, ""))) {
-    return "Enter a valid 10-digit phone number.";
-  }
   return "";
 }
 
@@ -75,15 +72,7 @@ function OfficeForm({ office, cancelTo, submitLabel, onSubmit }: OfficeFormProps
         <p className="-mt-2 mb-4 text-sm text-slate-500">All fields are required unless marked optional.</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Office Name" required maxLength={100} value={values.name} onChange={update("name")} />
-          <Field
-            label="Phone Number"
-            type="tel"
-            required
-            maxLength={20}
-            placeholder="713-555-0100"
-            value={values.phone}
-            onChange={update("phone")}
-          />
+          <PhoneField label="Phone Number" value={values.phone} onChange={(phone) => setValues((v) => ({ ...v, phone }))} />
         </div>
       </Section>
 

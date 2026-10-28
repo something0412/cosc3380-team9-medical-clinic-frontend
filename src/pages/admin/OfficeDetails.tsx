@@ -60,7 +60,7 @@ function OfficeStatus({ office, onChange }: { office: OfficeDetails; onChange: (
         </p>
       )}
 
-      <StatusRow label="Status" status={<ActiveBadge isActive={office.isActive} />} note={note} showActions={!confirming}>
+      <StatusRow label="Status" status={<ActiveBadge plain isActive={office.isActive} />} note={note} showActions={!confirming}>
         {office.isActive ? (
           <button
             type="button"

@@ -61,7 +61,7 @@ function HoursForm({ title, withName, values, saving, submitLabel, onChange, onS
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+    <form onSubmit={handleSubmit} className="rounded-lg shadow-box bg-slate-50 p-4">
       <p className="text-sm font-medium text-slate-700">{title}</p>
       <div className={`mt-3 grid gap-4 ${withName ? "sm:grid-cols-3" : "sm:grid-cols-2 lg:max-w-md"}`}>
         {withName && (
@@ -187,12 +187,12 @@ export function AdminShiftSettings() {
       {shifts.map((shift) => {
         const id = shift.shiftTypeId;
         return (
-          <section key={id} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+          <section key={id} className="space-y-4 rounded-lg shadow-box bg-white p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h3 className="text-lg font-semibold text-gray-900">{shift.name}</h3>
-                  <ActiveBadge isActive={shift.isActive} />
+                  <h3 className="text-lg font-semibold text-slate-900">{shift.name}</h3>
+                  <ActiveBadge plain isActive={shift.isActive} />
                 </div>
                 <p className="mt-1 text-sm text-slate-600">
                   {shift.startTime}–{shift.endTime} · used by {shift.activeScheduleCount} active schedule{shift.activeScheduleCount === 1 ? "" : "s"}
@@ -276,7 +276,7 @@ export function AdminShiftSettings() {
               {shift.timeSlots.length === 0 ? (
                 <p className="mt-2 text-sm text-slate-500">No time slots yet.</p>
               ) : (
-                <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200">
+                <ul className="mt-2 divide-y divide-slate-100 rounded-lg shadow-box">
                   {shift.timeSlots.map((slot) =>
                     open === `slot-${slot.timeSlotId}` ? (
                       <li key={slot.timeSlotId} className="p-3">
@@ -295,7 +295,7 @@ export function AdminShiftSettings() {
                       <li key={slot.timeSlotId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-sm">
                         <div className="flex items-center gap-3">
                           <span className="font-mono text-slate-700">{slot.startTime}–{slot.endTime}</span>
-                          <ActiveBadge isActive={slot.isActive} />
+                          <ActiveBadge plain isActive={slot.isActive} />
                         </div>
                         {open === null && (
                           <div className="flex gap-4">

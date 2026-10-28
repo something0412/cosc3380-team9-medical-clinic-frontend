@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../api";
 import { ErrorText, Field, SelectField } from "./FormControls";
 import { Modal } from "./Modal";
-import { FormActions, SecondaryButton, Section, StatusBadge, TextButton } from "./ProfileUI";
+import { FormActions, SecondaryButton, Section, TextButton } from "./ProfileUI";
 
 export interface Allergy {
   allergyId: number;
@@ -73,7 +73,9 @@ export function AllergiesSection({ base, patientId, allergies, readOnly = false,
             <li key={a.allergyId} className="flex items-center justify-between gap-2 py-2">
               <span>
                 <span className="font-medium text-slate-900">{a.name}</span>{" "}
-                <StatusBadge status={a.severity} />
+                <span className={`font-medium ${a.severity === "Severe" ? "text-red-600" : a.severity === "Mild" ? "text-yellow-600" : "text-slate-500"}`}>
+                  {a.severity}
+                </span>
                 {a.reaction && <span className="text-slate-600"> · {a.reaction}</span>}
               </span>
               {!readOnly && (

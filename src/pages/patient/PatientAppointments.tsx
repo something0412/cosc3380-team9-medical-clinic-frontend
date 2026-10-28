@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { PrimaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { AlertIcon, PrimaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton } from "../../components/ProfileUI";
 import { useAuth } from "../../context/AuthContext";
 
 interface Appointment {
@@ -66,6 +66,7 @@ export function PatientAppointments() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [times, setTimes] = useState<TimeSlot[]>([]);
   const [doctorId, setDoctorId] = useState("");
+  const [primaryDoctorId, setPrimaryDoctorId] = useState("");
   const [date, setDate] = useState("");
   const [timeSlotId, setTimeSlotId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -94,18 +95,25 @@ export function PatientAppointments() {
     loadAppointments();
   }, [patientId, reloadCount]);
 
-  // load doctors for the booking form
+  // load doctors for the booking form, with my primary doctor picked first
   useEffect(() => {
     async function loadDoctors() {
+      if (!patientId) return;
       try {
         const res = await api.get<Doctor[]>("/api/public/doctors");
         setDoctors(res.data);
+        const profileRes = await api.get<{ primaryDoctor: { doctorId: number } | null }>(`/api/patient/${patientId}/profile`);
+        const primary = profileRes.data.primaryDoctor;
+        if (primary && res.data.some((d) => d.doctorId === primary.doctorId)) {
+          setPrimaryDoctorId(String(primary.doctorId));
+          setDoctorId(String(primary.doctorId));
+        }
       } catch (err) {
         setBookingError(apiErrorMessage(err));
       }
     }
     loadDoctors();
-  }, []);
+  }, [patientId]);
 
   // check open times when the doctor or date changes
   useEffect(() => {
@@ -197,6 +205,7 @@ export function PatientAppointments() {
                   <option key={d.doctorId} value={d.doctorId}>
                     Dr. {d.firstName} {d.lastName}
                     {d.specialties.length > 0 && ` (${d.specialties.map((s) => s.name).join(", ")})`}
+                    {String(d.doctorId) === primaryDoctorId && " (Primary)"}
                   </option>
                 ))}
               </SelectField>
@@ -220,8 +229,9 @@ export function PatientAppointments() {
                   {checking ? (
                     <p className="text-sm text-slate-500">Checking open times...</p>
                   ) : needsReferral ? (
-                    <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                      This specialist needs an approved referral from your doctor before you can book.
+                    <p className="flex items-center gap-2 text-sm italic text-red-600">
+                      <AlertIcon className="h-4 w-4" />
+                      This specialist needs an approved referral from your primary doctor before you can book.
                     </p>
                   ) : openTimes.length === 0 ? (
                     <p className="text-sm text-slate-500">This doctor isn't working this date. Try another date.</p>
@@ -234,7 +244,7 @@ export function PatientAppointments() {
                             key={t.timeSlotId}
                             type="button"
                             disabled
-                            className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-sm text-slate-400"
+                            className="cursor-not-allowed rounded-lg bg-slate-100 px-3 py-1.5 text-sm text-slate-400"
                           >
                             {showTime(t.startTime)}
                           </button>
@@ -243,8 +253,8 @@ export function PatientAppointments() {
                           key={t.timeSlotId}
                           type="button"
                           onClick={() => setTimeSlotId(String(t.timeSlotId))}
-                          className={`rounded-lg border px-3 py-1.5 text-sm ${
-                            String(t.timeSlotId) === timeSlotId ? "border-navy bg-navy text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                          className={`rounded-lg px-3 py-1.5 text-sm shadow-button ${
+                            String(t.timeSlotId) === timeSlotId ? "bg-navy text-white" : "bg-white text-slate-700 hover:bg-slate-50"
                           }`}
                         >
                           {showTime(t.startTime)}
@@ -328,7 +338,7 @@ export function PatientAppointments() {
                   <span className="font-medium text-slate-900">{r.specialty}</span> with Dr. {r.specialistName}
                   <span className="text-slate-500"> · from Dr. {r.referringDoctorName} · valid until {r.expirationDate}</span>
                 </span>
-                <StatusBadge status={r.status === "Pending" && r.expired ? "Expired" : r.status} />
+                <StatusText status={r.status === "Pending" && r.expired ? "Expired" : r.status} />
               </li>
             ))}
           </ul>

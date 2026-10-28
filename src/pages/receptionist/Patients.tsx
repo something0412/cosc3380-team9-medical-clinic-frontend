@@ -4,10 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { isAxiosError } from "axios";
 import { api, apiErrorMessage } from "../../api";
 import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
-import { ErrorText, Field, SelectField } from "../../components/FormControls";
+import { ErrorText, Field, PhoneField, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { FormActions, StatusBadge } from "../../components/ProfileUI";
+import { FormActions, StatusBadge, WarningBox } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface Patient {
@@ -60,7 +60,7 @@ export function ReceptionistPatients() {
         </button>
       }
     >
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="rounded-lg shadow-box bg-slate-50 p-4">
         <Field
           label="Search"
           type="search"
@@ -72,7 +72,7 @@ export function ReceptionistPatients() {
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <section className="overflow-hidden rounded-lg shadow-box bg-white">
         <div className="border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
           {loading ? "Loading patients..." : `Showing ${shown.length} of ${patients.length} patients`}
         </div>
@@ -175,13 +175,13 @@ function RegisterModal({ onClose }: { onClose: () => void }) {
             <option value="Male">Male</option>
             <option value="Other">Other</option>
           </SelectField>
-          <Field label="Phone" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <PhoneField label="Phone" value={phone} onChange={setPhone} />
           <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <Field label="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
 
         {matches.length > 0 && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <WarningBox>
             <p className="font-medium">Possible existing patient:</p>
             <ul className="mt-2 space-y-1">
               {matches.map((m) => (
@@ -194,7 +194,7 @@ function RegisterModal({ onClose }: { onClose: () => void }) {
               ))}
             </ul>
             <p className="mt-2">If this is a different person, press Register again to add them.</p>
-          </div>
+          </WarningBox>
         )}
 
         <ErrorText message={matches.length > 0 ? "" : error} />

@@ -8,7 +8,7 @@ export function RoleLayout({ role }: { role: Role }) {
   const { role: currentRole, loading } = useAuth();
 
   if (loading) {
-    return <p className="p-6 text-gray-500">Loading...</p>;
+    return <p className="p-6 text-slate-500">Loading...</p>;
   }
 
   if (currentRole !== role) {

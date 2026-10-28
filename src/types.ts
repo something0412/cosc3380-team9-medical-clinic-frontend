@@ -71,6 +71,7 @@ export interface PatientProfile {
   isActive: boolean;
   emergencyContacts: EmergencyContact[];
   insurance: Insurance | null;
+  primaryDoctor: { doctorId: number; name: string } | null;
 }
 
 export interface PatientContactInfo {

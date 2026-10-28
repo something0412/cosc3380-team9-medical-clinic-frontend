@@ -7,7 +7,7 @@ import { ActiveBadge } from "../../components/admin/StatusBadges";
 import { ConfirmPanel, StatusRow } from "../../components/admin/StatusControls";
 import { ADMIN_DANGER_BUTTON, ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "../../components/admin/styles";
 import { SelectField } from "../../components/FormControls";
-import { InfoGrid, InfoItem, Section } from "../../components/ProfileUI";
+import { InfoGrid, InfoItem, Section, WarningBox } from "../../components/ProfileUI";
 import {
   WEEKDAYS,
   createSchedule,
@@ -116,8 +116,8 @@ function ScheduleForm({ schedule, cancelTo, submitLabel, onSubmit }: ScheduleFor
 
   const readOnly = (label: string, value: string) => (
     <div>
-      <span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>
-      <p className="rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-700">{value}</p>
+      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
+      <p className="rounded-lg bg-slate-100 shadow-field px-3 py-2 text-sm text-slate-700">{value}</p>
     </div>
   );
 
@@ -125,18 +125,18 @@ function ScheduleForm({ schedule, cancelTo, submitLabel, onSubmit }: ScheduleFor
     <form onSubmit={handleSubmit} className="space-y-6">
       <Section title={schedule ? "Change Assignment" : "Schedule Details"}>
         {shiftOptions.length === 0 && (
-          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <WarningBox className="mb-4">
             No active shifts exist yet.{" "}
             <Link to="/admin/schedules/shifts" className="font-medium underline">
               Add a shift
             </Link>{" "}
             before assigning schedules.
-          </p>
+          </WarningBox>
         )}
         {schedule && !doctor && (
-          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <WarningBox className="mb-4">
             This doctor is inactive, so their schedule can't be reassigned until they're activated again.
-          </p>
+          </WarningBox>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -244,7 +244,7 @@ function ScheduleStatus({ schedule, onChange }: { schedule: Schedule; onChange: 
 
       <StatusRow
         label="Status"
-        status={<ActiveBadge isActive={schedule.isActive} />}
+        status={<ActiveBadge plain isActive={schedule.isActive} />}
         note={schedule.isActive ? "The doctor works this assignment every week." : "Inactive schedules are kept for history and can be reactivated."}
         showActions={!confirming}
       >
@@ -372,7 +372,7 @@ export function AdminScheduleEdit() {
               <InfoItem label="Office" value={schedule.officeName} />
               <InfoItem label="Specialty" value={schedule.specialtyName} />
               <InfoItem label="Shift" value={`${schedule.shiftName} (${schedule.startTime}–${schedule.endTime})`} />
-              <InfoItem label="Status" value={<ActiveBadge isActive={schedule.isActive} />} />
+              <InfoItem label="Status" value={<ActiveBadge plain isActive={schedule.isActive} />} />
             </InfoGrid>
           </Section>
 

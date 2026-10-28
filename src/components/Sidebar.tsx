@@ -46,8 +46,7 @@ const ROLE_LINKS: Record<Role, { to: string; label: string }[]> = {
 const STAFF_LINKS: Record<string, { to: string; label: string }[]> = {
     Nurse: [
         { to: "/staff/dashboard", label: "Dashboard" },
-        { to: "/staff/nurse/today", label: "Today's Patients" },
-        { to: "/staff/nurse/patients", label: "Patients" },
+        { to: "/staff/nurse/appointments", label: "Patient Appointments" },
         { to: "/staff/nurse/supplies", label: "Supplies" },
         { to: "/staff/profile", label: "My Profile" },
     ],

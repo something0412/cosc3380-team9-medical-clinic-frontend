@@ -77,7 +77,7 @@ export function AdminEmployees() {
         </Link>
       }
     >
-      <div className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]">
+      <div className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]">
         <Field
           label="Search"
           type="search"
@@ -109,7 +109,7 @@ export function AdminEmployees() {
           Employees could not be loaded. {error}
         </p>
       ) : (
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <section className="overflow-hidden rounded-lg shadow-box bg-white">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 text-sm text-slate-600">
             <span>{loading ? "Loading employees..." : `Showing ${filtered.length} of ${employees.length} employees`}</span>
             {hasFilters && (

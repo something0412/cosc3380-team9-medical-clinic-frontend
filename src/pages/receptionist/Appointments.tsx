@@ -6,7 +6,7 @@ import { ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "../../components/a
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { FormActions, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { FormActions, StatusBadge, SuccessText, TextButton, WarningBox } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface Appointment {
@@ -130,7 +130,7 @@ export function ReceptionistAppointments() {
         </button>
       }
     >
-      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_2fr_auto_auto] sm:items-end">
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[1fr_2fr_auto_auto] sm:items-end">
         <Field label="Date" type="date" value={shownDate} onChange={(e) => setDate(e.target.value)} />
         <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
         <button type="submit" className={ADMIN_PRIMARY_BUTTON}>Search</button>
@@ -152,7 +152,7 @@ export function ReceptionistAppointments() {
       <PageError message={error} />
       <SuccessText message={message} />
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <section className="overflow-hidden rounded-lg shadow-box bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -353,9 +353,9 @@ function BookingModal({ officeId, today, onClose, onBooked }: { officeId: number
             {checking ? (
               <p className="text-sm text-slate-500">Checking open times...</p>
             ) : needsReferral ? (
-              <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <WarningBox>
                 {times[0].specialty} is a specialty. This patient needs an approved referral to this doctor before an appointment can be booked.
-              </p>
+              </WarningBox>
             ) : openTimes.length === 0 ? (
               <p className="text-sm text-slate-500">The doctor isn't working this date. Try another date.</p>
             ) : (
@@ -367,7 +367,7 @@ function BookingModal({ officeId, today, onClose, onBooked }: { officeId: number
                       key={t.timeSlotId}
                       type="button"
                       disabled
-                      className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-sm text-slate-400"
+                      className="cursor-not-allowed rounded-lg bg-slate-100 px-3 py-1.5 text-sm text-slate-400"
                     >
                       {t.startTime}
                     </button>
@@ -376,10 +376,10 @@ function BookingModal({ officeId, today, onClose, onBooked }: { officeId: number
                     key={t.timeSlotId}
                     type="button"
                     onClick={() => setTimeSlotId(String(t.timeSlotId))}
-                    className={`rounded-lg border px-3 py-1.5 text-sm ${
+                    className={`rounded-lg px-3 py-1.5 text-sm shadow-button ${
                       String(t.timeSlotId) === timeSlotId
-                        ? "border-navy bg-navy text-white"
-                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                        ? "bg-navy text-white"
+                        : "bg-white text-slate-700 hover:bg-slate-50"
                     }`}
                   >
                     {t.startTime}

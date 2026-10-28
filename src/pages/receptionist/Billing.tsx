@@ -11,7 +11,7 @@ import { InvoiceReport } from "../../components/InvoiceReport";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
 import { printReport } from "../../utils/printReport";
-import { FormActions, PrimaryButton, SecondaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { FormActions, PrimaryButton, SecondaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface Invoice {
@@ -83,7 +83,7 @@ export function ReceptionistBilling() {
       title="Billing"
       description="Take payments on invoices for your office, and ask the admin to refund a payment made by mistake."
     >
-      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
         <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
         <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="unpaid">Has a balance</option>
@@ -97,7 +97,7 @@ export function ReceptionistBilling() {
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <section className="overflow-hidden rounded-lg shadow-box bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -191,7 +191,7 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
       ) : (
         <div className="space-y-5 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge status={invoice.status} />
+            <StatusText status={invoice.status} />
             <span className="text-slate-700">
               {invoice.patientName} (ID {formatId(invoice.patientId)}) · visit {invoice.appointmentDate} with Dr. {invoice.doctorName}
             </span>
@@ -218,7 +218,7 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
                       {p.handledBy && ` · taken by ${p.handledBy}`}
                     </span>
                     <span className="flex items-center gap-3">
-                      <StatusBadge status={p.status === "Requested" ? "Refund Requested" : p.status} />
+                      <StatusText status={p.status === "Requested" ? "Refund Requested" : p.status} />
                       {p.status === "Completed" && <TextButton danger onClick={() => setRefundPayment(p)}>Request Refund</TextButton>}
                       {p.status === "Requested" && <TextButton onClick={() => cancelRequest(p)}>Cancel Request</TextButton>}
                     </span>
@@ -464,12 +464,12 @@ function InsuranceTab({
   return (
     <div className="space-y-4 text-sm">
       {insurance ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg shadow-box bg-slate-50 p-4">
           <span>
             <span className="font-semibold text-slate-900">{insurance.provider}</span>
             <span className="text-slate-600"> · policy {insurance.policyNumber}</span>
           </span>
-          <StatusBadge status={insurance.status} />
+          <StatusText status={insurance.status} />
         </div>
       ) : (
         <p className="text-slate-700">This patient has no insurance on file.</p>

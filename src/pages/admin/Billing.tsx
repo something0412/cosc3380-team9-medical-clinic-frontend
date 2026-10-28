@@ -10,7 +10,7 @@ import { InvoiceReport } from "../../components/InvoiceReport";
 import { Modal } from "../../components/Modal";
 import { PageError } from "../../components/PortalPage";
 import { printReport } from "../../utils/printReport";
-import { DangerButton, PrimaryButton, SecondaryButton, Section, StatusBadge, TextButton } from "../../components/ProfileUI";
+import { DangerButton, PrimaryButton, SecondaryButton, Section, StatusBadge, StatusText, TextButton, WarningBox } from "../../components/ProfileUI";
 import { formatId } from "../../utils/id";
 
 interface Invoice {
@@ -158,7 +158,7 @@ function InvoiceList({ reloadCount, onOpen }: { reloadCount: number; onOpen: (in
 
   return (
     <>
-      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
+      <form onSubmit={handleSearch} className="grid gap-4 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
         <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
         <SelectField label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
@@ -173,7 +173,7 @@ function InvoiceList({ reloadCount, onOpen }: { reloadCount: number; onOpen: (in
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <section className="overflow-hidden rounded-lg shadow-box bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -244,7 +244,7 @@ function RefundRequests({ reloadCount, onChanged, onOpen }: { reloadCount: numbe
     <>
       <PageError message={error} />
 
-      <section className="rounded-lg border border-slate-200 bg-white">
+      <section className="rounded-lg shadow-box bg-white">
         {loading ? (
           <p className="px-4 py-10 text-center text-sm text-slate-500">Loading refund requests...</p>
         ) : requests.length === 0 ? (
@@ -325,7 +325,7 @@ function DecideRefundModal({ request, approve, onClose, onSaved }: { request: Re
         </p>
         {approve && (
           <label className="flex items-start gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={voidInvoice} onChange={(e) => setVoidInvoice(e.target.checked)} className="mt-1" />
+            <input type="checkbox" checked={voidInvoice} onChange={(e) => setVoidInvoice(e.target.checked)} className="mt-1 h-4 w-4 accent-navy" />
             <span>
               Also void invoice #{request.invoiceId}. Use this when the invoice itself was a mistake. It needs every other
               payment on the invoice refunded first, and the patient will no longer see it.
@@ -381,9 +381,9 @@ function FeesTab() {
         invoices; old invoices keep the price they were billed at.
       </p>
       {missing > 0 && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <WarningBox>
           {missing} item(s) have no price yet and won't be billed until you add one.
-        </p>
+        </WarningBox>
       )}
 
       <div className="flex gap-2">
@@ -392,7 +392,7 @@ function FeesTab() {
             key={c}
             type="button"
             onClick={() => setCategory(c)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${category === c ? "bg-navy text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium shadow-button ${category === c ? "bg-navy text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
           >
             {c === "Visit" ? "Visits" : c === "Lab Test" ? "Lab Tests" : "Medications"}
           </button>
@@ -401,7 +401,7 @@ function FeesTab() {
 
       <PageError message={error} />
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <section className="overflow-hidden rounded-lg shadow-box bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -566,7 +566,7 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
       ) : (
         <div className="space-y-5 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge status={invoice.status} />
+            <StatusText status={invoice.status} />
             <span className="text-slate-700">
               {invoice.patientName} (ID {formatId(invoice.patientId)}) · visit {invoice.appointmentDate} with Dr. {invoice.doctorName} · {invoice.officeName}
             </span>
@@ -593,7 +593,7 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
                       {money(p.amountPaid)} · {p.paymentType} · {p.paymentDate}
                       {p.handledBy && ` · taken by ${p.handledBy}`}
                     </span>
-                    <StatusBadge status={p.status} />
+                    <StatusText status={p.status} />
                   </li>
                 ))}
               </ul>
@@ -601,7 +601,7 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
           </Section>
 
           {invoice.status !== "Void" && Number(invoice.balance) > 0 && (
-            <form onSubmit={takePayment} className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <form onSubmit={takePayment} className="grid gap-3 rounded-lg shadow-box bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
               <SelectField label="Payment type" required value={paymentTypeId} onChange={(e) => setPaymentTypeId(e.target.value)}>
                 <option value="">Choose one</option>
                 {paymentTypes.map((t) => (

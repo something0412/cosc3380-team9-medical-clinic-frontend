@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { Section, StatusBadge } from "../../components/ProfileUI";
+import { Section, StatusBadge, WarningBox } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 
@@ -98,10 +98,10 @@ export function ReceptionistDashboard() {
           </Section>
 
           {data.unpaidInvoices > 0 && (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <WarningBox>
               {data.unpaidInvoices} invoice(s) still have a balance.{" "}
               <Link to="/staff/reception/billing" className="font-medium underline">Go to billing</Link>
-            </p>
+            </WarningBox>
           )}
         </>
       )}

@@ -60,7 +60,7 @@ function SpecialtyStatus({ specialty, onChange }: { specialty: SpecialtyDetails;
         </p>
       )}
 
-      <StatusRow label="Status" status={<ActiveBadge isActive={specialty.isActive} />} note={note} showActions={!confirming}>
+      <StatusRow label="Status" status={<ActiveBadge plain isActive={specialty.isActive} />} note={note} showActions={!confirming}>
         {specialty.isActive ? (
           <button
             type="button"
@@ -169,7 +169,7 @@ export function AdminSpecialtyDetails() {
           <Section title="Specialty Information">
             <InfoGrid>
               <InfoItem label="Specialty ID" value={specialty.specialtyId} />
-              <InfoItem label="Referral" value={<ReferralBadge requiresReferral={specialty.requiresReferral} />} />
+              <InfoItem label="Referral" value={<ReferralBadge plain requiresReferral={specialty.requiresReferral} />} />
               <InfoItem
                 label="Assigned Doctors"
                 value={`${specialty.doctorCount} total · ${specialty.activeDoctorCount} active`}

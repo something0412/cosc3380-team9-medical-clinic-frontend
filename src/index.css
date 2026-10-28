@@ -5,6 +5,11 @@
   --color-navy: #123456;
   --color-navy-dark: #0b2238;
   --font-heading: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  /* portal shadows used instead of borders: shadow-box, shadow-button, shadow-field */
+  --shadow-box: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+  --shadow-button: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+  --shadow-field: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px;
 }
 
 html {

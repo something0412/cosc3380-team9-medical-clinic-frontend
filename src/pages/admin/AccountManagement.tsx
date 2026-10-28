@@ -4,7 +4,7 @@ import { apiErrorMessage } from "../../api";
 import { ActiveBadge, LoginStatusBadge } from "../../components/admin/StatusBadges";
 import { ConfirmPanel, StatusRow } from "../../components/admin/StatusControls";
 import { ADMIN_DANGER_BUTTON, ADMIN_PRIMARY_BUTTON, ADMIN_SECONDARY_BUTTON } from "../../components/admin/styles";
-import { Field } from "../../components/FormControls";
+import { Field, PasswordField } from "../../components/FormControls";
 import { Section } from "../../components/ProfileUI";
 import { useAuth } from "../../context/AuthContext";
 import { createEmployeeLogin, resetEmployeePassword, setEmployeeStatus, setLoginStatus } from "../../services/adminApi";
@@ -92,7 +92,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
         <div>
           <StatusRow
             label="Employee Status"
-            status={<ActiveBadge isActive={employee.isActive} />}
+            status={<ActiveBadge plain isActive={employee.isActive} />}
             showActions={panel === null}
             note={
               isSelf && employee.isActive
@@ -126,7 +126,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
         <div>
           <StatusRow
             label="Login Access"
-            status={<LoginStatusBadge hasLogin={employee.hasLogin} loginActive={employee.loginActive} />}
+            status={<LoginStatusBadge plain hasLogin={employee.hasLogin} loginActive={employee.loginActive} />}
             showActions={panel === null}
             note={
               !employee.hasLogin
@@ -172,7 +172,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
           )}
 
           {(panel === "reset-password" || panel === "create-login") && (
-            <form onSubmit={submitPassword} className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <form onSubmit={submitPassword} className="mb-4 rounded-lg shadow-box bg-slate-50 p-4">
               <p className="text-sm font-medium text-slate-700">{panel === "create-login" ? "Create Login" : "Reset Password"}</p>
               <p className="mt-1 text-sm text-slate-500">
                 {panel === "create-login"
@@ -183,9 +183,8 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
                 {panel === "create-login" && (
                   <Field label="Username" required maxLength={50} autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} />
                 )}
-                <Field
+                <PasswordField
                   label="New Password"
-                  type="password"
                   required
                   minLength={8}
                   maxLength={128}
@@ -193,9 +192,8 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <Field
+                <PasswordField
                   label="Confirm Password"
-                  type="password"
                   required
                   autoComplete="new-password"
                   value={confirmPassword}

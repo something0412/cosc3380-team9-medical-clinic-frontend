@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api, apiErrorMessage } from "../../api";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
+import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { AlertIcon, NotAvailable, PrimaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton } from "../../components/ProfileUI";
+import { AlertIcon, DangerButton, NotAvailable, PrimaryButton, SecondaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton } from "../../components/ProfileUI";
 import { useAuth } from "../../context/AuthContext";
 
 interface Appointment {
@@ -76,6 +77,8 @@ export function PatientAppointments() {
   const [bookingError, setBookingError] = useState("");
   const [message, setMessage] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
+  const [cancelling, setCancelling] = useState<Appointment | null>(null);
+  const [cancelSaving, setCancelSaving] = useState(false);
 
   // load my appointments and referrals
   useEffect(() => {
@@ -167,17 +170,20 @@ export function PatientAppointments() {
     }
   }
 
-  // cancel an upcoming appointment
+  // cancel the appointment after the patient confirms in the pop-up
   async function cancelAppointment(appointment: Appointment) {
-    if (!window.confirm(`Cancel your appointment on ${appointment.appointmentDate}?`)) return;
     setError("");
     setMessage("");
+    setCancelSaving(true);
     try {
       await api.patch(`/api/appointments/${appointment.appointmentId}/cancel`);
       setMessage("Your appointment was cancelled.");
       setReloadCount(reloadCount + 1);
     } catch (err) {
       setError(apiErrorMessage(err));
+    } finally {
+      setCancelSaving(false);
+      setCancelling(null);
     }
   }
 
@@ -316,7 +322,7 @@ export function PatientAppointments() {
                     <td className="px-4 py-3"><StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} /></td>
                     <td className="px-4 py-3 text-right">
                       {a.status === "Scheduled" && !a.checkedIn && a.appointmentDate >= today && (
-                        <TextButton danger onClick={() => cancelAppointment(a)}>Cancel</TextButton>
+                        <TextButton danger onClick={() => setCancelling(a)}>Cancel</TextButton>
                       )}
                     </td>
                   </tr>
@@ -345,6 +351,18 @@ export function PatientAppointments() {
         )}
         <p className="mt-3 text-xs text-slate-500">An approved referral lets you book that specialist above.</p>
       </Section>
+      {cancelling && (
+        <Modal title="Cancel Appointment" onClose={() => !cancelSaving && setCancelling(null)}>
+          <p className="text-sm text-slate-700">
+            Are you sure you want to cancel this appointment with Dr. {cancelling.doctorName} on {cancelling.appointmentDate}
+            {cancelling.appointmentTime && <> at {showTime(cancelling.appointmentTime)}</>} at {cancelling.officeName}?
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <SecondaryButton disabled={cancelSaving} onClick={() => setCancelling(null)}>Keep Appointment</SecondaryButton>
+            <DangerButton disabled={cancelSaving} onClick={() => cancelAppointment(cancelling)}>{cancelSaving ? "Cancelling..." : "Cancel Appointment"}</DangerButton>
+          </div>
+        </Modal>
+      )}
     </PortalPage>
   );
 }

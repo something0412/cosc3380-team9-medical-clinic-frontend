@@ -58,7 +58,7 @@ export function DoctorDashboard() {
             <StatCard label="My Patients" value={String(data.myPatients)} note="Assigned to you" />
             <StatCard label="Appointments Today" value={String(data.todayAppointments)} />
             <StatCard label="Labs Waiting" value={String(data.pendingLabs)} note="Ordered, no result yet" />
-            <StatCard label="Referrals to Review" value={String(data.referralsToReview)} note="Sent to you" />
+            <StatCard label="Referrals to Review" value={String(data.referralsToReview)} note="Waiting for your approval" />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -105,7 +105,7 @@ export function DoctorDashboard() {
 
           {data.referralsToReview > 0 && (
             <WarningBox>
-              You have {data.referralsToReview} referral(s) waiting for your answer.{" "}
+              You have {data.referralsToReview} referral(s) waiting for your approval.{" "}
               <Link to="/doctor/referrals" className="font-medium underline">Review them</Link>
             </WarningBox>
           )}

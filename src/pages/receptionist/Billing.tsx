@@ -515,9 +515,20 @@ function CashForm({ invoice, paymentTypes, onDone }: { invoice: InvoiceDetail; p
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // the amount must be more than 0 and no more than the balance
+  const amountProblem =
+    amount === ""
+      ? ""
+      : !(Number(amount) > 0)
+        ? "Enter an amount more than $0."
+        : Number(amount) > Number(invoice.balance)
+          ? `Amount can't be more than the $${Number(invoice.balance).toFixed(2)} balance.`
+          : "";
+
   // record a cash or check payment
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (amountProblem) return;
     setError("");
     setSaving(true);
     try {
@@ -538,10 +549,13 @@ function CashForm({ invoice, paymentTypes, onDone }: { invoice: InvoiceDetail; p
             <option key={t.paymentTypeId} value={t.paymentTypeId}>{t.name}</option>
           ))}
         </SelectField>
-        <Field label="Amount ($)" required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <div>
+          <Field label="Amount ($)" required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          {amountProblem && <p className="mt-1 text-xs text-red-600">{amountProblem}</p>}
+        </div>
       </div>
       <ErrorText message={error} />
-      <PrimaryButton disabled={saving}>{saving ? "Saving..." : `Record ${money(amount || 0)}`}</PrimaryButton>
+      <PrimaryButton disabled={saving || !!amountProblem}>{saving ? "Saving..." : `Record ${money(amount || 0)}`}</PrimaryButton>
     </form>
   );
 }

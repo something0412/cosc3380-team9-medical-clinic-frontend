@@ -40,6 +40,16 @@ export function CardPaymentForm({ balance, onPay }: { balance: string; onPay: (p
   const digits = cardNumber.replace(/\D/g, "");
   const lengthError = digits.length > 0 && digits.length !== 16 ? "The card number must be 16 digits" : "";
 
+  // the amount must be more than 0 and no more than the balance
+  const amountProblem =
+    amount === ""
+      ? ""
+      : !(Number(amount) > 0)
+        ? "Enter an amount more than $0."
+        : Number(amount) > Number(balance)
+          ? `Amount can't be more than the $${Number(balance).toFixed(2)} balance.`
+          : "";
+
   // send the card payment
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -47,6 +57,7 @@ export function CardPaymentForm({ balance, onPay }: { balance: string; onPay: (p
       setError("The card number must be 16 digits");
       return;
     }
+    if (amountProblem) return;
     setError("");
     setSaving(true);
     try {
@@ -65,7 +76,10 @@ export function CardPaymentForm({ balance, onPay }: { balance: string; onPay: (p
           <option value="Credit Card">Credit card</option>
           <option value="Debit Card">Debit card</option>
         </SelectField>
-        <Field label="Amount ($)" required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <div>
+          <Field label="Amount ($)" required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          {amountProblem && <p className="mt-1 text-xs text-red-600">{amountProblem}</p>}
+        </div>
       </div>
       <Field label="Name on Card" required autoComplete="off" value={nameOnCard} onChange={(e) => setNameOnCard(e.target.value)} />
       <div>
@@ -101,7 +115,7 @@ export function CardPaymentForm({ balance, onPay }: { balance: string; onPay: (p
         />
       </div>
       <ErrorText message={error} />
-      <PrimaryButton disabled={saving}>{saving ? "Paying..." : `Pay $${Number(amount || 0).toFixed(2)}`}</PrimaryButton>
+      <PrimaryButton disabled={saving || !!amountProblem}>{saving ? "Paying..." : `Pay $${Number(amount || 0).toFixed(2)}`}</PrimaryButton>
     </form>
   );
 }

@@ -39,6 +39,10 @@ import {
 import { AdminShiftSettings } from "./pages/admin/ShiftSettings";
 import { AdminPatients } from "./pages/admin/Patients";
 import { AdminPatientEdit } from "./pages/admin/PatientEdit";
+import { AdminReports } from "./pages/admin/Reports";
+import { AdminMissedAppointmentsReport } from "./pages/admin/MissedAppointmentsReport";
+import { AdminUnpaidBalancesReport } from "./pages/admin/UnpaidBalancesReport";
+import { AdminScheduleUtilizationReport } from "./pages/admin/ScheduleUtilizationReport";
 import { AdminBilling } from "./pages/admin/Billing";
 
 import { EmployeeLoginPage, PatientLoginPage } from "./pages/auth/Login";
@@ -162,6 +166,10 @@ function App() {
                 <Route path="patients" element={<AdminPatients />} />
                 <Route path="patients/:id/edit" element={<AdminPatientEdit />} />
                 <Route path="billing" element={<AdminBilling />} />
+                <Route path="reports" element={<AdminReports />} />
+                <Route path="reports/missed-appointments" element={<AdminMissedAppointmentsReport />} />
+                <Route path="reports/unpaid-balances" element={<AdminUnpaidBalancesReport />} />
+                <Route path="reports/schedule-utilization" element={<AdminScheduleUtilizationReport />} />
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
 

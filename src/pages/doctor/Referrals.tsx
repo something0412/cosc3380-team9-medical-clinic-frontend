@@ -6,7 +6,7 @@ import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
 import { ErrorText, Field, SelectField } from "../../components/FormControls";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { FormActions, Section, StatusBadge, TextButton } from "../../components/ProfileUI";
+import { FormActions, NotAvailable, Section, StatusBadge, TextButton } from "../../components/ProfileUI";
 
 interface Referral {
   referralId: number;
@@ -19,6 +19,9 @@ interface Referral {
   expirationDate: string;
   status: string;
   expired: boolean;
+  primaryDoctorName: string | null;
+  requestReason: string | null;
+  denialReason: string | null;
 }
 
 interface PatientOption {
@@ -37,18 +40,21 @@ interface Specialist {
 const shownStatus = (r: Referral) => (r.status === "Pending" && r.expired ? "Expired" : r.status);
 
 export function DoctorReferrals() {
+  const [toApprove, setToApprove] = useState<Referral[]>([]);
   const [sent, setSent] = useState<Referral[]>([]);
   const [received, setReceived] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [denying, setDenying] = useState<Referral | null>(null);
 
   // load referrals
   useEffect(() => {
     async function loadReferrals() {
       try {
-        const res = await api.get<{ sent: Referral[]; received: Referral[] }>("/api/doctor/referrals");
+        const res = await api.get<{ toApprove: Referral[]; sent: Referral[]; received: Referral[] }>("/api/doctor/referrals");
+        setToApprove(res.data.toApprove);
         setSent(res.data.sent);
         setReceived(res.data.received);
       } catch (err) {
@@ -60,11 +66,11 @@ export function DoctorReferrals() {
     loadReferrals();
   }, [reloadCount]);
 
-  // approve or deny
-  async function answerReferral(referral: Referral, status: "Approved" | "Denied") {
+  // approve as the patient's primary doctor
+  async function approveReferral(referral: Referral) {
     setError("");
     try {
-      await api.patch(`/api/doctor/referrals/${referral.referralId}/status`, { status });
+      await api.patch(`/api/doctor/referrals/${referral.referralId}/status`, { status: "Approved" });
       setReloadCount(reloadCount + 1);
     } catch (err) {
       setError(apiErrorMessage(err));
@@ -75,7 +81,7 @@ export function DoctorReferrals() {
     <PortalPage
       eyebrow="Doctor"
       title="Referrals"
-      description="Send patients to specialists and answer referrals sent to you. Once approved, the patient or the front desk books the visit."
+      description="Request a specialist for your patient with a reason. The patient's primary doctor approves or denies it, and once approved the patient or the front desk books the visit."
       actions={
         <button type="button" onClick={() => setShowForm(true)} className={ADMIN_PRIMARY_BUTTON}>
           New Referral
@@ -87,23 +93,31 @@ export function DoctorReferrals() {
 
       {!loading && (
         <>
-          <Section title="Sent to Me">
-            {received.length === 0 ? (
-              <p className="text-slate-500">No referrals sent to you.</p>
+          <Section title="Waiting for My Approval">
+            {toApprove.length === 0 ? (
+              <p className="text-slate-500">No referrals for your patients.</p>
             ) : (
               <ReferralTable
-                referrals={received}
-                otherLabel="From"
+                referrals={toApprove}
+                otherLabel="Requested By"
                 otherName={(r) => r.referringDoctorName}
                 actions={(r) =>
                   r.status === "Pending" && !r.expired ? (
                     <span className="flex justify-end gap-4">
-                      <TextButton onClick={() => answerReferral(r, "Approved")}>Approve</TextButton>
-                      <TextButton danger onClick={() => answerReferral(r, "Denied")}>Deny</TextButton>
+                      <TextButton onClick={() => approveReferral(r)}>Approve</TextButton>
+                      <TextButton danger onClick={() => setDenying(r)}>Deny</TextButton>
                     </span>
                   ) : null
                 }
               />
+            )}
+          </Section>
+
+          <Section title="Approved for Me as Specialist">
+            {received.length === 0 ? (
+              <p className="text-slate-500">No approved referrals to you.</p>
+            ) : (
+              <ReferralTable referrals={received} otherLabel="From" otherName={(r) => r.referringDoctorName} actions={() => null} />
             )}
           </Section>
 
@@ -118,6 +132,7 @@ export function DoctorReferrals() {
       )}
 
       {showForm && <NewReferralModal onClose={() => setShowForm(false)} onSaved={() => setReloadCount(reloadCount + 1)} />}
+      {denying && <DenyModal referral={denying} onClose={() => setDenying(null)} onSaved={() => setReloadCount(reloadCount + 1)} />}
     </PortalPage>
   );
 }
@@ -135,12 +150,13 @@ function ReferralTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] text-left text-sm">
+      <table className="w-full min-w-[860px] text-left text-sm">
         <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-4 py-3">Patient</th>
             <th className="px-4 py-3">{otherLabel}</th>
             <th className="px-4 py-3">Specialty</th>
+            <th className="px-4 py-3">Reason</th>
             <th className="px-4 py-3">Issued</th>
             <th className="px-4 py-3">Expires</th>
             <th className="px-4 py-3">Status</th>
@@ -149,7 +165,7 @@ function ReferralTable({
         </thead>
         <tbody className="divide-y divide-slate-100">
           {referrals.map((r) => (
-            <tr key={r.referralId} className="hover:bg-slate-50">
+            <tr key={r.referralId} className="align-top hover:bg-slate-50">
               <td className="whitespace-nowrap px-4 py-3">
                 <Link to={`/doctor/patients/${r.patientId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
                   {r.patientName}
@@ -157,6 +173,10 @@ function ReferralTable({
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-700">Dr. {otherName(r)}</td>
               <td className="px-4 py-3 text-slate-700">{r.specialty}</td>
+              <td className="max-w-xs px-4 py-3 text-slate-700">
+                {r.requestReason ?? <NotAvailable />}
+                {r.denialReason && <p className="mt-1 text-xs text-red-600">Denied: {r.denialReason}</p>}
+              </td>
               <td className="px-4 py-3 text-slate-700">{r.dateIssued}</td>
               <td className="px-4 py-3 text-slate-700">{r.expirationDate}</td>
               <td className="px-4 py-3"><StatusBadge status={shownStatus(r)} /></td>
@@ -175,6 +195,7 @@ function NewReferralModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
   const [patientId, setPatientId] = useState("");
   const [specialistKey, setSpecialistKey] = useState("");
   const [expirationDate, setExpirationDate] = useState("");
+  const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -205,6 +226,7 @@ function NewReferralModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
         specialistDoctorId: Number(specialistDoctorId),
         specialtyId: Number(specialtyId),
         expirationDate: expirationDate || undefined,
+        reason,
       });
       onSaved();
       onClose();
@@ -240,8 +262,64 @@ function NewReferralModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
           value={expirationDate}
           onChange={(e) => setExpirationDate(e.target.value)}
         />
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-slate-700">Reason for the referral</span>
+          <textarea
+            required
+            rows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Chest pain on exertion, abnormal ECG"
+            className="w-full rounded-lg px-3 py-2 text-sm shadow-field focus:outline-none"
+          />
+        </label>
+        <p className="text-xs text-slate-500">It goes to the patient's primary doctor to approve. If you're their primary doctor, it's approved right away.</p>
         <ErrorText message={error} />
         <FormActions saving={saving} onCancel={onClose} saveLabel="Send Referral" />
+      </form>
+    </Modal>
+  );
+}
+
+function DenyModal({ referral, onClose, onSaved }: { referral: Referral; onClose: () => void; onSaved: () => void }) {
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // deny with a reason
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      await api.patch(`/api/doctor/referrals/${referral.referralId}/status`, { status: "Denied", reason });
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title="Deny Referral" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-sm text-slate-600">
+          {referral.patientName} to Dr. {referral.specialistName} ({referral.specialty}). Dr. {referral.referringDoctorName} will see your reason.
+        </p>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-slate-700">Reason</span>
+          <textarea
+            required
+            rows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className="w-full rounded-lg px-3 py-2 text-sm shadow-field focus:outline-none"
+          />
+        </label>
+        <ErrorText message={error} />
+        <FormActions saving={saving} onCancel={onClose} saveLabel="Deny Referral" />
       </form>
     </Modal>
   );

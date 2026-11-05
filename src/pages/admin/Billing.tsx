@@ -525,9 +525,20 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
     loadInvoice();
   }, [invoiceId, reloadCount]);
 
+  // the amount must be more than 0 and no more than the balance
+  const amountProblem =
+    amount === ""
+      ? ""
+      : !(Number(amount) > 0)
+        ? "Enter an amount more than $0."
+        : Number(amount) > Number(invoice?.balance ?? 0)
+          ? `Amount can't be more than the $${Number(invoice?.balance ?? 0).toFixed(2)} balance.`
+          : "";
+
   // record a payment
   async function takePayment(e: FormEvent) {
     e.preventDefault();
+    if (amountProblem) return;
     setError("");
     setSaving(true);
     try {
@@ -608,8 +619,11 @@ function InvoiceModal({ invoiceId, onClose, onChanged }: { invoiceId: number; on
                   <option key={t.paymentTypeId} value={t.paymentTypeId}>{t.name}</option>
                 ))}
               </SelectField>
-              <Field label="Amount" required inputMode="decimal" placeholder={invoice.balance} value={amount} onChange={(e) => setAmount(e.target.value)} />
-              <PrimaryButton disabled={saving}>Take Payment</PrimaryButton>
+              <div>
+                <Field label="Amount" required inputMode="decimal" placeholder={invoice.balance} value={amount} onChange={(e) => setAmount(e.target.value)} />
+                {amountProblem && <p className="mt-1 text-xs text-red-600">{amountProblem}</p>}
+              </div>
+              <PrimaryButton disabled={saving || !!amountProblem}>Take Payment</PrimaryButton>
             </form>
           )}
 

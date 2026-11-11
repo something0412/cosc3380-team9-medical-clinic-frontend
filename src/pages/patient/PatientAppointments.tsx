@@ -6,6 +6,7 @@ import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
 import { AlertIcon, DangerButton, NotAvailable, PrimaryButton, SecondaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton } from "../../components/ProfileUI";
 import { useAuth } from "../../context/AuthContext";
+import { formatId } from "../../utils/id";
 
 interface Appointment {
   appointmentId: number;
@@ -14,6 +15,7 @@ interface Appointment {
   doctorName: string;
   officeName: string;
   specialty: string | null;
+  endTime?: string | null;
   status: string;
   checkedIn: boolean;
 }
@@ -50,12 +52,108 @@ interface Referral {
 // today's date at the clinic as YYYY-MM-DD
 const clinicToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
 
+// current date and time at the clinic as YYYY-MM-DD HH:MM:SS
+const clinicNow = () => new Date().toLocaleString("sv-SE", { timeZone: "America/Chicago" });
+
+// appointment start as YYYY-MM-DD HH:MM
+const startsAt = (a: Appointment) => `${a.appointmentDate} ${a.appointmentTime ?? "00:00"}`;
+
 // 14:30 -> 2:30 PM
 function showTime(value: string | null) {
   if (!value) return <NotAvailable />;
   const [hour, minute = "00"] = value.split(":");
   const h = Number(hour);
   return `${h % 12 || 12}:${minute} ${h >= 12 ? "PM" : "AM"}`;
+}
+
+// 2026-11-13 -> Friday, November 13, 2026
+const showLongDate = (date: string) =>
+  new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+
+// one appointment's details, shown right after booking and from the View button
+function AppointmentDetails({ appointment, booked, onClose }: { appointment: Appointment; booked: boolean; onClose: () => void }) {
+  const a = appointment;
+  return (
+    <Modal title={booked ? "Appointment Booked" : "Appointment Details"} onClose={onClose}>
+      {booked && (
+        <div className="mb-5 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
+          <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M8 12.5l2.5 2.5L16 9.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <p className="text-sm font-medium">Your appointment was booked successfully.</p>
+        </div>
+      )}
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+        <div className="col-span-2"><dt className="text-slate-500">Date</dt><dd className="font-medium text-slate-900">{showLongDate(a.appointmentDate)}</dd></div>
+        <div>
+          <dt className="text-slate-500">Time</dt>
+          <dd className="font-medium text-slate-900">
+            {showTime(a.appointmentTime)}
+            {a.endTime && <> - {showTime(a.endTime)}</>}
+          </dd>
+        </div>
+        <div><dt className="text-slate-500">Appointment Number</dt><dd className="font-mono font-medium text-slate-900">#{formatId(a.appointmentId)}</dd></div>
+        <div><dt className="text-slate-500">Doctor</dt><dd className="font-medium text-slate-900">Dr. {a.doctorName}</dd></div>
+        <div><dt className="text-slate-500">Specialty</dt><dd className="font-medium text-slate-900">{a.specialty ?? <NotAvailable />}</dd></div>
+        <div><dt className="text-slate-500">Office</dt><dd className="font-medium text-slate-900">{a.officeName}</dd></div>
+        <div>
+          <dt className="text-slate-500">Status</dt>
+          <dd className="font-medium"><StatusText status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} /></dd>
+        </div>
+      </dl>
+      <div className="mt-6 flex justify-end">
+        <SecondaryButton onClick={onClose}>Close</SecondaryButton>
+      </div>
+    </Modal>
+  );
+}
+
+// appointments table used by both sections
+function AppointmentTable({
+  appointments,
+  onView,
+  onCancel,
+}: {
+  appointments: Appointment[];
+  onView: (a: Appointment) => void;
+  onCancel?: (a: Appointment) => void;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[640px] text-left text-sm">
+        <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <tr>
+            <th className="px-4 py-3">Date</th>
+            <th className="px-4 py-3">Time</th>
+            <th className="px-4 py-3">Doctor</th>
+            <th className="px-4 py-3">Specialty</th>
+            <th className="px-4 py-3">Office</th>
+            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {appointments.map((a) => (
+            <tr key={a.appointmentId} className="hover:bg-slate-50">
+              <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.appointmentDate}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-slate-700">{showTime(a.appointmentTime)}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-slate-700">Dr. {a.doctorName}</td>
+              <td className="px-4 py-3 text-slate-700">{a.specialty ?? <NotAvailable />}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.officeName}</td>
+              <td className="px-4 py-3"><StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} /></td>
+              <td className="whitespace-nowrap px-4 py-3 text-right">
+                <TextButton onClick={() => onView(a)}>View</TextButton>
+                {onCancel && a.status === "Scheduled" && !a.checkedIn && (
+                  <TextButton danger className="ml-4" onClick={() => onCancel(a)}>Cancel</TextButton>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function PatientAppointments() {
@@ -79,6 +177,8 @@ export function PatientAppointments() {
   const [reloadCount, setReloadCount] = useState(0);
   const [cancelling, setCancelling] = useState<Appointment | null>(null);
   const [cancelSaving, setCancelSaving] = useState(false);
+  const [tab, setTab] = useState("upcoming");
+  const [details, setDetails] = useState<{ appointment: Appointment; booked: boolean } | null>(null);
 
   // load my appointments and referrals
   useEffect(() => {
@@ -145,6 +245,23 @@ export function PatientAppointments() {
   const selectedDoctor = doctors.find((d) => String(d.doctorId) === doctorId);
   const today = clinicToday();
 
+  const now = clinicNow();
+
+  // still to come (date and time), closest first
+  const upcoming = appointments
+    .filter((a) => a.status !== "Cancelled" && startsAt(a) > now)
+    .sort((a, b) => startsAt(a).localeCompare(startsAt(b)));
+
+  // already started or passed, most recent first
+  const history = appointments
+    .filter((a) => a.status !== "Cancelled" && startsAt(a) <= now)
+    .sort((a, b) => startsAt(b).localeCompare(startsAt(a)));
+
+  // cancelled, soonest to latest
+  const cancelled = appointments
+    .filter((a) => a.status === "Cancelled")
+    .sort((a, b) => startsAt(a).localeCompare(startsAt(b)));
+
   // book the selected time
   async function bookAppointment(e: FormEvent) {
     e.preventDefault();
@@ -153,14 +270,23 @@ export function PatientAppointments() {
     setBookingError("");
     setMessage("");
     try {
-      await api.post("/api/appointments", {
+      const res = await api.post("/api/appointments", {
         doctorId: Number(doctorId),
         specialtyId: selectedSlot.specialtyId,
         date,
         timeSlotId: selectedSlot.timeSlotId,
         referralId: selectedSlot.referralId,
       });
-      setMessage("Your appointment was booked.");
+      // show the new appointment in the booked pop-up
+      setDetails({
+        booked: true,
+        appointment: {
+          ...res.data,
+          appointmentDate: res.data.date,
+          appointmentTime: res.data.startTime,
+        },
+      });
+      setTab("upcoming");
       setTimeSlotId("");
       setReloadCount(reloadCount + 1);
     } catch (err) {
@@ -292,44 +418,44 @@ export function PatientAppointments() {
         </Section>
       </div>
 
-      <Section title="Appointment History">
+      <Section title="Appointments">
+        <div className="mb-4 flex gap-6 border-b border-slate-200">
+          {[
+            ["upcoming", `Upcoming (${upcoming.length})`],
+            ["history", `History (${history.length})`],
+            ["cancelled", `Cancelled (${cancelled.length})`],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`-mb-px border-b-2 pb-3 text-sm font-semibold ${
+                tab === key ? "border-navy text-navy" : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <p className="text-slate-500">Loading appointments...</p>
-        ) : appointments.length === 0 ? (
-          <p className="text-slate-500">No appointments yet.</p>
+        ) : tab === "upcoming" ? (
+          upcoming.length === 0 ? (
+            <p className="text-slate-500">No upcoming appointments.</p>
+          ) : (
+            <AppointmentTable appointments={upcoming} onView={(a) => setDetails({ appointment: a, booked: false })} onCancel={setCancelling} />
+          )
+        ) : tab === "history" ? (
+          history.length === 0 ? (
+            <p className="text-slate-500">No past appointments.</p>
+          ) : (
+            <AppointmentTable appointments={history} onView={(a) => setDetails({ appointment: a, booked: false })} />
+          )
+        ) : cancelled.length === 0 ? (
+          <p className="text-slate-500">No cancelled appointments.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Doctor</th>
-                  <th className="px-4 py-3">Specialty</th>
-                  <th className="px-4 py-3">Office</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {appointments.map((a) => (
-                  <tr key={a.appointmentId} className="hover:bg-slate-50">
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.appointmentDate}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{showTime(a.appointmentTime)}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">Dr. {a.doctorName}</td>
-                    <td className="px-4 py-3 text-slate-700">{a.specialty ?? <NotAvailable />}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.officeName}</td>
-                    <td className="px-4 py-3"><StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} /></td>
-                    <td className="px-4 py-3 text-right">
-                      {a.status === "Scheduled" && !a.checkedIn && a.appointmentDate >= today && (
-                        <TextButton danger onClick={() => setCancelling(a)}>Cancel</TextButton>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AppointmentTable appointments={cancelled} onView={(a) => setDetails({ appointment: a, booked: false })} />
         )}
       </Section>
 
@@ -351,6 +477,8 @@ export function PatientAppointments() {
         )}
         <p className="mt-3 text-xs text-slate-500">An approved referral lets you book that specialist above.</p>
       </Section>
+      {details && <AppointmentDetails appointment={details.appointment} booked={details.booked} onClose={() => setDetails(null)} />}
+
       {cancelling && (
         <Modal title="Cancel Appointment" onClose={() => !cancelSaving && setCancelling(null)}>
           <p className="text-sm text-slate-700">

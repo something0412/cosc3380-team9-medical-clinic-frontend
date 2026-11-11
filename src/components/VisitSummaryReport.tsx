@@ -16,6 +16,8 @@ export interface VisitSummaryData {
   diagnoses: { visitDiagnosisId: number; name: string; reasoning: string | null }[];
   vitals: Vitals[];
   prescriptions: { prescriptionItemId: number; medicationName: string; dosage: string; instructions: string | null; durationDays: number | null; isActive: boolean }[];
+  // only the patient's visit page sends lab orders
+  labOrders?: { labOrderId: number; testName: string; status: string; resultNotes: string | null; resultDate: string | null }[];
 }
 
 // a reading, or a dash when it wasn't taken
@@ -87,6 +89,24 @@ export function VisitSummaryReport({ visit }: { visit: VisitSummaryData }) {
           />
         )}
       </ReportSection>
+
+      {visit.labOrders && (
+        <ReportSection title="Lab Tests">
+          {visit.labOrders.length === 0 ? (
+            <p className="text-slate-500">No lab tests ordered at this visit.</p>
+          ) : (
+            <ReportTable
+              headers={["Test", "Status", "Result", "Result Date"]}
+              rows={visit.labOrders.map((l) => [
+                l.testName,
+                l.status === "InProgress" ? "In Progress" : l.status,
+                l.resultNotes ?? "Waiting for the result",
+                l.resultDate ?? "N/A",
+              ])}
+            />
+          )}
+        </ReportSection>
+      )}
     </PrintReport>
   );
 }

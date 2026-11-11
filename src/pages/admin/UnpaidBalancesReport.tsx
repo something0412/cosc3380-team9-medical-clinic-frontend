@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
+import { DotsButton } from "../../components/admin/DotsButton";
+import { Modal } from "../../components/Modal";
 import { ReportPeriod } from "../../components/admin/ReportPeriod";
 import { SortableTable } from "../../components/admin/SortableTable";
 import { Field, SelectField } from "../../components/FormControls";
@@ -33,11 +35,34 @@ interface PatientRow {
   lastPayment: string | null;
 }
 
+interface UnpaidInvoice {
+  invoiceId: number;
+  patientId: number;
+  issueDate: string;
+  amount: number;
+  paid: number;
+  balance: number;
+  daysUnpaid: number;
+  status: string;
+}
+
+interface PaidInvoice {
+  invoiceId: number;
+  patientId: number;
+  patientName: string;
+  payer: string;
+  issueDate: string;
+  amount: number;
+  paidOn: string | null;
+}
+
 interface Report {
   summary: { invoices: number; billed: number; collected: number; outstanding: number; collectionRate: number | null };
   aging: { bucket: string; invoices: number; amount: number }[];
   payers: { payer: string; patients: number; invoices: number; amount: number }[];
   patients: PatientRow[];
+  unpaidInvoices: UnpaidInvoice[];
+  paidInvoices: PaidInvoice[];
 }
 
 const BUCKETS = ["0-30", "31-60", "61-90", "90+"];
@@ -64,6 +89,7 @@ export function AdminUnpaidBalancesReport() {
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [details, setDetails] = useState<PatientRow | null>(null);
 
   // change filters and keep the others
   function setFilters(changes: Record<string, string>) {
@@ -226,10 +252,20 @@ export function AdminUnpaidBalancesReport() {
               searchKeys={["patientName", "phone", "payer"]}
               searchPlaceholder="Search patient, phone, payer"
               empty="Nobody owes anything for these filters."
+              pageSize={20}
               columns={[
-                { key: "patientId", label: "Patient ID", render: (p) => <span className="font-mono text-slate-500">{formatId(p.patientId)}</span> },
-                { key: "patientName", label: "Patient", render: (p) => <span className="font-medium text-navy">{p.patientName}</span> },
-                { key: "phone", label: "Phone" },
+                {
+                  key: "patientName",
+                  label: "Patient",
+                  render: (p) => (
+                    <>
+                      <span className="block font-medium text-navy">{p.patientName}</span>
+                      <span className="block text-xs text-slate-500">
+                        <span className="font-mono">#{formatId(p.patientId)}</span> · {p.phone}
+                      </span>
+                    </>
+                  ),
+                },
                 { key: "payer", label: "Payer" },
                 { key: "insuranceStatus", label: "Insurance", render: (p) => (p.insuranceStatus === "None" ? <NotAvailable /> : <StatusBadge status={p.insuranceStatus} />) },
                 { key: "invoices", label: "Invoices", right: true },
@@ -241,9 +277,73 @@ export function AdminUnpaidBalancesReport() {
                   render: (p) => <span className={p.oldestDays > 90 ? "font-semibold text-red-600" : ""}>{p.oldestDays}</span>,
                 },
                 { key: "lastPayment", label: "Last Payment", render: (p) => p.lastPayment ?? <NotAvailable /> },
+                {
+                  key: "patientId",
+                  label: "Details",
+                  right: true,
+                  noSort: true,
+                  render: (p) => <DotsButton label={`See unpaid invoices for ${p.patientName}`} onClick={() => setDetails(p)} />,
+                },
               ]}
             />
           </Section>
+
+          <Section title={`Paid Invoices (${report.paidInvoices.length})`}>
+            <SortableTable
+              rows={report.paidInvoices}
+              searchKeys={["patientName", "payer"]}
+              searchPlaceholder="Search patient, payer"
+              empty="No invoices were paid in full for these filters."
+              pageSize={20}
+              columns={[
+                { key: "invoiceId", label: "Invoice", render: (i) => <span className="font-mono text-slate-500">#{i.invoiceId}</span> },
+                { key: "patientName", label: "Patient", render: (i) => <span className="font-medium text-navy">{i.patientName}</span> },
+                { key: "payer", label: "Payer" },
+                { key: "issueDate", label: "Issued" },
+                { key: "amount", label: "Amount", right: true, render: (i) => money(i.amount) },
+                { key: "paidOn", label: "Paid On", render: (i) => i.paidOn ?? <NotAvailable /> },
+              ]}
+            />
+          </Section>
+
+          {details && (
+            <Modal title={`${details.patientName}: Unpaid Invoices`} onClose={() => setDetails(null)}>
+              <p className="mb-4 text-sm text-slate-600">
+                Patient #{formatId(details.patientId)} · {details.phone} · {details.payer} · Balance{" "}
+                <span className="font-semibold text-navy">{money(details.balance)}</span>
+              </p>
+              <div className="overflow-x-auto rounded-lg border border-slate-200">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-3 py-3">Invoice</th>
+                      <th className="px-3 py-3">Issued</th>
+                      <th className="px-3 py-3 text-right">Amount</th>
+                      <th className="px-3 py-3 text-right">Paid</th>
+                      <th className="px-3 py-3 text-right">Balance</th>
+                      <th className="px-3 py-3 text-right">Days</th>
+                      <th className="px-3 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {report.unpaidInvoices
+                      .filter((i) => i.patientId === details.patientId)
+                      .map((i) => (
+                        <tr key={i.invoiceId} className="hover:bg-slate-50">
+                          <td className="px-3 py-3 font-mono text-slate-500">#{i.invoiceId}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-slate-700">{i.issueDate}</td>
+                          <td className="px-3 py-3 text-right text-slate-700">{money(i.amount)}</td>
+                          <td className="px-3 py-3 text-right text-slate-700">{money(i.paid)}</td>
+                          <td className="px-3 py-3 text-right font-semibold text-navy">{money(i.balance)}</td>
+                          <td className={`px-3 py-3 text-right ${i.daysUnpaid > 90 ? "font-semibold text-red-600" : "text-slate-700"}`}>{i.daysUnpaid}</td>
+                          <td className="whitespace-nowrap px-3 py-3"><StatusBadge status={i.status} /></td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </Modal>
+          )}
 
           <PrintReport title="Unpaid Balances Report" subtitle={`Invoices issued ${from} to ${to}`}>
             <ReportSection title="Summary">
@@ -268,6 +368,13 @@ export function AdminUnpaidBalancesReport() {
                 headers={["Patient", "Phone", "Payer", "Invoices", "Balance", "Days Unpaid", "Last Payment"]}
                 rows={report.patients.map((p) => [p.patientName, p.phone, p.payer, p.invoices, money(p.balance), p.oldestDays, p.lastPayment ?? "N/A"])}
                 alignRight={[3, 4, 5]}
+              />
+            </ReportSection>
+            <ReportSection title="Paid Invoices">
+              <ReportTable
+                headers={["Invoice", "Patient", "Payer", "Issued", "Amount", "Paid On"]}
+                rows={report.paidInvoices.map((i) => [`#${i.invoiceId}`, i.patientName, i.payer, i.issueDate, money(i.amount), i.paidOn ?? "N/A"])}
+                alignRight={[4]}
               />
             </ReportSection>
           </PrintReport>

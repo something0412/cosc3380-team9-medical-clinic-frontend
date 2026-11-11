@@ -79,7 +79,8 @@ export interface SpecialtyDetails extends Specialty {
   activeScheduleCount: number;
 }
 
-export type SpecialtyInput = Pick<Specialty, "name" | "requiresReferral">;
+// visitPrice is only sent when adding a specialty
+export type SpecialtyInput = Pick<Specialty, "name" | "requiresReferral"> & { visitPrice?: string };
 
 // matches chk_nurse_level in the database
 export const NURSING_LEVELS = ["RN", "LPN", "NP", "CNA"];

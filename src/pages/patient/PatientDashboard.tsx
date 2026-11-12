@@ -48,7 +48,11 @@ export function PatientDashboard() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard label="Upcoming Appointments" value={String(summary.upcomingAppointments)} />
           <StatCard label="Forms to Complete" value={String(summary.pendingForms)} />
-          <StatCard label="Outstanding Balance" value={`$${Number(summary.outstandingBalance).toFixed(2)}`} />
+          <StatCard
+            label="Outstanding Balance"
+            value={`$${Number(summary.outstandingBalance).toFixed(2)}`}
+            highlight={Number(summary.outstandingBalance) > 0}
+          />
         </div>
       )}
 

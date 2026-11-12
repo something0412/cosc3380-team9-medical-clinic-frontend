@@ -102,7 +102,11 @@ export function PatientBilling() {
       {billing && (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <StatCard label="Outstanding Balance" value={money(billing.outstandingBalance)} />
+            <StatCard
+              label="Outstanding Balance"
+              value={money(billing.outstandingBalance)}
+              highlight={Number(billing.outstandingBalance) > 0}
+            />
             <StatCard label="Invoices" value={String(billing.invoices.length)} />
             <StatCard
               label="Insurance"

@@ -3,10 +3,9 @@ import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
-import { ErrorText, Field, SelectField } from "../../components/FormControls";
-import { Modal } from "../../components/Modal";
+import { Field, SelectField } from "../../components/FormControls";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { FormActions, StatusText, TextButton } from "../../components/ProfileUI";
+import { StatusText, TextButton } from "../../components/ProfileUI";
 
 interface LabOrder {
   labOrderId: number;
@@ -18,18 +17,7 @@ interface LabOrder {
   resultNotes: string | null;
   resultDate: string | null;
   performedBy: string | null;
-}
-
-interface PatientOption {
-  patientId: number;
-  firstName: string;
-  lastName: string;
-}
-
-interface LabTest {
-  labTestTypeId: number;
-  name: string;
-  cost: string;
+  appointmentId: number | null;
 }
 
 export function DoctorLabOrders() {
@@ -40,7 +28,6 @@ export function DoctorLabOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
-  const [showForm, setShowForm] = useState(false);
 
   // load my lab orders
   useEffect(() => {
@@ -80,12 +67,7 @@ export function DoctorLabOrders() {
     <PortalPage
       eyebrow="Doctor"
       title="Lab Orders"
-      description="Lab tests you ordered and their results."
-      actions={
-        <button type="button" onClick={() => setShowForm(true)} className={ADMIN_PRIMARY_BUTTON}>
-          Create Order
-        </button>
-      }
+      description="Lab tests you ordered and their results. To order a test, open the visit it's for from your appointments."
     >
       <form onSubmit={handleSearch} className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
         <Field label="Patient" type="search" placeholder="Patient name" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
@@ -120,7 +102,15 @@ export function DoctorLabOrders() {
                     </Link>
                     <span className="text-slate-500">ordered {o.orderDate}</span>
                   </div>
-                  {o.status === "Ordered" && <TextButton danger onClick={() => cancelOrder(o)}>Cancel</TextButton>}
+                  <div className="flex items-center gap-4">
+                    {/* orders are made from a visit; older ones without a visit have no link */}
+                    {o.appointmentId && (
+                      <Link to={`/doctor/appointments/${o.appointmentId}`} className="font-medium text-navy hover:text-teal-700 hover:underline">
+                        Open visit
+                      </Link>
+                    )}
+                    {o.status === "Ordered" && <TextButton danger onClick={() => cancelOrder(o)}>Cancel</TextButton>}
+                  </div>
                 </div>
                 {o.resultNotes && (
                   <div className="mt-2 rounded-lg bg-slate-50 p-3">
@@ -134,68 +124,6 @@ export function DoctorLabOrders() {
         )}
       </section>
 
-      {showForm && <CreateOrderModal onClose={() => setShowForm(false)} onSaved={() => setReloadCount(reloadCount + 1)} />}
     </PortalPage>
-  );
-}
-
-function CreateOrderModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [patients, setPatients] = useState<PatientOption[]>([]);
-  const [tests, setTests] = useState<LabTest[]>([]);
-  const [patientId, setPatientId] = useState("");
-  const [labTestTypeId, setLabTestTypeId] = useState("");
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  // load patients and lab tests for the dropdowns
-  useEffect(() => {
-    async function loadOptions() {
-      try {
-        const patientsRes = await api.get<PatientOption[]>("/api/doctor/patients");
-        setPatients(patientsRes.data);
-        const testsRes = await api.get<LabTest[]>("/api/doctor/lab-tests");
-        setTests(testsRes.data);
-      } catch (err) {
-        setError(apiErrorMessage(err));
-      }
-    }
-    loadOptions();
-  }, []);
-
-  // create the order
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    setSaving(true);
-    try {
-      await api.post("/api/doctor/lab-orders", { patientId: Number(patientId), labTestTypeId: Number(labTestTypeId) });
-      onSaved();
-      onClose();
-    } catch (err) {
-      setError(apiErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Modal title="Create Lab Order" onClose={onClose}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <SelectField label="Patient" required value={patientId} onChange={(e) => setPatientId(e.target.value)}>
-          <option value="">Select a patient</option>
-          {patients.map((p) => (
-            <option key={p.patientId} value={p.patientId}>{p.lastName}, {p.firstName}</option>
-          ))}
-        </SelectField>
-        <SelectField label="Lab Test" required value={labTestTypeId} onChange={(e) => setLabTestTypeId(e.target.value)}>
-          <option value="">Select a test</option>
-          {tests.map((t) => (
-            <option key={t.labTestTypeId} value={t.labTestTypeId}>{t.name} (${Number(t.cost).toFixed(2)})</option>
-          ))}
-        </SelectField>
-        <ErrorText message={error} />
-        <FormActions saving={saving} onCancel={onClose} saveLabel="Create Order" />
-      </form>
-    </Modal>
   );
 }

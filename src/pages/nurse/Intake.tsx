@@ -6,8 +6,10 @@ import { AllergiesSection, HomeMedicationsSection, SevereAllergyBanner } from ".
 import type { Allergy, HomeMedication, NursingNote } from "../../components/ClinicalRecords";
 import { ErrorText, Field } from "../../components/FormControls";
 import { PageError, PortalPage } from "../../components/PortalPage";
-import { PrimaryButton, SecondaryButton, Section, StatusText, SuccessText, TextButton, WarningBox } from "../../components/ProfileUI";
-import { CriticalVitalsBanner, VitalsTable } from "../../components/VitalsTable";
+import { NotAvailable, PrimaryButton, SecondaryButton, Section, StatusText, SuccessText, TextButton, WarningBox } from "../../components/ProfileUI";
+import { Modal } from "../../components/Modal";
+import { CriticalVitalsBanner } from "../../components/VitalsTable";
+import { FLAG_STYLE, vitalsFlags } from "../../utils/vitalsFlags";
 import type { Vitals } from "../../components/VitalsTable";
 import { useAuth } from "../../context/AuthContext";
 import { formatId } from "../../utils/id";
@@ -57,13 +59,30 @@ export function NurseIntake() {
   const [formError, setFormError] = useState("");
   const [success, setSuccess] = useState("");
   const [saving, setSaving] = useState(false);
+  // saved vitals stay locked until the nurse confirms they want to edit them
+  const [editing, setEditing] = useState(false);
+  const [confirmEdit, setConfirmEdit] = useState(false);
 
-  // load intake
+  // put the saved readings in the boxes, or empty boxes when there are none
+  function fillForm(saved: Vitals | undefined) {
+    const text = (value: number | null | undefined) => (value == null ? "" : String(value));
+    setTemperature(text(saved?.temperature));
+    setHeartRate(text(saved?.heartRate));
+    setSystolic(text(saved?.systolic));
+    setDiastolic(text(saved?.diastolic));
+    setRespiratoryRate(text(saved?.respiratoryRate));
+    setOxygenSaturation(text(saved?.oxygenSaturation));
+    setWeight(text(saved?.weight));
+    setHeight(text(saved?.height));
+  }
+
+  // load intake, and show this visit's saved vitals in the form
   useEffect(() => {
     async function loadIntake() {
       try {
         const res = await api.get<IntakeData>(`/api/nurse/appointments/${appointmentId}`);
         setIntake(res.data);
+        fillForm(res.data.vitals[0]);
       } catch (err) {
         setError(apiErrorMessage(err));
       }
@@ -71,7 +90,7 @@ export function NurseIntake() {
     loadIntake();
   }, [appointmentId, reloadCount]);
 
-  // save vitals
+  // save vitals: the first save creates the visit's record, later saves replace it
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormError("");
@@ -92,14 +111,7 @@ export function NurseIntake() {
         weight: reading(weight),
         height: reading(height),
       });
-      setTemperature("");
-      setHeartRate("");
-      setSystolic("");
-      setDiastolic("");
-      setRespiratoryRate("");
-      setOxygenSaturation("");
-      setWeight("");
-      setHeight("");
+      setEditing(false);
       setSuccess("Vitals saved.");
       setReloadCount(reloadCount + 1);
     } catch (err) {
@@ -107,6 +119,13 @@ export function NurseIntake() {
     } finally {
       setSaving(false);
     }
+  }
+
+  // stop editing and put the saved readings back
+  function cancelEdit() {
+    fillForm(intake?.vitals[0]);
+    setEditing(false);
+    setFormError("");
   }
 
   if (!intake) {
@@ -120,6 +139,10 @@ export function NurseIntake() {
   // the server says why intake can't be edited (wrong day, other office, not checked in)
   const canDocument = !intake.editBlockedReason;
   const reloadIntake = () => setReloadCount(reloadCount + 1);
+  // this visit's one vitals record, if it has been saved
+  const savedVitals = intake.vitals[0];
+  // the boxes can be typed in when there's nothing saved yet, or while editing
+  const canType = canDocument && (!savedVitals || editing);
 
   return (
     <PortalPage
@@ -154,33 +177,88 @@ export function NurseIntake() {
         />
       </div>
 
-      <Section title="Vitals for This Visit">
-        <VitalsTable vitals={intake.vitals} empty="No vitals recorded for this visit yet." />
-      </Section>
+      <Section title="Vitals">
+        {savedVitals ? (
+          <p className="mb-4 text-sm text-slate-600">
+            Recorded by {savedVitals.recordedBy} at {savedVitals.recordedAt}
+          </p>
+        ) : (
+          <p className="mb-4 text-sm text-slate-500">No vitals recorded for this visit yet.</p>
+        )}
 
-      <Section title="Record Vitals">
-        {/* the form stays visible but greyed out when intake can't be edited */}
-        <form onSubmit={handleSubmit} className={canDocument ? "" : "opacity-60"}>
-          <fieldset disabled={!canDocument} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Temperature (°F)" type="number" step="0.1" min="0" value={temperature} onChange={(e) => setTemperature(e.target.value)} />
-              <Field label="Heart Rate (bpm)" type="number" min="0" value={heartRate} onChange={(e) => setHeartRate(e.target.value)} />
-              <Field label="Systolic BP" type="number" min="0" value={systolic} onChange={(e) => setSystolic(e.target.value)} />
-              <Field label="Diastolic BP" type="number" min="0" value={diastolic} onChange={(e) => setDiastolic(e.target.value)} />
-              <Field label="Breathing (per min)" type="number" min="0" value={respiratoryRate} onChange={(e) => setRespiratoryRate(e.target.value)} />
-              <Field label="Oxygen (%)" type="number" min="0" max="100" value={oxygenSaturation} onChange={(e) => setOxygenSaturation(e.target.value)} />
-              <Field label="Weight (lb)" type="number" step="0.1" min="0" value={weight} onChange={(e) => setWeight(e.target.value)} />
-              <Field label="Height (in)" type="number" step="0.1" min="0" value={height} onChange={(e) => setHeight(e.target.value)} />
-            </div>
+        {/* empty boxes are greyed out when intake can't be edited; saved readings always show clearly */}
+        <form onSubmit={handleSubmit} className={canDocument || savedVitals ? "" : "opacity-60"}>
+          <fieldset disabled={!canType} className="space-y-4">
+            {savedVitals && !editing ? (
+              <SavedVitals vitals={savedVitals} />
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Field label="Temperature (°F)" type="number" step="0.1" min="0" value={temperature} onChange={(e) => setTemperature(e.target.value)} />
+                <Field label="Heart Rate (bpm)" type="number" min="0" value={heartRate} onChange={(e) => setHeartRate(e.target.value)} />
+                <Field label="Systolic BP" type="number" min="0" value={systolic} onChange={(e) => setSystolic(e.target.value)} />
+                <Field label="Diastolic BP" type="number" min="0" value={diastolic} onChange={(e) => setDiastolic(e.target.value)} />
+                <Field label="Breathing (per min)" type="number" min="0" value={respiratoryRate} onChange={(e) => setRespiratoryRate(e.target.value)} />
+                <Field label="Oxygen (%)" type="number" min="0" max="100" value={oxygenSaturation} onChange={(e) => setOxygenSaturation(e.target.value)} />
+                <Field label="Weight (lb)" type="number" step="0.1" min="0" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                <Field label="Height (in)" type="number" step="0.1" min="0" value={height} onChange={(e) => setHeight(e.target.value)} />
+              </div>
+            )}
             <p className="text-xs text-slate-500">
-              {canDocument ? "Leave a box empty if that reading wasn't taken." : intake.editBlockedReason}
+              {!canDocument
+                ? intake.editBlockedReason
+                : canType
+                  ? "Leave a box empty if that reading wasn't taken."
+                  : "These vitals are saved. Use Edit Vitals to change them. Red is critical and amber is abnormal."}
             </p>
             <ErrorText message={formError} />
             <SuccessText message={success} />
-            <PrimaryButton disabled={saving || !canDocument}>{saving ? "Saving..." : "Save Vitals"}</PrimaryButton>
           </fieldset>
+
+          {/* save the first time; after that edit, then save or cancel */}
+          {canDocument && (
+            <div className="mt-4 flex gap-2">
+              {!savedVitals && <PrimaryButton disabled={saving}>{saving ? "Saving..." : "Save Vitals"}</PrimaryButton>}
+              {savedVitals && !editing && (
+                <PrimaryButton
+                  type="button"
+                  onClick={() => {
+                    setSuccess("");
+                    setConfirmEdit(true);
+                  }}
+                >
+                  Edit Vitals
+                </PrimaryButton>
+              )}
+              {savedVitals && editing && (
+                <>
+                  <PrimaryButton disabled={saving}>{saving ? "Saving..." : "Save"}</PrimaryButton>
+                  <SecondaryButton disabled={saving} onClick={cancelEdit}>Cancel</SecondaryButton>
+                </>
+              )}
+            </div>
+          )}
         </form>
       </Section>
+
+      {confirmEdit && (
+        <Modal title="Edit Vitals" onClose={() => setConfirmEdit(false)}>
+          <p className="text-sm text-slate-700">
+            Are you sure you want to edit this record? Your old record can't be recovered after the change.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <SecondaryButton onClick={() => setConfirmEdit(false)}>Cancel</SecondaryButton>
+            <PrimaryButton
+              type="button"
+              onClick={() => {
+                setEditing(true);
+                setConfirmEdit(false);
+              }}
+            >
+              Continue
+            </PrimaryButton>
+          </div>
+        </Modal>
+      )}
 
       <NursingNotesSection
         appointmentId={intake.appointmentId}
@@ -191,6 +269,34 @@ export function NurseIntake() {
         onChanged={reloadIntake}
       />
     </PortalPage>
+  );
+}
+
+// one saved reading: the number in plain text, N/A when it wasn't taken, red or amber when out of range
+function SavedReading({ label, value, flag }: { label: string; value: string | null; flag?: "critical" | "abnormal" | null }) {
+  return (
+    <div className={`rounded-lg px-3 py-2 ${flag ? FLAG_STYLE[flag] : ""}`}>
+      <p className="text-sm font-medium text-slate-700">{label}</p>
+      <p className={`mt-1 text-lg ${flag ? "" : "font-semibold text-slate-900"}`}>{value ?? <NotAvailable />}</p>
+    </div>
+  );
+}
+
+// the visit's saved vitals, shown as plain numbers instead of locked boxes
+function SavedVitals({ vitals }: { vitals: Vitals }) {
+  const flags = vitalsFlags(vitals);
+  const shown = (value: number | null, unit = "") => (value == null ? null : `${value}${unit}`);
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <SavedReading label="Temperature (°F)" value={shown(vitals.temperature)} flag={flags.temperature} />
+      <SavedReading label="Heart Rate (bpm)" value={shown(vitals.heartRate)} flag={flags.heartRate} />
+      <SavedReading label="Systolic BP" value={shown(vitals.systolic)} flag={flags.bloodPressure} />
+      <SavedReading label="Diastolic BP" value={shown(vitals.diastolic)} flag={flags.bloodPressure} />
+      <SavedReading label="Breathing (per min)" value={shown(vitals.respiratoryRate)} flag={flags.breathing} />
+      <SavedReading label="Oxygen (%)" value={shown(vitals.oxygenSaturation, "%")} flag={flags.oxygen} />
+      <SavedReading label="Weight (lb)" value={shown(vitals.weight)} />
+      <SavedReading label="Height (in)" value={shown(vitals.height)} />
+    </div>
   );
 }
 

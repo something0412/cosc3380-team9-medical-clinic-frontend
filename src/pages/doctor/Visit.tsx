@@ -39,6 +39,66 @@ interface VisitData {
   homeMedications: HomeMedication[];
   insurance: { provider: string; status: string } | null;
   missingForms: string[];
+  labOrders: LabOrder[];
+}
+
+interface LabOrder {
+  labOrderId: number;
+  testName: string;
+  status: string;
+  orderDate: string;
+  orderedById: number;
+  resultNotes: string | null;
+  resultDate: string | null;
+  performedBy: string | null;
+}
+
+// InProgress -> In Progress
+const labStatus = (status: string) => (status === "InProgress" ? "In Progress" : status);
+
+// one group of this visit's lab orders (results, waiting, or cancelled)
+function LabOrderGroup({
+  title,
+  orders,
+  visitDate,
+  onCancel,
+}: {
+  title: string;
+  orders: LabOrder[];
+  visitDate: string;
+  onCancel?: (order: LabOrder) => void;
+}) {
+  if (orders.length === 0) return null;
+  return (
+    <div>
+      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
+      <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 text-sm">
+        {orders.map((o) => (
+          <li key={o.labOrderId} className="px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-slate-900">{o.testName}</span>
+                {/* ordered on a later day, after the results of this visit came back */}
+                {o.orderDate > visitDate && <span className="text-xs font-medium text-teal-700">Follow-up</span>}
+              </span>
+              <span className="flex items-center gap-4">
+                <StatusText status={labStatus(o.status)} />
+                {onCancel && o.status === "Ordered" && (
+                  <TextButton danger onClick={() => onCancel(o)}>Cancel</TextButton>
+                )}
+              </span>
+            </div>
+            {o.resultNotes && <p className="mt-1 whitespace-pre-wrap wrap-anywhere text-slate-800">{o.resultNotes}</p>}
+            <p className="mt-1 text-xs text-slate-500">
+              Ordered {o.orderDate}
+              {o.orderDate > visitDate ? ", after the visit" : " at the visit"}
+              {o.resultDate && ` · Result ${o.resultDate}${o.performedBy ? ` by ${o.performedBy}` : ""}`}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 interface Medication {
@@ -221,11 +281,25 @@ export function DoctorVisit() {
       });
       setLabTestTypeId("");
       setLabMessage(`${res.data.testName} ordered for this visit.`);
+      setReloadCount(reloadCount + 1);
     } catch (err) {
       setLabError(apiErrorMessage(err));
     } finally {
       labBusy.current = false;
       setLabSaving(false);
+    }
+  }
+
+  // cancel a lab order the lab hasn't started
+  async function cancelLabOrder(order: LabOrder) {
+    if (!window.confirm(`Cancel the ${order.testName} order?`)) return;
+    setLabError("");
+    setLabMessage("");
+    try {
+      await api.patch(`/api/doctor/lab-orders/${order.labOrderId}/cancel`);
+      setReloadCount(reloadCount + 1);
+    } catch (err) {
+      setLabError(apiErrorMessage(err));
     }
   }
 
@@ -428,10 +502,33 @@ export function DoctorVisit() {
         )}
       </Section>
 
-      {canWrite && (
-        <Section title="Lab Orders">
-          <form onSubmit={orderLabTest} className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <h4 className="font-semibold text-navy">New Lab Order for This Visit</h4>
+      <Section title="Lab Orders">
+        {visit.labOrders.length === 0 ? (
+          <p className="text-slate-500">No lab tests ordered for this visit.</p>
+        ) : (
+          <div className="space-y-5">
+            <LabOrderGroup
+              title="Results"
+              orders={visit.labOrders.filter((l) => l.status === "Completed")}
+              visitDate={visit.date}
+            />
+            <LabOrderGroup
+              title="Waiting for Results"
+              orders={visit.labOrders.filter((l) => l.status === "Ordered" || l.status === "InProgress")}
+              visitDate={visit.date}
+              onCancel={canWrite ? cancelLabOrder : undefined}
+            />
+            <LabOrderGroup
+              title="Cancelled"
+              orders={visit.labOrders.filter((l) => l.status === "Cancelled")}
+              visitDate={visit.date}
+            />
+          </div>
+        )}
+
+        {canWrite && (
+          <form onSubmit={orderLabTest} className="mt-5 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h4 className="font-semibold text-navy">Order Another Lab Test</h4>
             <div className="max-w-md">
               <SelectField label="Lab Test" required value={labTestTypeId} onChange={(e) => setLabTestTypeId(e.target.value)}>
                 <option value="">Select a lab test</option>
@@ -443,19 +540,15 @@ export function DoctorVisit() {
                 ))}
               </SelectField>
             </div>
+            <p className="text-xs text-slate-500">
+              A test ordered after check out goes on this visit's invoice. If the invoice was already paid, it reopens so the patient can pay the new balance.
+            </p>
             <ErrorText message={labError} />
             <SuccessText message={labMessage} />
             <PrimaryButton disabled={labSaving}>{labSaving ? "Ordering..." : "Order Lab Test"}</PrimaryButton>
           </form>
-          <p className="mt-3 text-sm text-slate-500">
-            Results show up on the{" "}
-            <Link to="/doctor/lab-orders" className="font-medium text-navy hover:underline">
-              Lab Orders
-            </Link>{" "}
-            page.
-          </p>
-        </Section>
-      )}
+        )}
+      </Section>
 
       <VisitSummaryReport visit={visit} />
     </PortalPage>

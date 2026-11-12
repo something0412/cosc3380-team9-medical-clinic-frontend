@@ -18,6 +18,7 @@ interface Appointment {
   endTime?: string | null;
   status: string;
   checkedIn: boolean;
+  cancelledAt?: string | null;
 }
 
 interface Doctor {
@@ -110,14 +111,25 @@ function AppointmentDetails({ appointment, booked, onClose }: { appointment: App
 }
 
 // appointments table used by both sections
+// cancel time in clinic time, like 2026-11-11 3:39 AM
+function showCancelledAt(value: string | null | undefined) {
+  if (!value) return <NotAvailable />;
+  const when = new Date(value);
+  const date = when.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+  const time = when.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" });
+  return `${date} ${time}`;
+}
+
 function AppointmentTable({
   appointments,
   onView,
   onCancel,
+  showCancelled = false,
 }: {
   appointments: Appointment[];
   onView: (a: Appointment) => void;
   onCancel?: (a: Appointment) => void;
+  showCancelled?: boolean;
 }) {
   return (
     <div className="overflow-x-auto">
@@ -130,6 +142,7 @@ function AppointmentTable({
             <th className="px-4 py-3">Specialty</th>
             <th className="px-4 py-3">Office</th>
             <th className="px-4 py-3">Status</th>
+            {showCancelled && <th className="px-4 py-3">Cancelled On</th>}
             <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
           </tr>
         </thead>
@@ -142,6 +155,7 @@ function AppointmentTable({
               <td className="px-4 py-3 text-slate-700">{a.specialty ?? <NotAvailable />}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-700">{a.officeName}</td>
               <td className="px-4 py-3"><StatusBadge status={a.status === "Scheduled" && a.checkedIn ? "Checked In" : a.status} /></td>
+              {showCancelled && <td className="whitespace-nowrap px-4 py-3 text-slate-700">{showCancelledAt(a.cancelledAt)}</td>}
               <td className="whitespace-nowrap px-4 py-3 text-right">
                 <TextButton onClick={() => onView(a)}>View</TextButton>
                 {onCancel && a.status === "Scheduled" && !a.checkedIn && (
@@ -257,10 +271,15 @@ export function PatientAppointments() {
     .filter((a) => a.status !== "Cancelled" && startsAt(a) <= now)
     .sort((a, b) => startsAt(b).localeCompare(startsAt(a)));
 
-  // cancelled, soonest to latest
+  // cancelled, most recently cancelled first (old ones with no cancel time go last)
   const cancelled = appointments
     .filter((a) => a.status === "Cancelled")
-    .sort((a, b) => startsAt(a).localeCompare(startsAt(b)));
+    .sort((a, b) => {
+      if (a.cancelledAt && b.cancelledAt) return b.cancelledAt.localeCompare(a.cancelledAt);
+      if (a.cancelledAt) return -1;
+      if (b.cancelledAt) return 1;
+      return startsAt(b).localeCompare(startsAt(a));
+    });
 
   // book the selected time
   async function bookAppointment(e: FormEvent) {
@@ -455,7 +474,7 @@ export function PatientAppointments() {
         ) : cancelled.length === 0 ? (
           <p className="text-slate-500">No cancelled appointments.</p>
         ) : (
-          <AppointmentTable appointments={cancelled} onView={(a) => setDetails({ appointment: a, booked: false })} />
+          <AppointmentTable appointments={cancelled} onView={(a) => setDetails({ appointment: a, booked: false })} showCancelled />
         )}
       </Section>
 

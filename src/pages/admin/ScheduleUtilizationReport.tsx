@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
+import { DotsButton } from "../../components/admin/DotsButton";
 import { ReportPeriod } from "../../components/admin/ReportPeriod";
 import { SortableTable } from "../../components/admin/SortableTable";
 import { SelectField } from "../../components/FormControls";
@@ -60,7 +61,7 @@ function UtilizationBar({ value }: { value: number | null }) {
   const color = width >= 90 ? "bg-red-500" : width >= 50 ? "bg-teal-600" : "bg-slate-400";
   return (
     <span className="inline-flex items-center justify-end gap-2">
-      <span className="h-2 w-24 overflow-hidden rounded bg-slate-100">
+      <span className="h-2 w-14 overflow-hidden rounded bg-slate-100">
         <span className={`block h-2 ${color}`} style={{ width: `${width}%` }} />
       </span>
       <span className="w-12 text-right">{percent(value)}</span>
@@ -72,6 +73,7 @@ function UtilizationBar({ value }: { value: number | null }) {
 export function AdminScheduleUtilizationReport() {
   // the filters live in the URL, so a filtered report can be bookmarked or shared
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const period = (params.get("period") as Period) ?? "month";
   const from = params.get("from") ?? periodRange(period).from;
   const to = params.get("to") ?? periodRange(period).to;
@@ -147,6 +149,12 @@ export function AdminScheduleUtilizationReport() {
   const s = report?.summary;
   const fileName = `Schedule Utilization ${from} to ${to}`;
 
+  // the calendar page gets the same filters, so its numbers match the doctor's row
+  const calendarParams = new URLSearchParams(params);
+  calendarParams.set("period", period);
+  calendarParams.set("from", from);
+  calendarParams.set("to", to);
+
 
   return (
     <AdminPage
@@ -204,19 +212,47 @@ export function AdminScheduleUtilizationReport() {
               searchPlaceholder="Search doctor, office, specialty"
               empty="No scheduled slots for these filters."
               columns={[
-                { key: "doctorName", label: "Doctor", render: (d) => <span className="font-medium text-navy">Dr. {d.doctorName}</span> },
-                { key: "offices", label: "Offices" },
-                { key: "specialties", label: "Specialties" },
+                {
+                  key: "doctorName",
+                  label: "Doctor",
+                  render: (d) => (
+                    <>
+                      <span className="block font-medium text-navy">Dr. {d.doctorName}</span>
+                      <span className="block whitespace-normal text-xs text-slate-500">
+                        {d.specialties} · {d.offices}
+                      </span>
+                    </>
+                  ),
+                },
                 { key: "offered", label: "Offered", right: true },
                 { key: "booked", label: "Booked", right: true },
                 { key: "open", label: "Open", right: true },
                 { key: "noShows", label: "No-Shows", right: true },
                 { key: "utilization", label: "Utilization", right: true, render: (d) => <UtilizationBar value={d.utilization} /> },
+                {
+                  key: "doctorId",
+                  label: "Calendar",
+                  right: true,
+                  noSort: true,
+                  render: (d) => (
+                    <DotsButton
+                      label={`See Dr. ${d.doctorName}'s schedule calendar`}
+                      onClick={() => navigate(`/admin/reports/schedule-utilization/doctors/${d.doctorId}?${calendarParams.toString()}`)}
+                    />
+                  ),
+                },
               ]}
             />
           </Section>
 
-          <Section title="By Day of the Week">
+          <Section
+            title="By Day of the Week"
+            action={
+              <SecondaryButton onClick={() => navigate(`/admin/reports/schedule-utilization/calendar?${calendarParams.toString()}`)}>
+                View Calendar
+              </SecondaryButton>
+            }
+          >
             <SortableTable
               rows={report.days}
               searchKeys={["dayOfWeek"]}

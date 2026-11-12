@@ -20,6 +20,7 @@ interface SpecialtyFormProps {
 function SpecialtyForm({ specialty, cancelTo, submitLabel, onSubmit }: SpecialtyFormProps) {
   const [name, setName] = useState(specialty?.name ?? "");
   const [requiresReferral, setRequiresReferral] = useState(specialty?.requiresReferral ?? false);
+  const [visitPrice, setVisitPrice] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   // blocks a second submit before the disabled button re-renders
@@ -37,7 +38,7 @@ function SpecialtyForm({ specialty, cancelTo, submitLabel, onSubmit }: Specialty
     setSaving(true);
     setError("");
     try {
-      await onSubmit({ name, requiresReferral });
+      await onSubmit(specialty ? { name, requiresReferral } : { name, requiresReferral, visitPrice });
     } catch (err) {
       setError(apiErrorMessage(err));
       setSaving(false);
@@ -50,7 +51,18 @@ function SpecialtyForm({ specialty, cancelTo, submitLabel, onSubmit }: Specialty
       <Section title="Specialty Information">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Specialty Name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
+          {!specialty && (
+            <Field
+              label="Visit Price ($)"
+              required
+              inputMode="decimal"
+              placeholder="150.00"
+              value={visitPrice}
+              onChange={(e) => setVisitPrice(e.target.value)}
+            />
+          )}
         </div>
+        {!specialty && <p className="mt-2 text-sm text-slate-500">You can change the visit price later in Billing, under Fees.</p>}
         <label className="mt-5 flex items-start gap-3 text-sm text-slate-700">
           <input
             type="checkbox"

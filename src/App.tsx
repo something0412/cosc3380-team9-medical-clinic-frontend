@@ -43,6 +43,8 @@ import { AdminReports } from "./pages/admin/Reports";
 import { AdminMissedAppointmentsReport } from "./pages/admin/MissedAppointmentsReport";
 import { AdminUnpaidBalancesReport } from "./pages/admin/UnpaidBalancesReport";
 import { AdminScheduleUtilizationReport } from "./pages/admin/ScheduleUtilizationReport";
+import { AdminScheduleUtilizationDoctor } from "./pages/admin/ScheduleUtilizationDoctor";
+import { AdminScheduleUtilizationCalendar } from "./pages/admin/ScheduleUtilizationCalendar";
 import { AdminBilling } from "./pages/admin/Billing";
 
 import { LoginPage } from "./pages/auth/Login";
@@ -171,6 +173,8 @@ function App() {
                 <Route path="reports/missed-appointments" element={<AdminMissedAppointmentsReport />} />
                 <Route path="reports/unpaid-balances" element={<AdminUnpaidBalancesReport />} />
                 <Route path="reports/schedule-utilization" element={<AdminScheduleUtilizationReport />} />
+                <Route path="reports/schedule-utilization/doctors/:doctorId" element={<AdminScheduleUtilizationDoctor />} />
+                <Route path="reports/schedule-utilization/calendar" element={<AdminScheduleUtilizationCalendar />} />
                 <Route path="profile" element={<StaffProfile />} />
             </Route>
 

@@ -154,7 +154,7 @@ export function DoctorPatientChart() {
                   <StatusText status={l.status} />
                   <span className="text-slate-500">{l.orderDate} · Dr. {l.orderedBy}</span>
                 </div>
-                {l.resultNotes && <p className="mt-1 text-slate-700">{l.resultNotes}</p>}
+                {l.resultNotes && <p className="mt-1 whitespace-pre-wrap wrap-anywhere text-slate-700">{l.resultNotes}</p>}
               </li>
             ))}
           </ul>

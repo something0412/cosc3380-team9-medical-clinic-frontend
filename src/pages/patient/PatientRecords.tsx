@@ -110,7 +110,7 @@ export function PatientRecords() {
                       <span className="font-medium text-slate-900">{l.testName}</span>
                       <span className="text-slate-500"> · ordered {l.orderDate}</span>
                     </p>
-                    <p className="mt-1 text-slate-700">{l.resultNotes ?? "Waiting for the result"}</p>
+                    <p className="mt-1 whitespace-pre-wrap wrap-anywhere text-slate-700">{l.resultNotes ?? "Waiting for the result"}</p>
                   </li>
                 ))}
               </ul>

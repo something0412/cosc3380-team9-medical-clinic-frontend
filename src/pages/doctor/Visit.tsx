@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
@@ -46,6 +46,12 @@ interface Medication {
   name: string;
 }
 
+interface LabTest {
+  labTestTypeId: number;
+  name: string;
+  cost: string | null;
+}
+
 const BACK = { to: "/doctor/appointments", label: "Back to appointments" };
 
 export function DoctorVisit() {
@@ -71,6 +77,17 @@ export function DoctorVisit() {
   const [instructions, setInstructions] = useState("");
   const [durationDays, setDurationDays] = useState("");
   const [rxError, setRxError] = useState("");
+  const [rxSaving, setRxSaving] = useState(false);
+  // blocks a second request before the disabled buttons re-render
+  const rxBusy = useRef(false);
+
+  // lab order form for this visit
+  const [labTests, setLabTests] = useState<LabTest[]>([]);
+  const [labTestTypeId, setLabTestTypeId] = useState("");
+  const [labError, setLabError] = useState("");
+  const [labMessage, setLabMessage] = useState("");
+  const [labSaving, setLabSaving] = useState(false);
+  const labBusy = useRef(false);
 
   // load the visit
   useEffect(() => {
@@ -98,6 +115,19 @@ export function DoctorVisit() {
       }
     }
     loadMedications();
+  }, []);
+
+  // load lab tests for the lab order form
+  useEffect(() => {
+    async function loadLabTests() {
+      try {
+        const res = await api.get<LabTest[]>("/api/doctor/lab-tests");
+        setLabTests(res.data);
+      } catch (err) {
+        setError(apiErrorMessage(err));
+      }
+    }
+    loadLabTests();
   }, []);
 
   // change one new diagnosis slot
@@ -147,6 +177,9 @@ export function DoctorVisit() {
   // write a prescription with one medication
   async function addPrescription(e: FormEvent) {
     e.preventDefault();
+    if (rxBusy.current) return;
+    rxBusy.current = true;
+    setRxSaving(true);
     setRxError("");
     try {
       await api.post(`/api/doctor/appointments/${id}/prescriptions`, {
@@ -166,6 +199,33 @@ export function DoctorVisit() {
       setReloadCount(reloadCount + 1);
     } catch (err) {
       setRxError(apiErrorMessage(err));
+    } finally {
+      rxBusy.current = false;
+      setRxSaving(false);
+    }
+  }
+
+  // order a lab test for this visit, so it goes on the bill for this visit
+  async function orderLabTest(e: FormEvent) {
+    e.preventDefault();
+    if (!visit || labBusy.current) return;
+    labBusy.current = true;
+    setLabSaving(true);
+    setLabError("");
+    setLabMessage("");
+    try {
+      const res = await api.post<{ testName: string }>("/api/doctor/lab-orders", {
+        patientId: visit.patientId,
+        labTestTypeId: Number(labTestTypeId),
+        appointmentId: visit.appointmentId,
+      });
+      setLabTestTypeId("");
+      setLabMessage(`${res.data.testName} ordered for this visit.`);
+    } catch (err) {
+      setLabError(apiErrorMessage(err));
+    } finally {
+      labBusy.current = false;
+      setLabSaving(false);
     }
   }
 
@@ -363,10 +423,39 @@ export function DoctorVisit() {
               <Field label="Duration (days)" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(e.target.value)} />
             </div>
             <ErrorText message={rxError} />
-            <PrimaryButton>Add Prescription</PrimaryButton>
+            <PrimaryButton disabled={rxSaving}>{rxSaving ? "Adding..." : "Add Prescription"}</PrimaryButton>
           </form>
         )}
       </Section>
+
+      {canWrite && (
+        <Section title="Lab Orders">
+          <form onSubmit={orderLabTest} className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h4 className="font-semibold text-navy">New Lab Order for This Visit</h4>
+            <div className="max-w-md">
+              <SelectField label="Lab Test" required value={labTestTypeId} onChange={(e) => setLabTestTypeId(e.target.value)}>
+                <option value="">Select a lab test</option>
+                {labTests.map((t) => (
+                  <option key={t.labTestTypeId} value={t.labTestTypeId}>
+                    {t.name}
+                    {t.cost !== null && ` ($${Number(t.cost).toFixed(2)})`}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
+            <ErrorText message={labError} />
+            <SuccessText message={labMessage} />
+            <PrimaryButton disabled={labSaving}>{labSaving ? "Ordering..." : "Order Lab Test"}</PrimaryButton>
+          </form>
+          <p className="mt-3 text-sm text-slate-500">
+            Results show up on the{" "}
+            <Link to="/doctor/lab-orders" className="font-medium text-navy hover:underline">
+              Lab Orders
+            </Link>{" "}
+            page.
+          </p>
+        </Section>
+      )}
 
       <VisitSummaryReport visit={visit} />
     </PortalPage>

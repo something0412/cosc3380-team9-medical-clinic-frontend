@@ -294,7 +294,7 @@ function EmployeeForm({ employee, cancelTo, submitLabel, onSubmit }: EmployeeFor
           {values.createLogin && (
             <>
               <p className="mt-2 text-sm text-slate-500">
-                Staff sign in with their staff ID and this password. The username is usually the employee's work email.
+                Staff log in with their work email and this password. The username is usually the same email.
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Field label="Username" required maxLength={50} autoComplete="off" value={values.username} onChange={update("username")} />

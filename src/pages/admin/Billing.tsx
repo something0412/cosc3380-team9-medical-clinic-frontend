@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
 import { ADMIN_PRIMARY_BUTTON } from "../../components/admin/styles";
@@ -351,6 +352,9 @@ function FeesTab() {
   const [fees, setFees] = useState<Fee[]>([]);
   const [category, setCategory] = useState("Visit");
   const [editing, setEditing] = useState<Fee | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [turningOff, setTurningOff] = useState<Fee | null>(null);
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
@@ -370,6 +374,21 @@ function FeesTab() {
     }
     loadFees();
   }, [reloadCount]);
+
+  // turn a lab test or medication off or back on
+  async function setItemStatus(fee: Fee, isActive: boolean) {
+    setError("");
+    setSaving(true);
+    try {
+      await api.patch(`/api/admin/fees/items/${encodeURIComponent(fee.category)}/${fee.linkId}/status`, { isActive });
+      setReloadCount(reloadCount + 1);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+      setTurningOff(null);
+    }
+  }
 
   const shown = fees.filter((f) => f.category === category);
   const missing = fees.filter((f) => f.feeId === null && f.linkActive).length;
@@ -401,6 +420,19 @@ function FeesTab() {
 
       <PageError message={error} />
 
+      {category === "Visit" ? (
+        <p className="text-sm text-slate-600">
+          Each visit price belongs to a specialty. To add or turn off a visit type, go to{" "}
+          <Link to="/admin/specialties" className="font-medium text-navy underline">Specialties</Link>.
+        </p>
+      ) : (
+        <div className="flex justify-end">
+          <button type="button" className={ADMIN_PRIMARY_BUTTON} onClick={() => setAdding(true)}>
+            {category === "Lab Test" ? "Add Lab Test" : "Add Medication"}
+          </button>
+        </div>
+      )}
+
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
@@ -424,11 +456,17 @@ function FeesTab() {
                     <td className="px-4 py-3 text-slate-700">{f.type ?? <NotAvailable />}</td>
                     <td className="px-4 py-3 font-medium text-slate-900">{f.price === null ? "No price" : money(f.price)}</td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={f.feeId === null ? "Pending" : f.isActive ? "Active" : "Inactive"} />
+                      <StatusBadge status={!f.linkActive ? "Inactive" : f.feeId === null ? "Pending" : f.isActive ? "Active" : "Inactive"} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-500">{f.updatedAt ?? <NotAvailable />}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="whitespace-nowrap px-4 py-3 text-right">
                       <TextButton onClick={() => setEditing(f)}>{f.feeId === null ? "Add Price" : "Edit"}</TextButton>
+                      {f.category !== "Visit" &&
+                        (f.linkActive ? (
+                          <TextButton danger className="ml-4" onClick={() => setTurningOff(f)}>Deactivate</TextButton>
+                        ) : (
+                          <TextButton className="ml-4" onClick={() => setItemStatus(f, true)}>Reactivate</TextButton>
+                        ))}
                     </td>
                   </tr>
                 ))
@@ -439,7 +477,70 @@ function FeesTab() {
       </section>
 
       {editing && <FeeModal fee={editing} onClose={() => setEditing(null)} onSaved={() => setReloadCount(reloadCount + 1)} />}
+
+      {adding && <AddItemModal category={category} onClose={() => setAdding(false)} onSaved={() => setReloadCount(reloadCount + 1)} />}
+
+      {turningOff && (
+        <Modal title={`Deactivate ${turningOff.name}`} onClose={() => !saving && setTurningOff(null)}>
+          <p className="text-sm text-slate-700">
+            Doctors won't be able to {turningOff.category === "Lab Test" ? "order this lab test" : "prescribe this medication"} and it
+            won't be billed. Past orders, prescriptions and invoices stay as they are. You can reactivate it any time.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <SecondaryButton disabled={saving} onClick={() => setTurningOff(null)}>Cancel</SecondaryButton>
+            <DangerButton disabled={saving} onClick={() => setItemStatus(turningOff, false)}>{saving ? "Saving..." : "Deactivate"}</DangerButton>
+          </div>
+        </Modal>
+      )}
     </>
+  );
+}
+
+function AddItemModal({ category, onClose, onSaved }: { category: string; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState("");
+  const [manufacturer, setManufacturer] = useState("");
+  const [price, setPrice] = useState("");
+  const [type, setType] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // add the lab test or medication with its price
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      await api.post("/api/admin/fees/items", { category, name, manufacturer, price, type });
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title={category === "Lab Test" ? "Add Lab Test" : "Add Medication"} onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Name" required maxLength={100} placeholder={category === "Lab Test" ? "e.g. Lipid Panel" : "e.g. Lisinopril"} value={name} onChange={(e) => setName(e.target.value)} />
+        {category === "Medication" && (
+          <Field label="Manufacturer" maxLength={100} value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} />
+        )}
+        <Field label="Price ($)" required inputMode="decimal" placeholder="25.00" value={price} onChange={(e) => setPrice(e.target.value)} />
+        <Field
+          label="Type"
+          placeholder={category === "Lab Test" ? "e.g. Blood Test" : "e.g. Blood Pressure"}
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+        />
+        <ErrorText message={error} />
+        <div className="flex gap-2">
+          <PrimaryButton disabled={saving}>{saving ? "Saving..." : category === "Lab Test" ? "Add Lab Test" : "Add Medication"}</PrimaryButton>
+          <SecondaryButton onClick={onClose} disabled={saving}>Cancel</SecondaryButton>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

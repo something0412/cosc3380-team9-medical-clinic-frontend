@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api";
 import { AdminPage } from "../../components/admin/AdminPage";
+import { DotsButton } from "../../components/admin/DotsButton";
 import { ReportPeriod } from "../../components/admin/ReportPeriod";
 import { SortableTable } from "../../components/admin/SortableTable";
 import { Field, SelectField } from "../../components/FormControls";
 import { PageError } from "../../components/PortalPage";
 import { PrintReport, ReportSection, ReportTable } from "../../components/PrintReport";
+import { Modal } from "../../components/Modal";
 import { SecondaryButton, Section, StatusBadge } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
+import { formatId } from "../../utils/id";
 import { printReport } from "../../utils/printReport";
 import { periodRange } from "../../utils/reportPeriod";
 import type { Period } from "../../utils/reportPeriod";
@@ -45,10 +48,22 @@ interface MissedRow {
   outcome: string;
 }
 
+interface AppointmentRow {
+  appointmentId: number;
+  groupId: number;
+  date: string;
+  time: string;
+  patientName: string;
+  doctorName: string;
+  officeName: string;
+  status: string;
+}
+
 interface Report {
   summary: { total: number; completed: number; noShows: number; cancelled: number; lateCancelled: number; scheduled: number };
   groups: GroupRow[];
   missed: MissedRow[];
+  appointments: AppointmentRow[];
 }
 
 const GROUP_LABELS: Record<string, string> = { doctor: "Doctor", office: "Office", specialty: "Specialty" };
@@ -74,6 +89,7 @@ export function AdminMissedAppointmentsReport() {
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [details, setDetails] = useState<GroupRow | null>(null);
 
   // change filters and keep the others
   function setFilters(changes: Record<string, string>) {
@@ -197,16 +213,61 @@ export function AdminMissedAppointmentsReport() {
               empty="No appointments match these filters."
               columns={[
                 { key: "name", label: groupLabel, render: (g) => (groupBy === "doctor" ? `Dr. ${g.name}` : g.name) },
-                { key: "total", label: "Appointments", right: true },
+                { key: "total", label: "Total", right: true },
                 { key: "completed", label: "Completed", right: true },
                 { key: "noShows", label: "No-Shows", right: true },
                 { key: "cancelled", label: "Cancelled", right: true },
                 { key: "lateCancelled", label: "Late Cancel", right: true },
                 { key: "noShowRate", label: "No-Show Rate", right: true, render: (g) => percent(g.noShowRate) },
                 { key: "cancelRate", label: "Cancel Rate", right: true, render: (g) => percent(g.cancelRate) },
+                {
+                  key: "id",
+                  label: "Details",
+                  right: true,
+                  noSort: true,
+                  render: (g) => <DotsButton label={`See appointments for ${g.name}`} onClick={() => setDetails(g)} />,
+                },
               ]}
             />
           </Section>
+
+          {details && (
+            <Modal title={`${groupBy === "doctor" ? `Dr. ${details.name}` : details.name}: Appointments`} onClose={() => setDetails(null)}>
+              <p className="mb-4 text-sm text-slate-600">
+                {from} to {to} · {details.total} appointments · {details.completed} completed · {details.noShows} no-shows ·{" "}
+                {details.cancelled} cancelled ({details.lateCancelled} late) · No-show rate {percent(details.noShowRate)} · Cancel rate{" "}
+                {percent(details.cancelRate)}
+              </p>
+              <div className="overflow-x-auto rounded-lg border border-slate-200">
+                <table className="w-full min-w-[560px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-3 py-3">Appt #</th>
+                      <th className="px-3 py-3">Date</th>
+                      <th className="px-3 py-3">Patient</th>
+                      {groupBy !== "doctor" && <th className="px-3 py-3">Doctor</th>}
+                      {groupBy !== "office" && <th className="px-3 py-3">Office</th>}
+                      <th className="px-3 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {report.appointments
+                      .filter((a) => a.groupId === details.id)
+                      .map((a) => (
+                        <tr key={a.appointmentId} className="hover:bg-slate-50">
+                          <td className="px-3 py-3 font-mono text-slate-500">#{formatId(a.appointmentId)}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-slate-700">{a.date} {a.time}</td>
+                          <td className="px-3 py-3 text-slate-700">{a.patientName}</td>
+                          {groupBy !== "doctor" && <td className="px-3 py-3 text-slate-700">Dr. {a.doctorName}</td>}
+                          {groupBy !== "office" && <td className="px-3 py-3 text-slate-700">{a.officeName}</td>}
+                          <td className="whitespace-nowrap px-3 py-3"><StatusBadge status={a.status} /></td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </Modal>
+          )}
 
           <Section title={`${OUTCOME_LABELS[outcome]} (${report.missed.length})`}>
             <SortableTable
@@ -214,6 +275,7 @@ export function AdminMissedAppointmentsReport() {
               searchKeys={["patientName", "phone", "doctorName", "officeName", "specialty"]}
               searchPlaceholder="Search patient, phone, doctor"
               empty="No missed appointments for these filters."
+              pageSize={20}
               columns={[
                 { key: "date", label: "Date" },
                 { key: "time", label: "Time" },

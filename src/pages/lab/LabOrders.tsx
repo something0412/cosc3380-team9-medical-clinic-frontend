@@ -147,7 +147,7 @@ export function LabOrders() {
                 </p>
                 {o.resultNotes && (
                   <div className="mt-2 rounded-lg bg-slate-50 p-3">
-                    <p className="text-slate-800">{o.resultNotes}</p>
+                    <p className="whitespace-pre-wrap wrap-anywhere text-slate-800">{o.resultNotes}</p>
                     {o.performedBy && (
                       <p className="mt-1 text-xs text-slate-500">
                         Entered by {o.performedBy} on {o.resultDate}

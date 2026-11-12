@@ -11,7 +11,7 @@ import { InvoiceReport } from "../../components/InvoiceReport";
 import { Modal } from "../../components/Modal";
 import { PageError, PortalPage } from "../../components/PortalPage";
 import { printReport } from "../../utils/printReport";
-import { PrimaryButton, Section, StatusBadge, SuccessText, TextButton } from "../../components/ProfileUI";
+import { NotAvailable, PrimaryButton, SecondaryButton, Section, StatusBadge, StatusText, SuccessText, TextButton } from "../../components/ProfileUI";
 import { StatCard } from "../../components/StatCard";
 import { useAuth } from "../../context/AuthContext";
 
@@ -60,6 +60,7 @@ export function PatientBilling() {
   const [insurance, setInsurance] = useState<Insurance | null>(null);
   const [paying, setPaying] = useState<Invoice | null>(null);
   const [printing, setPrinting] = useState<Invoice | null>(null);
+  const [viewing, setViewing] = useState<Invoice | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
@@ -143,7 +144,8 @@ export function PatientBilling() {
                         <td className="px-4 py-3 font-medium text-slate-900">{money(i.balance)}</td>
                         <td className="px-4 py-3"><StatusBadge status={i.status} /></td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
-                          {Number(i.balance) > 0 && <TextButton onClick={() => setPaying(i)}>Pay</TextButton>}
+                          <TextButton onClick={() => setViewing(i)}>View</TextButton>
+                          {Number(i.balance) > 0 && <TextButton className="ml-4" onClick={() => setPaying(i)}>Pay</TextButton>}
                           <TextButton className="ml-4" onClick={() => downloadInvoice(i)}>Download PDF</TextButton>
                         </td>
                       </tr>
@@ -153,21 +155,6 @@ export function PatientBilling() {
               </div>
             )}
           </Section>
-
-          {billing.invoices.length > 0 && (
-            <Section title="What Each Invoice Is For">
-              <div className="space-y-5">
-                {billing.invoices.map((i) => (
-                  <div key={i.invoiceId}>
-                    <p className="mb-1 text-sm font-semibold text-slate-900">
-                      Invoice #{i.invoiceId} · {i.issueDate}
-                    </p>
-                    <InvoiceLines items={i.items} />
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
 
           <Section title="Payment History">
             {billing.payments.length === 0 ? (
@@ -202,6 +189,61 @@ export function PatientBilling() {
             )}
           </Section>
         </>
+      )}
+
+      {viewing && billing && (
+        <Modal title={`Invoice #${viewing.invoiceId}`} onClose={() => setViewing(null)}>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <div><dt className="text-slate-500">Visit Date</dt><dd className="font-medium text-slate-900">{viewing.appointmentDate ?? <NotAvailable />}</dd></div>
+            <div><dt className="text-slate-500">Issued</dt><dd className="font-medium text-slate-900">{viewing.issueDate}</dd></div>
+            <div><dt className="text-slate-500">Doctor</dt><dd className="font-medium text-slate-900">{viewing.doctorName ? `Dr. ${viewing.doctorName}` : <NotAvailable />}</dd></div>
+            <div><dt className="text-slate-500">Office</dt><dd className="font-medium text-slate-900">{viewing.officeName ?? <NotAvailable />}</dd></div>
+            <div><dt className="text-slate-500">Status</dt><dd className="font-medium"><StatusText status={viewing.status} /></dd></div>
+          </dl>
+
+          <h3 className="mb-1 mt-6 text-sm font-semibold text-slate-900">Charges</h3>
+          <InvoiceLines items={viewing.items} />
+
+          <dl className="mt-4 space-y-1 rounded-lg border border-slate-200 p-4 text-sm">
+            <div className="flex justify-between"><dt className="text-slate-500">Amount</dt><dd className="text-slate-900">{money(viewing.amount)}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">Paid</dt><dd className="text-slate-900">{money(viewing.paid)}</dd></div>
+            <div className="flex justify-between font-semibold"><dt className="text-navy">Balance</dt><dd className="text-navy">{money(viewing.balance)}</dd></div>
+          </dl>
+
+          <h3 className="mb-1 mt-6 text-sm font-semibold text-slate-900">Payments</h3>
+          {billing.payments.filter((p) => p.invoiceId === viewing.invoiceId).length === 0 ? (
+            <p className="text-sm text-slate-500">No payments on this invoice.</p>
+          ) : (
+            <ul className="divide-y divide-slate-100 text-sm">
+              {billing.payments
+                .filter((p) => p.invoiceId === viewing.invoiceId)
+                .map((p) => (
+                  <li key={p.paymentId} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <span className="text-slate-700">{p.paymentDate} · {p.paymentType}</span>
+                    <span className="flex items-center gap-3">
+                      <StatusText status={p.status === "Requested" ? "Refund Requested" : p.status === "Completed" ? "Paid" : p.status} />
+                      <span className="font-medium text-slate-900">{money(p.amountPaid)}</span>
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          )}
+
+          <div className="mt-6 flex justify-end gap-2">
+            <SecondaryButton onClick={() => downloadInvoice(viewing)}>Download PDF</SecondaryButton>
+            {Number(viewing.balance) > 0 && (
+              <PrimaryButton
+                type="button"
+                onClick={() => {
+                  setPaying(viewing);
+                  setViewing(null);
+                }}
+              >
+                Pay
+              </PrimaryButton>
+            )}
+          </div>
+        </Modal>
       )}
 
       {paying && patientId && (

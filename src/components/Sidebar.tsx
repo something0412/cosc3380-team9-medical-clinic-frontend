@@ -68,7 +68,7 @@ export function Sidebar({ role }: { role: Role }) {
 
     function handleLogout() {
         logout();
-        navigate(role === "patient" ? "/login" : "/employee/login", { replace: true });
+        navigate("/login", { replace: true });
     }
 
     return (

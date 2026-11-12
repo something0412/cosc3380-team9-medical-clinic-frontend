@@ -42,12 +42,12 @@ All requests send the login cookie (`withCredentials: true`).
 
 | Role | Sign-in | Main pages |
 | --- | --- | --- |
-| Patient | `/login` (patient number or email) | Dashboard, appointments (book with the primary doctor preselected, cancel with an "are you sure" pop-up, referral status), records, billing (pay by card), forms, profile (primary doctor, contacts, insurance) |
-| Doctor | `/employee/login` | Dashboard, appointments, patients and charts, visit documentation (summary, diagnoses, prescriptions, lab orders), referrals (send with a reason, approve or deny as the primary doctor), lab orders, schedule |
-| Nurse | `/employee/login` | Dashboard, Patient Appointments (filter by name, day and office), intake (vitals, notes, allergies, home medications; editable only on the visit day at the nurse's office after check-in), supplies |
-| Receptionist | `/employee/login` | Dashboard, appointments (book, check in, check out; visits that pass without a check-in become No Show automatically), patients (register, insurance, forms, portal logins), billing |
-| Lab technician | `/employee/login` | Dashboard, lab orders and results |
-| Admin | `/employee/login` | Dashboard with yearly report, employees, offices, specialties, schedules and shifts, billing (invoices, refunds, fees), patients (primary doctor, password reset, activate or deactivate), **Reports** (3 data reports) |
+| Patient | `/login` (email) | Dashboard, appointments (book with the primary doctor preselected, cancel with an "are you sure" pop-up, referral status), records, billing (pay by card), forms, profile (primary doctor, contacts, insurance) |
+| Doctor | `/login` (email) | Dashboard, appointments, patients and charts, visit documentation (summary, diagnoses, prescriptions, lab orders), referrals (send with a reason, approve or deny as the primary doctor), lab orders, schedule |
+| Nurse | `/login` (email) | Dashboard, Patient Appointments (filter by name, day and office), intake (vitals, notes, allergies, home medications; editable only on the visit day at the nurse's office after check-in), supplies |
+| Receptionist | `/login` (email) | Dashboard, appointments (book, check in, check out; visits that pass without a check-in become No Show automatically), patients (register, insurance, forms, portal logins), billing |
+| Lab technician | `/login` (email) | Dashboard, lab orders and results |
+| Admin | `/login` (email) | Dashboard with yearly report, employees, offices, specialties, schedules and shifts, billing (invoices, refunds, fees), patients (primary doctor, password reset, activate or deactivate), **Reports** (3 data reports) |
 
 Every portal role also has a **My Profile** page with a password change.
 

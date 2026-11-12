@@ -1,15 +1,15 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
-import { ErrorText, Field, IdField, PasswordField, PhoneField } from "../../components/FormControls";
+import { ErrorText, Field, PasswordField, PhoneField } from "../../components/FormControls";
 import { LogoMark } from "../../components/public/icons";
 import { FOCUS, PRIMARY_BUTTON } from "../../components/public/shared";
 import { useAuth } from "../../context/AuthContext";
 import type { AuthUser } from "../../context/AuthContext";
 import { api, apiErrorMessage } from "../../api";
-import type { PatientAuthResponse, PatientSignupRequest, StaffAuthResponse } from "../../types";
+import type { PatientAuthResponse, PatientSignupRequest } from "../../types";
 import { safeBookingPath } from "../../utils/bookingLinks";
-import { formatId, parseId } from "../../utils/id";
+import { formatId } from "../../utils/id";
 
 type PatientMode = "login" | "signup";
 
@@ -27,8 +27,8 @@ const TEXT_BUTTON = `rounded font-semibold text-teal-700 hover:text-navy hover:u
 
 const HEADING = "text-center font-heading text-[1.75rem] leading-tight font-semibold text-navy";
 
-// patient sign in and registration
-export function PatientLoginPage() {
+// one login for patients and staff, plus patient registration
+export function LoginPage() {
   const { login } = useAuth();
   const [params] = useSearchParams();
   // a booking page to return to afterwards, ignored unless it's one of ours
@@ -36,17 +36,7 @@ export function PatientLoginPage() {
   const initialMode: PatientMode = params.get("mode") === "signup" ? "signup" : "login";
   return (
     <AuthPage help="Need help signing in? Call your clinic office." bookingPath={bookingPath}>
-      <PatientPanel onLogin={login} initialMode={initialMode} booking={!!bookingPath} />
-    </AuthPage>
-  );
-}
-
-// employee sign in; the backend decides which workspace they get
-export function EmployeeLoginPage() {
-  const { login } = useAuth();
-  return (
-    <AuthPage help="Can't sign in? Ask a clinic administrator to reset your password or reactivate your login.">
-      <StaffPanel onLogin={login} />
+      <LoginPanel onLogin={login} initialMode={initialMode} booking={!!bookingPath} />
     </AuthPage>
   );
 }
@@ -97,10 +87,9 @@ function toPatientUser(p: PatientAuthResponse): AuthUser {
   return { role: "patient", id: p.patientId, firstName: p.firstName, lastName: p.lastName };
 }
 
-function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthUser) => void; initialMode: PatientMode; booking: boolean }) {
+function LoginPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthUser) => void; initialMode: PatientMode; booking: boolean }) {
   const [mode, setMode] = useState<PatientMode>(initialMode);
-  // the patient number or the email, whichever the patient types
-  const [account, setAccount] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signup, setSignup] = useState(EMPTY_SIGNUP);
   const [created, setCreated] = useState<PatientAuthResponse | null>(null);
@@ -112,21 +101,14 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
     setError("");
   }
 
-  // patient login with the patient number or email
+  // the backend finds the patient or employee from the email and sends back their role
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
     setError("");
-    const typed = account.trim();
-    const isEmail = typed.includes("@");
-    const id = isEmail ? null : parseId(typed);
-    if (!isEmail && !id) {
-      setError("Enter your email, or your 8-digit patient number, e.g. 00000123.");
-      return;
-    }
     setSubmitting(true);
     try {
-      const res = await api.post<PatientAuthResponse>("/api/auth/patient/login", isEmail ? { email: typed, password } : { patientId: id, password });
-      onLogin(toPatientUser(res.data));
+      const res = await api.post<AuthUser>("/api/auth/login", { email: email.trim(), password });
+      onLogin(res.data);
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {
@@ -166,7 +148,7 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
         <h1 className={HEADING}>Account created</h1>
         <p className="text-sm text-slate-600">Your patient number is</p>
         <p className="text-4xl font-bold tracking-wider text-navy">{formatId(created.patientId)}</p>
-        <p className="text-sm text-slate-600">Save this number. You can sign in with it or your email, plus your password.</p>
+        <p className="text-sm text-slate-600">Save this number for the front desk. You log in with your email and password.</p>
         <button type="button" onClick={() => onLogin(toPatientUser(created))} className={`${PRIMARY_BUTTON} w-full shadow-button`}>
           {booking ? "Continue to your appointment" : "Continue to Patient Portal"}
         </button>
@@ -179,16 +161,13 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
 
   return mode === "login" ? (
     <form onSubmit={handleLogin} className="space-y-4">
-      <h1 className={`${HEADING} ${booking ? "mb-2" : "mb-6"}`}>Patient Sign In</h1>
+      <h1 className={`${HEADING} ${booking ? "mb-2" : "mb-6"}`}>Login</h1>
       {booking && <p className="mb-6 text-center text-sm leading-relaxed text-slate-600">Sign in to finish booking your appointment.</p>}
-      <div>
-        <Field label="Patient number or email" required autoComplete="username" value={account} onChange={(e) => setAccount(e.target.value)} />
-        <p className="mt-1 text-xs text-slate-500">Use the email or the patient number from when you created your account.</p>
-      </div>
+      <Field label="Email" type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
       <PasswordField label="Password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <ErrorText message={error} />
       <div className="pt-1">
-        <FormButton submitting={submitting} label="Sign In" />
+        <FormButton submitting={submitting} label="Login" />
       </div>
       <p className="text-center text-sm text-slate-600">
         New patient?{" "}
@@ -222,46 +201,6 @@ function PatientPanel({ onLogin, initialMode, booking }: { onLogin: (user: AuthU
           Sign in
         </button>
       </p>
-    </form>
-  );
-}
-
-function StaffPanel({ onLogin }: { onLogin: (user: AuthUser) => void }) {
-  const [employeeId, setEmployeeId] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  // staff login
-  async function handleLogin(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    const id = parseId(employeeId);
-    if (!id) {
-      setError("Invalid employee ID. It must be 8 digits, e.g. 00001001.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const res = await api.post<StaffAuthResponse>("/api/auth/staff/login", { employeeId: id, password });
-      const staff = res.data;
-      onLogin({ role: staff.role, id: staff.employeeId, firstName: staff.firstName, lastName: staff.lastName, employeeType: staff.employeeType });
-    } catch (err) {
-      setError(apiErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <form onSubmit={handleLogin} className="space-y-4">
-      <h1 className={`${HEADING} mb-6`}>Employee Sign In</h1>
-      <IdField label="Employee ID" value={employeeId} onChange={setEmployeeId} />
-      <PasswordField label="Password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <ErrorText message={error} />
-      <div className="pt-1">
-        <FormButton submitting={submitting} label="Sign In" />
-      </div>
     </form>
   );
 }

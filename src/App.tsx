@@ -47,7 +47,7 @@ import { AdminScheduleUtilizationDoctor } from "./pages/admin/ScheduleUtilizatio
 import { AdminScheduleUtilizationCalendar } from "./pages/admin/ScheduleUtilizationCalendar";
 import { AdminBilling } from "./pages/admin/Billing";
 
-import { EmployeeLoginPage, PatientLoginPage } from "./pages/auth/Login";
+import { LoginPage } from "./pages/auth/Login";
 
 import { DoctorAppointments } from "./pages/doctor/Appointments";
 import { DoctorDashboard } from "./pages/doctor/Dashboard";
@@ -96,8 +96,9 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Route>
 
-      <Route path="/login" element={<PatientLoginPage />} />
-      <Route path="/employee/login" element={<EmployeeLoginPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      {/* the old employee login link still works */}
+      <Route path="/employee/login" element={<Navigate to="/login" replace />} />
 
             {/* patient routes */}
             <Route path="/patient" element={<RoleLayout role="patient" />}>

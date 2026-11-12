@@ -279,7 +279,10 @@ function NewOrderModal({ supplyId, onClose, onSaved }: { supplyId: number | null
             <option key={s.supplyId} value={s.supplyId}>{s.name} ({s.supplyType})</option>
           ))}
         </SelectField>
-        <Field label="Quantity" type="number" min="1" required value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+        <div>
+          <Field label="Quantity" type="number" min="1" max="10000" step="1" required value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+          <p className="mt-1 text-xs text-slate-500">Up to 10,000 per order.</p>
+        </div>
         <ErrorText message={error} />
         <FormActions saving={saving} onCancel={onClose} saveLabel="Place Order" />
       </form>

@@ -176,7 +176,7 @@ export function AccountManagement({ employee, onChange }: { employee: AdminEmplo
               <p className="text-sm font-medium text-slate-700">{panel === "create-login" ? "Create Login" : "Reset Password"}</p>
               <p className="mt-1 text-sm text-slate-500">
                 {panel === "create-login"
-                  ? "Staff sign in with their staff ID and this password."
+                  ? "Staff log in with their work email and this password."
                   : "The new password replaces the current one. Login access is not changed."}
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

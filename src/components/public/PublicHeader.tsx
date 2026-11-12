@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { LogoMark } from "./icons";
 import { CONTAINER, PRIMARY_BUTTON, PUBLIC_LINKS, usePortalLink } from "./shared";
 
@@ -105,19 +106,21 @@ export function PublicHeader() {
 
 function PortalButton({ className = "", onClick }: { className?: string; onClick?: () => void }) {
   const portal = usePortalLink();
+  const { role } = useAuth();
 
   // keep the space while auth loads so the wrong label never flashes
   if (portal.loading) {
     return (
       <span aria-hidden="true" className={`${PRIMARY_BUTTON} invisible ${className}`}>
-        Patient Portal
+        Login
       </span>
     );
   }
 
+  // signed out, this is the one login for patients and staff
   return (
     <Link to={portal.to} onClick={onClick} className={`${PRIMARY_BUTTON} ${className}`}>
-      {portal.label}
+      {role ? portal.label : "Login"}
     </Link>
   );
 }

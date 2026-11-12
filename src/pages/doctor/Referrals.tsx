@@ -28,6 +28,8 @@ interface PatientOption {
   patientId: number;
   firstName: string;
   lastName: string;
+  assignedToMe: boolean;
+  canRefer: boolean;
 }
 
 interface Specialist {
@@ -242,8 +244,13 @@ function NewReferralModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
       <form onSubmit={handleSubmit} className="space-y-4">
         <SelectField label="Patient" required value={patientId} onChange={(e) => setPatientId(e.target.value)}>
           <option value="">Select a patient</option>
+          {/* patients the backend would refuse stay listed but can't be picked */}
           {patients.map((p) => (
-            <option key={p.patientId} value={p.patientId}>{p.lastName}, {p.firstName}</option>
+            <option key={p.patientId} value={p.patientId} disabled={!p.canRefer}>
+              {p.lastName}, {p.firstName}
+              {p.assignedToMe && " (Primary)"}
+              {!p.canRefer && " (can't refer yet)"}
+            </option>
           ))}
         </SelectField>
         <SelectField label="Specialist" required value={specialistKey} onChange={(e) => setSpecialistKey(e.target.value)}>
@@ -273,7 +280,10 @@ function NewReferralModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
             className="w-full rounded-lg px-3 py-2 text-sm shadow-field focus:outline-none"
           />
         </label>
-        <p className="text-xs text-slate-500">It goes to the patient's primary doctor to approve. If you're their primary doctor, it's approved right away.</p>
+        <p className="text-xs text-slate-500">
+          It goes to the patient's primary doctor to approve. If you're their primary doctor, it's approved right away. Patients marked can't refer yet
+          need a checked in or completed visit with you and a primary doctor first.
+        </p>
         <ErrorText message={error} />
         <FormActions saving={saving} onCancel={onClose} saveLabel="Send Referral" />
       </form>
